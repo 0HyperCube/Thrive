@@ -8,17 +8,20 @@ add_library(thrive_native SHARED
 
 target_compile_definitions(thrive_native PRIVATE THRIVE_NATIVE_BUILD)
 
-# target_link_libraries(thrive_native PUBLIC)
+target_link_libraries(thrive_native PRIVATE Jolt)
 # target_link_libraries(thrive_native PRIVATE stuff)
 
 target_include_directories(thrive_native PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
-target_precompile_headers(thrive_native PUBLIC
-  "${PROJECT_BINARY_DIR}/Include.h")
+# target_include_directories(thrive_native PUBLIC "../../third_party/JoltPhysics/")
+
+target_precompile_headers(thrive_native PUBLIC "${PROJECT_BINARY_DIR}/Include.h"
+  PRIVATE "../../third_party/JoltPhysics/Jolt/Jolt.h")
 
 set_target_properties(thrive_native PROPERTIES
   CXX_STANDARD 17
   CXX_EXTENSIONS OFF
+  INTERPROCEDURAL_OPTIMIZATION ON
   )
 
 message(STATUS "TODO: static standard lib for easier distributing")
