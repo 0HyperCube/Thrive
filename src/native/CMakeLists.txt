@@ -3,14 +3,18 @@ add_library(thrive_native SHARED
   interop/CInterop.h interop/CInterop.cpp
   interop/CStructures.h
   physics/PhysicalWorld.hpp physics/PhysicalWorld.cpp
+  "${PROJECT_BINARY_DIR}/Include.h"
   )
+
+target_compile_definitions(thrive_native PRIVATE THRIVE_NATIVE_BUILD)
 
 # target_link_libraries(thrive_native PUBLIC)
 # target_link_libraries(thrive_native PRIVATE stuff)
 
-target_include_directories(thrive_native
-  PRIVATE ${CMAKE_CURRENT_LIST_DIR}
-  INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(thrive_native PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+
+target_precompile_headers(thrive_native PUBLIC
+  "${PROJECT_BINARY_DIR}/Include.h")
 
 set_target_properties(thrive_native PROPERTIES
   CXX_STANDARD 17
@@ -31,3 +35,5 @@ if(NOT WIN32)
 else()
   set_target_properties(thrive_native PROPERTIES LINK_FLAGS_RELEASE "")
 endif()
+
+install(TARGETS thrive_native)
