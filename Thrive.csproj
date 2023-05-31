@@ -617,7 +617,8 @@
     <Compile Include="src\modding\ModUploader.cs" />
     <Compile Include="src\modding\NewModGUI.cs" />
     <Compile Include="src\modding\WorkshopData.cs" />
-    <Compile Include="src\native\interop\NativeMethods.cs" />
+    <Compile Include="src\native\interop\Interop.cs" />
+    <Compile Include="src\native\interop\NativeLibraryHandler.cs" />
     <Compile Include="src\native\NativeConstants.cs" />
     <Compile Include="src\saving\FileHelpers.cs" />
     <Compile Include="src\saving\IChildPropertiesLoadCallback.cs" />

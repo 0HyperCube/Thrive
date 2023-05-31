@@ -10,11 +10,8 @@ using Path = System.IO.Path;
 /// <summary>
 ///   Calling interface from C# to the native code side of things for the native module
 /// </summary>
-public static class NativeMethods
+public static class NativeLibraryHandler
 {
-    // DL Open flag (hopefully this is not different on any unix system)
-    private const int RTLD_NOW = 2;
-
     private static bool loadCalled;
 
     /// <summary>
@@ -31,9 +28,9 @@ public static class NativeMethods
 
         // The default path handling for Godot mono seems really bad (at least on Linux) so we preload the native
         // library to ensure it gets loaded even though it already is at a sensible location
-        PerformNativeLibPathLoadHack();
+        InsertNativeLibPathHack();
 
-        int version = CheckAPIVersion();
+        int version = Interop.CheckAPIVersion();
 
         if (version != NativeConstants.Version)
         {
@@ -54,7 +51,7 @@ public static class NativeMethods
         // things for the initial settings
         _ = settings;
 
-        var result = InitThriveLibrary();
+        var result = Interop.InitThriveLibrary();
 
         if (result != 0)
         {
@@ -67,23 +64,23 @@ public static class NativeMethods
     /// </summary>
     public static void Shutdown()
     {
-        ShutdownThriveLibrary();
+        Interop.ShutdownThriveLibrary();
     }
 
-    [DllImport("libthrive_native.so")]
-    private static extern int CheckAPIVersion();
+    // TODO: remove this method usage once we move to .NET 7
+    // https://learn.microsoft.com/en-us/dotnet/standard/native-interop/cross-platform#custom-import-resolver
+    // ReSharper disable once StringLiteralTypo
+#pragma warning disable CA2101
+    [DllImport("__Internal", EntryPoint = "mono_dllmap_insert", CharSet = CharSet.Ansi)]
+    private static extern void MonoDllMapInsert(IntPtr assembly, string dll, string? func, string targetDll,
+        string? targetFunc);
+#pragma warning restore CA2101
 
-    [DllImport("thrive_native")]
-    private static extern int InitThriveLibrary();
-
-    [DllImport("thrive_native")]
-    private static extern void ShutdownThriveLibrary();
-
-    private static void PerformNativeLibPathLoadHack()
+    private static void InsertNativeLibPathHack()
     {
         // Needed before .NET 7 allows doing this nicely
         // Because the look path is for some reason just in ".mono/temp" folder we need this manual hack to be able
-        // to load a library in our current / executable folder
+        // to specify a sensible path for mono to use
 
         var libraryName = ThriveNativeLibraryName();
 
@@ -96,11 +93,11 @@ public static class NativeMethods
 
             try
             {
-                LoadNativeLibrary(path);
+                RegisterNativeLibrary("thrive_native", path);
             }
             catch (Exception e)
             {
-                GD.PrintErr($"Loading native library ({path}) early failed: ", e);
+                GD.PrintErr($"Register native library path \"{path}\" failed: ", e);
             }
 
             return;
@@ -110,53 +107,18 @@ public static class NativeMethods
             "will likely fail next with an exception failing ot load it");
     }
 
-    // ReSharper disable StringLiteralTypo
-
-    [DllImport("libdl.so", EntryPoint = "dlopen")]
-    private static extern IntPtr DLOpenLinux([MarshalAs(UnmanagedType.LPWStr)] string filename, int flags);
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-    private static extern IntPtr LoadLibrary(string filename);
-
-    [DllImport("libdl.dylib", EntryPoint = "dlopen")]
-    private static extern IntPtr DLOpenMac([MarshalAs(UnmanagedType.LPWStr)] string fileName, int flags);
-
-    // ReSharper restore StringLiteralTypo
-
-    private static void LoadNativeLibrary(string libraryFilePath)
+    private static void RegisterNativeLibrary(string name, string libraryFilePath)
     {
-        switch (FeatureInformation.GetOS())
-        {
-            case FeatureInformation.PlatformWindows:
-            {
-                var moduleHandle = LoadLibrary(libraryFilePath);
-                if (moduleHandle.ToInt64() == 0)
-                    throw new Exception("Failed to load the library (handle is null)");
+        var path = Path.GetFullPath(libraryFilePath);
 
-                break;
-            }
+        MonoDllMapInsert(IntPtr.Zero, name, null, path, null);
 
-            case FeatureInformation.PlatformLinux:
-            {
-                var moduleHandle = DLOpenLinux(libraryFilePath, RTLD_NOW);
-                if (moduleHandle.ToInt64() == 0)
-                    throw new Exception("Failed to open the library (handle is null)");
-
-                break;
-            }
-
-            case FeatureInformation.PlatformMac:
-            {
-                var moduleHandle = DLOpenMac(libraryFilePath, RTLD_NOW);
-                if (moduleHandle.ToInt64() == 0)
-                    throw new Exception("Failed to open the library (handle is null)");
-
-                break;
-            }
-
-            default:
-                throw new InvalidOperationException("Unknown method to load native library for this platform");
-        }
+        // MonoDllMapInsert(IntPtr.Zero, "thrive_native.dll", null, path, null);
+        // MonoDllMapInsert(IntPtr.Zero, "thrive_native.so", null, path, null);
+        // MonoDllMapInsert(IntPtr.Zero, "libthrive_native.so", null, path, null);
+        // MonoDllMapInsert(IntPtr.Zero, "libthrive_native.dll", null, path, null);
+        // MonoDllMapInsert(IntPtr.Zero, "libthrive_native.so.dll", null, path, null);
+        // MonoDllMapInsert(IntPtr.Zero, path, null, path, null);
     }
 
     private static string ThriveNativeLibraryName()

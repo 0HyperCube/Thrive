@@ -34,7 +34,7 @@ public class StartupActions : Node
         GD.Print("Game logs are written to: ", Path.Combine(userDir, Constants.LOGS_FOLDER_NAME),
             " latest log is 'log.txt'");
 
-        NativeMethods.Load();
+        NativeLibraryHandler.Load();
 
         // Load settings here, to make sure locales etc. are applied to the main loaded and autoloaded scenes
         try
@@ -48,6 +48,6 @@ public class StartupActions : Node
             GD.PrintErr("Failed to initialize settings: ", e);
         }
 
-        NativeMethods.Init(Settings.Instance);
+        NativeLibraryHandler.Init(Settings.Instance);
     }
 }

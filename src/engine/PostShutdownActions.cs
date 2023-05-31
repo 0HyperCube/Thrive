@@ -48,7 +48,7 @@ public class PostShutdownActions : Node
         }
 
         GD.Print("Shutting down native library");
-        NativeMethods.Shutdown();
+        NativeLibraryHandler.Shutdown();
 
         GD.Print("Shutdown actions complete");
     }
