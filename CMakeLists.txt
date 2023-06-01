@@ -16,8 +16,8 @@ option(WARNINGS_AS_ERRORS "When on treat compiler warnings as errors" ON)
 # set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake")
 
 # static building
-SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-SET(BUILD_SHARED_LIBS OFF)
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+set(BUILD_SHARED_LIBS OFF)
 
 # Common options
 if(CMAKE_BUILD_TYPE STREQUAL "")
