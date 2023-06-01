@@ -79,7 +79,7 @@ IncludeCategories:
   - Regex: ".*"
     Priority: 6
 IndentAccessModifiers: false
-IndentCaseLabels: false
+IndentCaseLabels: true
 IndentCaseBlocks: false
 IndentExternBlock: AfterExternBlock
 IndentGotoLabels: false
