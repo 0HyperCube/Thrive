@@ -2,22 +2,30 @@
 Language: Cpp
 AccessModifierOffset: -4
 AlignAfterOpenBracket: DontAlign
+AlignArrayOfStructures: None
 AlignConsecutiveAssignments: None
+AlignConsecutiveBitFields: None
 AlignConsecutiveDeclarations: None
-AlignEscapedNewlinesLeft: Left
+AlignConsecutiveMacros: None
+AlignEscapedNewlines: Right
+AlignOperands: DontAlign
 AlignTrailingComments: false
-AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortBlocksOnASingleLine: Never
-AllowShortCaseLabelsOnASingleLine: true
-AllowShortFunctionsOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false
+AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: Yes
 BinPackArguments: true
-BinPackParameters: false
-BreakBeforeBinaryOperators: None
+BinPackParameters: true
+BitFieldColonSpacing: Both
 BreakBeforeBraces: Allman
 #BreakBeforeBraces: Custom
 #BraceWrapping:
@@ -35,40 +43,119 @@ BreakBeforeBraces: Allman
 #    SplitEmptyFunction: true
 #    SplitEmptyRecord: false
 #    SplitEmptyNamespace: true
-BreakBeforeInheritanceComma: false
+BreakAfterAttributes: Never
+BreakBeforeBinaryOperators: None
+BreakBeforeConceptDeclarations: Never
+BreakBeforeInlineASMColon: OnlyMultiline
 BreakBeforeTernaryOperators: false
 BreakConstructorInitializers: AfterColon
+BreakInheritanceList: AfterComma
+BreakStringLiterals: false
+ColumnLimit: 120
 # Works fine even without this
 # CommentPragmas: '^! \\'
 CompactNamespaces: true
-ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
 Cpp11BracedListStyle: true
-ColumnLimit: 120
 DerivePointerAlignment: false
+EmptyLineAfterAccessModifier: Never
+EmptyLineBeforeAccessModifier: LogicalBlock
+FixNamespaceComments: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: "<(Jolt|boost).*>"
+    Priority: 2
+  - Regex: "<.*>"
+    Priority: 1
+  - Regex: "\"(Include.h).*"
+    Priority: 3
+    SortPriority: 3
+  - Regex: "\"(core\/ForwardDefinitions.hpp).*"
+    Priority: 3
+    SortPriority: 4
+  - Regex: "\".*\/"
+    Priority: 5
+  - Regex: ".*"
+    Priority: 6
+IndentAccessModifiers: false
 IndentCaseLabels: false
+IndentCaseBlocks: false
+IndentExternBlock: AfterExternBlock
+IndentGotoLabels: false
+IndentPPDirectives: None
+IndentRequiresClause: false
 IndentWidth: 4
 IndentWrappedFunctionNames: true
+InsertBraces: false
+InsertNewlineAtEOF: true
 KeepEmptyLinesAtTheStartOfBlocks: false
+LambdaBodyIndentation: Signature
+LineEnding: DeriveLF
+# MacroBlockBegin:
+# MacroBlockEnd:
+# Macros:
 MaxEmptyLinesToKeep: 2
 NamespaceIndentation: None
+# NamespaceMacros:
+#   -
+PPIndentWidth: 1
+PackConstructorInitializers: BinPack
 PointerAlignment: Left
+QualifierAlignment: Custom
+QualifierOrder:
+  - static
+  - constexpr
+  - const
+  - inline
+  - volatile
+  - restrict
+  - friend
+  - type
+# This needs to be left as otherwise functions will look ugly
+ReferenceAlignment: Left
 ReflowComments: true
+RemoveSemicolon: true
+RequiresClausePosition: OwnLine
+RequiresExpressionIndentation: OuterScope
+SeparateDefinitionBlocks: Always
+ShortNamespaceLines: 0
 SortIncludes: CaseInsensitive
-SortUsingDeclarations: true
+SortUsingDeclarations: Lexicographic
 SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: false
+SpaceAroundPointerQualifiers: Before
 SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
 SpaceInEmptyParentheses: false
 SpacesBeforeTrailingComments: 1
 SpacesInAngles: false
 SpacesInCStyleCastParentheses: false
+SpacesInConditionalStatement: false
 SpacesInContainerLiterals: false
+SpacesInLineCommentPrefix:
+  Minimum: 1
+  Maximum: 1
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
 Standard: c++17
+# StatementAttributeLikeMacros:
+#   -
+# StatementMacros:
+#   -
 TabWidth: 4
+# TypenameMacros:
+#   -
 UseTab: Never
+# WhitespaceSensitiveMacros:
+#   -
 
 ...
