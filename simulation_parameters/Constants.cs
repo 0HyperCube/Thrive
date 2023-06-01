@@ -37,8 +37,8 @@ public static class Constants
     public const float PLAYER_ENGULFED_DEATH_DELAY_MAX = 10.0f;
 
     // Variance in the player position when respawning
-    public const float MIN_SPAWN_DISTANCE = -2500.0f;
-    public const float MAX_SPAWN_DISTANCE = 2500.0f;
+    public const float MIN_SPAWN_DISTANCE = -5000.0f;
+    public const float MAX_SPAWN_DISTANCE = 5000.0f;
 
     /// <summary>
     ///   Size of "chunks" used for spawning entities
