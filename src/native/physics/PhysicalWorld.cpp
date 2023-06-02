@@ -31,6 +31,8 @@ PhysicalWorld::PhysicalWorld()
     InitPhysicsWorld();
 }
 
+PhysicalWorld::~PhysicalWorld() = default;
+
 // ------------------------------------ //
 void PhysicalWorld::InitPhysicsWorld()
 {

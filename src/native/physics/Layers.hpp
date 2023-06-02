@@ -91,6 +91,27 @@ public:
                 std::abort();
         }
     }
+
+#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
+    const char* GetBroadPhaseLayerName(JPH::BroadPhaseLayer layer) const override
+    {
+        switch ((JPH::BroadPhaseLayer::Type)layer)
+        {
+            case (JPH::BroadPhaseLayer::Type)BroadPhaseLayers::NON_MOVING:
+                return "NON_MOVING";
+            case (JPH::BroadPhaseLayer::Type)BroadPhaseLayers::MOVING:
+                return "MOVING";
+            case (JPH::BroadPhaseLayer::Type)BroadPhaseLayers::DEBRIS:
+                return "DEBRIS";
+            case (JPH::BroadPhaseLayer::Type)BroadPhaseLayers::SENSOR:
+                return "SENSOR";
+            case (JPH::BroadPhaseLayer::Type)BroadPhaseLayers::PROJECTILE:
+                return "PROJECTILE";
+            default:
+                return "INVALID";
+        }
+    }
+#endif // JPH_EXTERNAL_PROFILE || JPH_PROFILE_ENABLED
 };
 
 /// \brief Specifies which object layers can collide with which broadphase layers

@@ -26,7 +26,7 @@ class PhysicalWorld
 {
 public:
     PhysicalWorld();
-    ~PhysicalWorld() = default;
+    ~PhysicalWorld();
 
     /// \brief Process physics
     /// \returns True when enough time has passed and physics was stepped
