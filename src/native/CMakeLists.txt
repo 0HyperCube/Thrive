@@ -40,9 +40,11 @@ target_include_directories(thrive_native PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 # target_include_directories(thrive_native PUBLIC "../../third_party/JoltPhysics/")
 
+# TODO: the one private precompiled header will probably cause issues with
+# other libraries linking to this
 target_precompile_headers(thrive_native PUBLIC "${PROJECT_BINARY_DIR}/Include.h"
-  PRIVATE "../../third_party/JoltPhysics/Jolt/Jolt.h" "core/ForwardDefinitions.hpp"
-  "core/RefCounted.hpp")
+  "core/ForwardDefinitions.hpp" "core/RefCounted.hpp"
+  PRIVATE "../../third_party/JoltPhysics/Jolt/Jolt.h")
 
 set_target_properties(thrive_native PROPERTIES
   CXX_STANDARD 17
