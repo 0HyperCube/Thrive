@@ -5,7 +5,7 @@
 namespace Thrive
 {
 
-enum class LogLevel : uint8_t
+enum class LogLevel : int8_t
 {
     Debug = 0,
     Info = 1,
@@ -65,7 +65,7 @@ public:
 private:
     bool flushOnError = true;
 
-    bool isRedirected;
+    bool isRedirected = false;
     std::function<void(std::string_view, LogLevel)> redirectedLogReceiver;
 
     LogLevel currentLoggingLevel = LogLevel::Info;
