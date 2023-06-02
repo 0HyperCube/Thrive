@@ -6,7 +6,7 @@ add_library(thrive_native SHARED
   core/Logger.cpp core/Logger.hpp
   core/Mutex.hpp
   core/NonCopyable.hpp core/Reference.hpp
-  core/RefCounted.cpp core/RefCounted.hpp
+  core/RefCounted.hpp
   core/TaskSystem.cpp core/TaskSystem.hpp
   physics/ContactListener.cpp physics/ContactListener.hpp
   physics/Layers.hpp
