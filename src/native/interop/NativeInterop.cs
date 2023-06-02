@@ -1,11 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using Godot;
-using Directory = System.IO.Directory;
-using File = System.IO.File;
-using Path = System.IO.Path;
 
 /// <summary>
 ///   Calling interface from C# to the native code side of things for the native module
@@ -32,6 +27,7 @@ public static class NativeInterop
         // instead of using DllImportAttribute, also mono_dllmap_insert doesn't work as still the attributes load
         // before that can be used to set. With .NET 7 it should be possible to finally cleanly fix this:
         // https://learn.microsoft.com/en-us/dotnet/standard/native-interop/cross-platform#custom-import-resolver
+        // `NativeLibrary.Load` would probably also be a good way to do something
 
         int version = NativeMethods.CheckAPIVersion();
 
