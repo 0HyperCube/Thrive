@@ -3,6 +3,7 @@
 
 // TODO: switch to a custom thread pool
 #include "Jolt/Core/JobSystemThreadPool.h"
+#include "Jolt/Physics/Body/BodyCreationSettings.h"
 #include "Jolt/Physics/Collision/CastResult.h"
 #include "Jolt/Physics/Collision/RayCast.h"
 #include "Jolt/Physics/PhysicsSettings.h"
@@ -11,6 +12,7 @@
 // #include "core/TaskSystem.hpp"
 
 #include "ContactListener.hpp"
+#include "PhysicsBody.hpp"
 // ------------------------------------ //
 namespace Thrive::Physics
 {
@@ -77,6 +79,27 @@ bool PhysicalWorld::Process(float delta)
 }
 
 // ------------------------------------ //
+Ref<PhysicsBody> PhysicalWorld::CreateMovingBody(
+    const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position, JPH::Quat rotation /* = JPH::Quat::sIdentity()*/)
+{
+    if (!shape)
+    {
+        LOG_ERROR("No shape given to body create");
+        return nullptr;
+    }
+
+    // TODO: multithreaded body adding?
+    const auto body = CreateBody(*shape, JPH::EMotionType::Dynamic, Layers::MOVING, position, rotation);
+
+    if (body == nullptr)
+        return nullptr;
+
+    physicsSystem->GetBodyInterface().AddBody(body->GetId(), JPH::EActivation::Activate);
+
+    return body;
+}
+
+// ------------------------------------ //
 std::optional<std::tuple<float, JPH::Vec3, JPH::BodyID>> PhysicalWorld::CastRay(JPH::RVec3 start, JPH::Vec3 endOffset)
 {
     // The Jolt samples app has some really nice alternative cast modes that could be added in the future
@@ -115,6 +138,19 @@ std::optional<std::tuple<float, JPH::Vec3, JPH::BodyID>> PhysicalWorld::CastRay(
 }
 
 // ------------------------------------ //
+void PhysicalWorld::SetGravity(JPH::Vec3 newGravity)
+{
+    gravity = newGravity;
+
+    physicsSystem->SetGravity(gravity);
+}
+
+void PhysicalWorld::RemoveGravity()
+{
+    SetGravity(JPH::Vec3(0, 0, 0));
+}
+
+// ------------------------------------ //
 void PhysicalWorld::StepPhysics(JPH::JobSystemThreadPool& jobs, float time)
 {
     // TODO: physics processing time tracking with a high resolution timer (should get the average time over the last
@@ -139,4 +175,27 @@ void PhysicalWorld::StepPhysics(JPH::JobSystemThreadPool& jobs, float time)
         default:
             LOG_ERROR("Physics update error: unknown");
     }
+}
+
+Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotionType motionType,
+    JPH::ObjectLayer layer, JPH::RVec3Arg position, JPH::Quat rotation /*= JPH::Quat::sIdentity()*/)
+{
+    // TODO: should we add these kinds of checks
+    // // Sanity check some layer stuff
+    // if (motionType == JPH::EMotionType::Dynamic && layer == Layers::NON_MOVING){
+    //     LOG_ERROR("Incorrect motion type for layer specified");
+    //     return nullptr;
+    // }
+
+    const auto body = physicsSystem->GetBodyInterface().CreateBody(
+        JPH::BodyCreationSettings(&shape, position, rotation, motionType, layer));
+
+    if (!body)
+    {
+        LOG_ERROR("Ran out of physics bodies");
+        return nullptr;
+    }
+
+    return std::shared_ptr<PhysicsBody>(new PhysicsBody(body, body->GetID()));
+}
 }
