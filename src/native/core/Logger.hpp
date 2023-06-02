@@ -57,7 +57,14 @@ public:
     /// \see CInterop.h
     THRIVE_NATIVE_API void SetLogTargetOverride(std::function<void(std::string_view, LogLevel)>&& logReceiver);
 
+    /// \brief When flush on error is on, the output is flushed on each error message
+    THRIVE_NATIVE_API void SetFlushOnError(bool flush){
+        flushOnError = flush;
+    }
+
 private:
+    bool flushOnError = true;
+
     bool isRedirected;
     std::function<void(std::string_view, LogLevel)> redirectedLogReceiver;
 
