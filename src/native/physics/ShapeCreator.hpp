@@ -2,6 +2,11 @@
 
 #include "SimpleShapes.hpp"
 
+namespace JPH
+{
+class IndexedTriangle;
+} // namespace JPH
+
 namespace Thrive::Physics
 {
 
@@ -26,7 +31,11 @@ public:
     static JPH::RefConst<JPH::Shape> CreateMutableCompound(
         const std::vector<std::tuple<JPH::RefConst<JPH::Shape>, JPH::Vec3, JPH::Quat, uint32_t>>& subShapes);
 
-    // TODO: mesh (but note the performance caveats)
+    /// \brief Creates a mesh collision (note that the performance is worse and this can't collide with everything even
+    /// when movable)
+    /// \todo Materials support, each triangle can have its own so this is a bit complicated to setup
+    static JPH::RefConst<JPH::Shape> CreateMesh(
+        JPH::Array<JPH::Float3>&& vertices, JPH::Array<JPH::IndexedTriangle>&& triangles);
 };
 
 } // namespace Thrive::Physics

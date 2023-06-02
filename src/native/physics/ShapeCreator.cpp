@@ -1,7 +1,9 @@
 // ------------------------------------ //
 #include "ShapeCreator.hpp"
 
+#include "Jolt/Math/Trigonometry.h"
 #include "Jolt/Physics/Collision/Shape/ConvexHullShape.h"
+#include "Jolt/Physics/Collision/Shape/MeshShape.h"
 #include "Jolt/Physics/Collision/Shape/MutableCompoundShape.h"
 #include "Jolt/Physics/Collision/Shape/StaticCompoundShape.h"
 // ------------------------------------ //
@@ -37,4 +39,19 @@ JPH::RefConst<JPH::Shape> ShapeCreator::CreateMutableCompound(
     }
 
     return settings.Create().Get();
+}
+
+JPH::RefConst<JPH::Shape> ShapeCreator::CreateMesh(
+    JPH::Array<JPH::Float3>&& vertices, JPH::Array<JPH::IndexedTriangle>&& triangles)
+{
+    // Create torus
+    JPH::MeshShapeSettings mesh;
+
+    // TODO: materials support (each triangle can have a different one)
+    // mesh.mMaterials
+
+    mesh.mTriangleVertices = std::move(vertices);
+    mesh.mIndexedTriangles = std::move(triangles);
+
+    return mesh.Create().Get();
 }
