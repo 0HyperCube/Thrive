@@ -35,12 +35,19 @@ public:
     /// \brief Retrieves an instance of this class from a physics body user data
     static inline PhysicsBody* FromJoltBody(const JPH::Body* body);
 
-    inline JPH::BodyID GetId(){
+    inline JPH::BodyID GetId() const
+    {
         return id;
     }
 
+protected:
+    void MarkUsedInWorld();
+    void MarkRemovedFromWorld();
+
 private:
     const JPH::BodyID id;
+
+    bool inWorld;
 
     // PhysicalWorld* owningWorld;
 };

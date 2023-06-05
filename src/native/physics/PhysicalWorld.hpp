@@ -64,6 +64,8 @@ private:
 private:
     float elapsedSinceUpdate = 0;
 
+    int bodyCount = 0;
+
     // TODO: rename all the following fields
 
     /// \brief The main part, the physics system that simulates this world

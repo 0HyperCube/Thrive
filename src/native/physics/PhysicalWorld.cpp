@@ -13,6 +13,7 @@
 
 #include "ContactListener.hpp"
 #include "PhysicsBody.hpp"
+
 // ------------------------------------ //
 namespace Thrive::Physics
 {
@@ -34,7 +35,14 @@ PhysicalWorld::PhysicalWorld()
     InitPhysicsWorld();
 }
 
-PhysicalWorld::~PhysicalWorld() = default;
+PhysicalWorld::~PhysicalWorld()
+{
+    if (bodyCount != 0)
+    {
+        LOG_ERROR(
+            "PhysicalWorld destroyed while not all bodies were removed, existing bodies: " + std::to_string(bodyCount));
+    }
+}
 
 // ------------------------------------ //
 void PhysicalWorld::InitPhysicsWorld()
@@ -89,14 +97,33 @@ Ref<PhysicsBody> PhysicalWorld::CreateMovingBody(
     }
 
     // TODO: multithreaded body adding?
-    const auto body = CreateBody(*shape, JPH::EMotionType::Dynamic, Layers::MOVING, position, rotation);
+    auto body = CreateBody(*shape, JPH::EMotionType::Dynamic, Layers::MOVING, position, rotation);
 
     if (body == nullptr)
         return nullptr;
 
     physicsSystem->GetBodyInterface().AddBody(body->GetId(), JPH::EActivation::Activate);
 
+    body->MarkUsedInWorld();
+
+    // Add an extra reference to the body to keep it from being deleted while in this world
+    body->AddRef();
+    ++bodyCount;
+
     return body;
+}
+
+void PhysicalWorld::DestroyBody(const Ref<PhysicsBody>& body)
+{
+    if (body == nullptr)
+        return;
+
+    physicsSystem->GetBodyInterface().RemoveBody(body->GetId());
+    body->MarkRemovedFromWorld();
+
+    // Remove the extra body reference that we added for the physics system keeping a pointer to the body
+    body->Release();
+    --bodyCount;
 }
 
 // ------------------------------------ //
@@ -177,8 +204,8 @@ void PhysicalWorld::StepPhysics(JPH::JobSystemThreadPool& jobs, float time)
     }
 }
 
-Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotionType motionType,
-    JPH::ObjectLayer layer, JPH::RVec3Arg position, JPH::Quat rotation /*= JPH::Quat::sIdentity()*/)
+Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotionType motionType, JPH::ObjectLayer layer,
+    JPH::RVec3Arg position, JPH::Quat rotation /*= JPH::Quat::sIdentity()*/)
 {
     // TODO: should we add these kinds of checks
     // // Sanity check some layer stuff
@@ -196,6 +223,7 @@ Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotion
         return nullptr;
     }
 
-    return std::shared_ptr<PhysicsBody>(new PhysicsBody(body, body->GetID()));
+    return {new PhysicsBody(body, body->GetID())};
 }
-}
+
+} // namespace Thrive::Physics
