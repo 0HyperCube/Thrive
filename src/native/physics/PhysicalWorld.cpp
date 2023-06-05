@@ -90,7 +90,7 @@ bool PhysicalWorld::Process(float delta)
 Ref<PhysicsBody> PhysicalWorld::CreateMovingBody(
     const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position, JPH::Quat rotation /* = JPH::Quat::sIdentity()*/)
 {
-    if (!shape)
+    if (shape == nullptr)
     {
         LOG_ERROR("No shape given to body create");
         return nullptr;
@@ -217,7 +217,7 @@ Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotion
     const auto body = physicsSystem->GetBodyInterface().CreateBody(
         JPH::BodyCreationSettings(&shape, position, rotation, motionType, layer));
 
-    if (!body)
+    if (body == nullptr)
     {
         LOG_ERROR("Ran out of physics bodies");
         return nullptr;
