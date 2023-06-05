@@ -10,6 +10,26 @@ public static class NativeInterop
     private static bool loadCalled;
 
     /// <summary>
+    ///   Performs any initialization needed by the native library (note has to be called after the library is loaded)
+    /// </summary>
+    /// <param name="settings">Current game settings</param>
+    public static void Init(Settings settings)
+    {
+        // Settings are passed as probably in the future something needs to be setup right in the native side of
+        // things for the initial settings
+        _ = settings;
+
+        NativeMethods.SetLogForwardingCallback(ForwardMessage);
+
+        var result = NativeMethods.InitThriveLibrary();
+
+        if (result != 0)
+        {
+            throw new InvalidOperationException($"Failed to initialize Thrive native library, code: {result}");
+        }
+    }
+
+    /// <summary>
     ///   Loads and checks the native library is good to use
     /// </summary>
     /// <exception cref="Exception">If the library is not fine (wrong version)</exception>
@@ -43,26 +63,6 @@ public static class NativeInterop
 #if DEBUG
         NativeMethods.SetLogLevel(NativeMethods.LogLevel.Debug);
 #endif
-    }
-
-    /// <summary>
-    ///   Performs any initialization needed by the native library
-    /// </summary>
-    /// <param name="settings">Current game settings</param>
-    public static void Init(Settings settings)
-    {
-        // Settings are passed as probably in the future something needs to be setup right in the native side of
-        // things for the initial settings
-        _ = settings;
-
-        NativeMethods.SetLogForwardingCallback(ForwardMessage);
-
-        var result = NativeMethods.InitThriveLibrary();
-
-        if (result != 0)
-        {
-            throw new InvalidOperationException($"Failed to initialize Thrive native library, code: {result}");
-        }
     }
 
     /// <summary>
@@ -110,10 +110,10 @@ internal static partial class NativeMethods
     }
 
     [DllImport("thrive_native")]
-    internal static extern int CheckAPIVersion();
+    internal static extern int InitThriveLibrary();
 
     [DllImport("thrive_native")]
-    internal static extern int InitThriveLibrary();
+    internal static extern int CheckAPIVersion();
 
     [DllImport("thrive_native")]
     internal static extern void ShutdownThriveLibrary();
