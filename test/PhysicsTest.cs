@@ -78,7 +78,7 @@ public class PhysicsTest : Node
 
         var groundShape = PhysicsShape.CreateBox(new Vector3(100, 0.05f, 100));
 
-        allCreatedBodies.Add(physicalWorld.CreateStaticBody(groundShape, new Vector3(0, -0.05f, 0), Quat.Identity));
+        allCreatedBodies.Add(physicalWorld.CreateStaticBody(groundShape, new Vector3(0, -0.025f, 0), Quat.Identity));
 
         allCreatedBodies.AddRange(sphereBodies);
     }
@@ -90,6 +90,7 @@ public class PhysicsTest : Node
             Mesh = new SphereMesh
             {
                 Radius = 0.5f,
+                Height = 1.0f,
             },
         };
 
