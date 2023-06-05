@@ -42,6 +42,8 @@ public:
     Ref<PhysicsBody> CreateMovingBody(
         const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position, JPH::Quat rotation = JPH::Quat::sIdentity());
 
+    void DestroyBody(const Ref<PhysicsBody>& body);
+
     void SetGravity(JPH::Vec3 newGravity);
     void RemoveGravity();
 
@@ -56,8 +58,8 @@ private:
 
     void StepPhysics(JPH::JobSystemThreadPool& jobs, float time);
 
-    Ref<PhysicsBody> CreateBody(const JPH::Shape& shape, JPH::EMotionType motionType,
-        JPH::ObjectLayer layer, JPH::RVec3Arg position, JPH::Quat rotation = JPH::Quat::sIdentity());
+    Ref<PhysicsBody> CreateBody(const JPH::Shape& shape, JPH::EMotionType motionType, JPH::ObjectLayer layer,
+        JPH::RVec3Arg position, JPH::Quat rotation = JPH::Quat::sIdentity());
 
 private:
     float elapsedSinceUpdate = 0;

@@ -16,7 +16,7 @@ namespace Thrive::Physics
 class PhysicalWorld;
 
 /// \brief Our physics body wrapper that has extra data
-class PhysicsBody : RefCounted
+class PhysicsBody : public RefCounted
 {
     friend PhysicalWorld;
 
