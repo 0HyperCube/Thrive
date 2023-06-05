@@ -17,9 +17,19 @@ FORCE_INLINE JPH::DVec3 DVec3FromCAPI(JVec3 vec)
     return {vec.X, vec.Y, vec.Z};
 }
 
-FORCE_INLINE JVec3 QuatToCAPI(JPH::DVec3 vec)
+FORCE_INLINE JVec3 DVec3ToCAPI(JPH::DVec3 vec)
 {
     return JVec3{vec.GetX(), vec.GetY(), vec.GetZ()};
+}
+
+FORCE_INLINE JPH::Vec3 Vec3FromCAPI(JVecF3 vec)
+{
+    return {vec.X, vec.Y, vec.Z};
+}
+
+FORCE_INLINE JVecF3 Vec3ToCAPI(JPH::Vec3 vec)
+{
+    return JVecF3{vec.GetX(), vec.GetY(), vec.GetZ()};
 }
 
 FORCE_INLINE JPH::Quat QuatFromCAPI(JQuat quat)

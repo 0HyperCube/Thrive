@@ -16,6 +16,11 @@ extern "C"
         double X, Y, Z;
     } JVec3;
 
+    typedef struct JVecF3
+    {
+        float X, Y, Z;
+    } JVecF3;
+
     typedef struct JQuat
     {
         float X, Y, Z, W;

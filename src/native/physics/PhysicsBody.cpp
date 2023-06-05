@@ -42,10 +42,10 @@ void PhysicsBody::MarkUsedInWorld()
 
 void PhysicsBody::MarkRemovedFromWorld()
 {
-    if (inWorld)
+    if (!inWorld)
         LOG_ERROR("PhysicsBody marked removed from world when it wasn't used in the first place");
 
-    inWorld = true;
+    inWorld = false;
 }
 
 } // namespace Thrive::Physics

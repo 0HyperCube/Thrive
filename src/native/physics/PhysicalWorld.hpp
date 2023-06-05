@@ -26,6 +26,9 @@ namespace Thrive::Physics
 class PhysicsBody;
 
 /// \brief Main handling class of the physics simulation
+///
+/// Before starting the physics an allocator needs to be enabled for Jolt (for example the C interface library init
+/// does this) and collision types registered.
 class PhysicalWorld
 {
 public:
@@ -42,7 +45,12 @@ public:
     Ref<PhysicsBody> CreateMovingBody(
         const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position, JPH::Quat rotation = JPH::Quat::sIdentity());
 
+    Ref<PhysicsBody> CreateStaticBody(
+        const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position, JPH::Quat rotation = JPH::Quat::sIdentity());
+
     void DestroyBody(const Ref<PhysicsBody>& body);
+
+    void ReadBodyTransform(JPH::BodyID bodyId, JPH::RVec3& positionReceiver, JPH::Quat& rotationReceiver) const;
 
     void SetGravity(JPH::Vec3 newGravity);
     void RemoveGravity();
@@ -61,10 +69,13 @@ private:
     Ref<PhysicsBody> CreateBody(const JPH::Shape& shape, JPH::EMotionType motionType, JPH::ObjectLayer layer,
         JPH::RVec3Arg position, JPH::Quat rotation = JPH::Quat::sIdentity());
 
+    void OnPostBodyAdded(const Ref<PhysicsBody>& body);
+
 private:
     float elapsedSinceUpdate = 0;
 
     int bodyCount = 0;
+    bool changesToBodies = true;
 
     // TODO: rename all the following fields
 

@@ -47,7 +47,7 @@ protected:
 private:
     const JPH::BodyID id;
 
-    bool inWorld;
+    bool inWorld = false;
 
     // PhysicalWorld* owningWorld;
 };

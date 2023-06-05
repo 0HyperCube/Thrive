@@ -40,14 +40,23 @@ extern "C"
 
     [[maybe_unused]] THRIVE_NATIVE_API bool ProcessPhysicalWorld(PhysicalWorld* physicalWorld, float delta);
 
-    [[maybe_unused]] THRIVE_NATIVE_API PhysicsBody* CreatePhysicalWorldBody(
+    [[maybe_unused]] THRIVE_NATIVE_API PhysicsBody* PhysicalWorldCreateMovingBody(
         PhysicalWorld* physicalWorld, PhysicsShape* shape, JVec3 position, JQuat rotation = QuatIdentity);
+    [[maybe_unused]] THRIVE_NATIVE_API PhysicsBody* PhysicalWorldCreateStaticBody(
+        PhysicalWorld* physicalWorld, PhysicsShape* shape, JVec3 position, JQuat rotation = QuatIdentity);
+
     [[maybe_unused]] THRIVE_NATIVE_API void DestroyPhysicalWorldBody(PhysicalWorld* physicalWorld, PhysicsBody* body);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void ReadPhysicsBodyTransform(
+        PhysicalWorld* physicalWorld, PhysicsBody* body, JVec3* positionReceiver, JQuat* rotationReceiver);
 
     [[maybe_unused]] THRIVE_NATIVE_API void ReleasePhysicsBodyReference(PhysicsBody* body);
 
     // ------------------------------------ //
     // Physics shapes
     [[maybe_unused]] THRIVE_NATIVE_API PhysicsShape* CreateBoxShape(float halfSideLength);
+    [[maybe_unused]] THRIVE_NATIVE_API PhysicsShape* CreateBoxShapeWithDimensions(JVecF3 halfDimensions);
     [[maybe_unused]] THRIVE_NATIVE_API PhysicsShape* CreateSphereShape(float radius);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void ReleaseShape(PhysicsShape* shape);
 }
