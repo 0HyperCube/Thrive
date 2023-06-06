@@ -16,8 +16,11 @@
 
 #include "core/Time.hpp"
 
+#include "BodyActivationListener.hpp"
 #include "ContactListener.hpp"
 #include "PhysicsBody.hpp"
+
+JPH_SUPPRESS_WARNINGS
 
 // ------------------------------------ //
 namespace Thrive::Physics
@@ -100,12 +103,15 @@ void PhysicalWorld::InitPhysicsWorld()
 
     physicsSystem->SetGravity(pimpl->gravity);
 
+    // Contact listening
     contactListener = std::make_unique<ContactListener>();
 
     // contactListener->SetNextListener(something);
     physicsSystem->SetContactListener(contactListener.get());
 
-    // TODO: activation listener
+    // Activation listening
+    activationListener = std::make_unique<BodyActivationListener>();
+    physicsSystem->SetBodyActivationListener(activationListener.get());
 }
 
 // ------------------------------------ //
@@ -120,6 +126,8 @@ bool PhysicalWorld::Process(float delta)
     bool simulatedPhysics = false;
 
     // TODO: limit max steps per frame to avoid massive potential for lag spikes
+    // TODO: alternatively to this it is possible to use a bigger timestep at once but then collision steps and
+    // integration steps should be incremented
     while (elapsedSinceUpdate > singlePhysicsFrame)
     {
         elapsedSinceUpdate -= singlePhysicsFrame;
@@ -274,14 +282,32 @@ void PhysicalWorld::StepPhysics(JPH::JobSystemThreadPool& jobs, float time)
 {
     if (changesToBodies)
     {
-        // TODO: maybe delay this by some time if only like one body changed?
+        if (simulationsToNextOptimization <= 0)
+        {
+            // Queue an optimization
+            simulationsToNextOptimization = simulationsBetweenBroadPhaseOptimization;
+        }
+
         changesToBodies = false;
-        physicsSystem->OptimizeBroadPhase();
+    }
+
+    // Optimize broadphase (but at most quite rarely)
+    if (simulationsToNextOptimization > 0)
+    {
+        if (--simulationsToNextOptimization <= 0)
+        {
+            simulationsToNextOptimization = 0;
+
+            // Time to optimize
+            physicsSystem->OptimizeBroadPhase();
+        }
     }
 
     // TODO: physics processing time tracking with a high resolution timer (should get the average time over the last
     // second)
     const auto start = TimingClock::now();
+
+    // TODO: apply per physics frame forces
 
     const auto result =
         physicsSystem->Update(time, collisionStepsPerUpdate, integrationSubSteps, tempAllocator.get(), &jobs);

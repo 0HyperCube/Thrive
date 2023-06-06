@@ -15,7 +15,8 @@ add_library(thrive_native SHARED
   physics/PhysicsBody.cpp physics/PhysicsBody.hpp
   physics/ShapeCreator.cpp physics/ShapeCreator.hpp
   physics/ShapeWrapper.cpp physics/ShapeWrapper.hpp
-  physics/SimpleShapes.cpp physics/SimpleShapes.hpp)
+  physics/SimpleShapes.cpp physics/SimpleShapes.hpp
+  physics/BodyActivationListener.cpp physics/BodyActivationListener.hpp)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   target_compile_options(thrive_native PRIVATE /W4 /wd4068)
