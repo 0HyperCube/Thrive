@@ -76,7 +76,8 @@ PhysicalWorld::PhysicalWorld() : pimpl(std::make_unique<Pimpl>())
 #endif
 
     // Create job system
-    // TODO: configurable threads
+    // TODO: configurable threads (should be about 1-8), or well if we share thread with other systems then maybe up
+    // to like any cores not used by the C# background tasks
     int physicsThreads = 2;
     jobSystem =
         std::make_unique<JPH::JobSystemThreadPool>(JPH::cMaxPhysicsJobs, JPH::cMaxPhysicsBarriers, physicsThreads);
