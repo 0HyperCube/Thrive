@@ -36,9 +36,9 @@ public:
     PhysicsBody& operator=(PhysicsBody&& other) = delete;
 
     /// \brief Retrieves an instance of this class from a physics body user data
-    [[nodiscard]] static inline PhysicsBody* FromJoltBody(const JPH::Body* body) noexcept;
+    [[nodiscard]] static PhysicsBody* FromJoltBody(const JPH::Body* body) noexcept;
 
-    [[nodiscard]] static inline PhysicsBody* FromJoltBody(uint64_t bodyUserData) noexcept;
+    [[nodiscard]] static PhysicsBody* FromJoltBody(uint64_t bodyUserData) noexcept;
 
     [[nodiscard]] bool IsActive() const noexcept
     {

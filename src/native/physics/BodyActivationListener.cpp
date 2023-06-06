@@ -9,6 +9,8 @@ namespace Thrive::Physics
 
 void BodyActivationListener::OnBodyActivated(const JPH::BodyID& bodyID, uint64_t bodyUserData)
 {
+    UNUSED(bodyID);
+
     auto bodyWrapper = PhysicsBody::FromJoltBody(bodyUserData);
 
     if (bodyWrapper != nullptr)
@@ -17,6 +19,8 @@ void BodyActivationListener::OnBodyActivated(const JPH::BodyID& bodyID, uint64_t
 
 void BodyActivationListener::OnBodyDeactivated(const JPH::BodyID& bodyID, uint64_t bodyUserData)
 {
+    UNUSED(bodyID);
+
     auto bodyWrapper = PhysicsBody::FromJoltBody(bodyUserData);
 
     if (bodyWrapper != nullptr)
