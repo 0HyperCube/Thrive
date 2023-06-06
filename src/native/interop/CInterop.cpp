@@ -6,6 +6,7 @@
 
 #include "Jolt/Core/Factory.h"
 #include "Jolt/Core/Memory.h"
+#include "Jolt/Jolt.h"
 #include "Jolt/RegisterTypes.h"
 
 #include "physics/PhysicalWorld.hpp"
@@ -20,7 +21,10 @@
 
 // ------------------------------------ //
 void PhysicsTrace(const char* fmt, ...);
+
+#ifdef JPH_ENABLE_ASSERTS
 bool PhysicsAssert(const char* expression, const char* message, const char* file, uint line);
+#endif
 
 int32_t CheckAPIVersion()
 {
@@ -228,6 +232,7 @@ void PhysicsTrace(const char* fmt, ...)
     LOG_INFO(std::string_view(buffer, std::strlen(buffer)));
 }
 
+#ifdef JPH_ENABLE_ASSERTS
 bool PhysicsAssert(const char* expression, const char* message, const char* file, uint line)
 {
     LOG_ERROR(std::string("Jolt assert failed in ") + file + ":" + std::to_string(line) + " (" + expression + ") " +
@@ -236,3 +241,4 @@ bool PhysicsAssert(const char* expression, const char* message, const char* file
     // True seems to indicate that break is wanted (TODO: maybe set to false in production?)
     return true;
 }
+#endif
