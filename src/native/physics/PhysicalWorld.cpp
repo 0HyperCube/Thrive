@@ -4,6 +4,7 @@
 #include <cstring>
 
 // TODO: switch to a custom thread pool
+#include "boost/circular_buffer.hpp"
 #include "Jolt/Core/JobSystemThreadPool.h"
 #include "Jolt/Physics/Body/BodyCreationSettings.h"
 #include "Jolt/Physics/Collision/CastResult.h"
@@ -13,6 +14,8 @@
 
 // #include "core/TaskSystem.hpp"
 
+#include "core/Time.hpp"
+
 #include "ContactListener.hpp"
 #include "PhysicsBody.hpp"
 
@@ -20,7 +23,48 @@
 namespace Thrive::Physics
 {
 
-PhysicalWorld::PhysicalWorld()
+class PhysicalWorld::Pimpl
+{
+public:
+    Pimpl() : durationBuffer(30)
+    {
+    }
+
+    float AddAndCalculateAverageTime(float duration)
+    {
+        durationBuffer.push_back(duration);
+
+        const auto size = durationBuffer.size();
+
+        if (size < 1)
+        {
+            LOG_ERROR("Duration circular buffer empty");
+            return -1;
+        }
+
+        float durations = 0;
+
+        for (const auto value : durationBuffer)
+        {
+            durations += value;
+        }
+
+        return durations / static_cast<float>(size);
+    }
+
+public:
+    BroadPhaseLayerInterface broadPhaseLayer;
+    ObjectToBroadPhaseLayerFilter objectToBroadPhaseLayer;
+    ObjectLayerPairFilter objectToObjectPair;
+
+    JPH::PhysicsSettings physicsSettings;
+
+    boost::circular_buffer<float> durationBuffer;
+
+    JPH::Vec3 gravity = JPH::Vec3(0, -9.81f, 0);
+};
+
+PhysicalWorld::PhysicalWorld() : pimpl(std::make_unique<Pimpl>())
 {
 #ifdef USE_OBJECT_POOLS
     tempAllocator = std::make_unique<JPH::TempAllocatorImpl>(32 * 1024 * 1024);
@@ -50,11 +94,11 @@ PhysicalWorld::~PhysicalWorld()
 void PhysicalWorld::InitPhysicsWorld()
 {
     physicsSystem = std::make_unique<JPH::PhysicsSystem>();
-    physicsSystem->Init(maxBodies, maxBodyMutexes, maxBodyPairs, maxContactConstraints, broadPhaseLayer,
-        objectToBroadPhaseLayer, objectToObjectPair);
-    physicsSystem->SetPhysicsSettings(physicsSettings);
+    physicsSystem->Init(maxBodies, maxBodyMutexes, maxBodyPairs, maxContactConstraints, pimpl->broadPhaseLayer,
+        pimpl->objectToBroadPhaseLayer, pimpl->objectToObjectPair);
+    physicsSystem->SetPhysicsSettings(pimpl->physicsSettings);
 
-    physicsSystem->SetGravity(gravity);
+    physicsSystem->SetGravity(pimpl->gravity);
 
     contactListener = std::make_unique<ContactListener>();
 
@@ -215,9 +259,9 @@ std::optional<std::tuple<float, JPH::Vec3, JPH::BodyID>> PhysicalWorld::CastRay(
 // ------------------------------------ //
 void PhysicalWorld::SetGravity(JPH::Vec3 newGravity)
 {
-    gravity = newGravity;
+    pimpl->gravity = newGravity;
 
-    physicsSystem->SetGravity(gravity);
+    physicsSystem->SetGravity(pimpl->gravity);
 }
 
 void PhysicalWorld::RemoveGravity()
@@ -231,15 +275,18 @@ void PhysicalWorld::StepPhysics(JPH::JobSystemThreadPool& jobs, float time)
     if (changesToBodies)
     {
         // TODO: maybe delay this by some time if only like one body changed?
-        changesToBodies = true;
+        changesToBodies = false;
         physicsSystem->OptimizeBroadPhase();
     }
 
     // TODO: physics processing time tracking with a high resolution timer (should get the average time over the last
     // second)
+    const auto start = TimingClock::now();
 
     const auto result =
         physicsSystem->Update(time, collisionStepsPerUpdate, integrationSubSteps, tempAllocator.get(), &jobs);
+
+    const auto elapsed = std::chrono::duration_cast<SecondDuration>(TimingClock::now() - start).count();
 
     switch (result)
     {
@@ -257,6 +304,10 @@ void PhysicalWorld::StepPhysics(JPH::JobSystemThreadPool& jobs, float time)
         default:
             LOG_ERROR("Physics update error: unknown");
     }
+
+    latestPhysicsTime = elapsed;
+
+    averagePhysicsTime = pimpl->AddAndCalculateAverageTime(elapsed);
 }
 
 Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotionType motionType, JPH::ObjectLayer layer,

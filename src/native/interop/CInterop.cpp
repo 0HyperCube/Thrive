@@ -155,6 +155,17 @@ void ReadPhysicsBodyTransform(
 
 #pragma clang diagnostic pop
 
+float PhysicalWorldGetPhysicsLatestTime(PhysicalWorld* physicalWorld)
+{
+    return reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)->GetLatestPhysicsTime();
+}
+
+float PhysicalWorldGetPhysicsAverageTime(PhysicalWorld* physicalWorld)
+{
+    return reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)->GetAveragePhysicsTime();
+}
+
+// ------------------------------------ //
 void ReleasePhysicsBodyReference(PhysicsBody* body)
 {
     if (body == nullptr)
