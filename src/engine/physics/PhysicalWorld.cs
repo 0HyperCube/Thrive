@@ -17,6 +17,31 @@ public class PhysicalWorld : IDisposable
         Dispose(false);
     }
 
+    public float LatestPhysicsDuration
+    {
+        get
+        {
+            if (disposed)
+                throw new ObjectDisposedException(nameof(PhysicalWorld));
+
+            return NativeMethods.PhysicalWorldGetPhysicsLatestTime(nativeInstance);
+        }
+    }
+
+    /// <summary>
+    ///   Time in seconds on average that physics simulation steps take
+    /// </summary>
+    public float AveragePhysicsDuration
+    {
+        get
+        {
+            if (disposed)
+                throw new ObjectDisposedException(nameof(PhysicalWorld));
+
+            return NativeMethods.PhysicalWorldGetPhysicsAverageTime(nativeInstance);
+        }
+    }
+
     public static PhysicalWorld Create()
     {
         return new PhysicalWorld(NativeMethods.CreatePhysicalWorld());
@@ -122,4 +147,10 @@ internal static partial class NativeMethods
 
     [DllImport("thrive_native")]
     internal static extern void DestroyPhysicalWorldBody(IntPtr physicalWorld, IntPtr body);
+
+    [DllImport("thrive_native")]
+    internal static extern float PhysicalWorldGetPhysicsLatestTime(IntPtr physicalWorld);
+
+    [DllImport("thrive_native")]
+    internal static extern float PhysicalWorldGetPhysicsAverageTime(IntPtr physicalWorld);
 }
