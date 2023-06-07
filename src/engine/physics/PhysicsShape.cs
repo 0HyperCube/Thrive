@@ -24,12 +24,22 @@ public class PhysicsShape : IDisposable
 
     public static PhysicsShape CreateBox(Vector3 halfDimensions)
     {
-        return new PhysicsShape(NativeMethods.CreateBoxShapeWithDimensions(new NativeMethods.JVecF3(halfDimensions)));
+        return new PhysicsShape(NativeMethods.CreateBoxShapeWithDimensions(new JVecF3(halfDimensions)));
     }
 
     public static PhysicsShape CreateSphere(float radius)
     {
         return new PhysicsShape(NativeMethods.CreateSphereShape(radius));
+    }
+
+    public static PhysicsShape CreateMicrobeShape(JVecF3[] organellePositions, bool scaleAsBacteria)
+    {
+        var gch = GCHandle.Alloc(organellePositions);
+
+        var result = new PhysicsShape(NativeMethods.CreateMicrobeShape(GCHandle.ToIntPtr(gch), scaleAsBacteria));
+        gch.Free();
+
+        return result;
     }
 
     public void Dispose()
@@ -78,6 +88,9 @@ internal static partial class NativeMethods
 
     [DllImport("thrive_native")]
     internal static extern IntPtr CreateSphereShape(float radius);
+
+    [DllImport("thrive_native")]
+    internal static extern IntPtr CreateMicrobeShape(IntPtr microbePoints, bool isBacteria);
 
     [DllImport("thrive_native")]
     internal static extern void ReleaseShape(IntPtr shape);
