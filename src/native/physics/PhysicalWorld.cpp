@@ -16,9 +16,11 @@
 
 #include "core/Time.hpp"
 
+#include "AxisLockConstraint.hpp"
 #include "BodyActivationListener.hpp"
 #include "ContactListener.hpp"
 #include "PhysicsBody.hpp"
+#include "TrackedConstraint.hpp"
 
 JPH_SUPPRESS_WARNINGS
 
@@ -145,8 +147,8 @@ bool PhysicalWorld::Process(float delta)
 }
 
 // ------------------------------------ //
-Ref<PhysicsBody> PhysicalWorld::CreateMovingBody(
-    const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position, JPH::Quat rotation /* = JPH::Quat::sIdentity()*/)
+Ref<PhysicsBody> PhysicalWorld::CreateMovingBody(const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position,
+    JPH::Quat rotation /* = JPH::Quat::sIdentity()*/, bool addToWorld /*= true*/)
 {
     if (shape == nullptr)
     {
@@ -160,14 +162,17 @@ Ref<PhysicsBody> PhysicalWorld::CreateMovingBody(
     if (body == nullptr)
         return nullptr;
 
-    physicsSystem->GetBodyInterface().AddBody(body->GetId(), JPH::EActivation::Activate);
-    OnPostBodyAdded(body);
+    if (addToWorld)
+    {
+        physicsSystem->GetBodyInterface().AddBody(body->GetId(), JPH::EActivation::Activate);
+        OnPostBodyAdded(*body);
+    }
 
     return body;
 }
 
-Ref<PhysicsBody> PhysicalWorld::CreateStaticBody(
-    const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position, JPH::Quat rotation /* = JPH::Quat::sIdentity()*/)
+Ref<PhysicsBody> PhysicalWorld::CreateStaticBody(const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position,
+    JPH::Quat rotation /* = JPH::Quat::sIdentity()*/, bool addToWorld /*= true*/)
 {
     if (shape == nullptr)
     {
@@ -181,10 +186,34 @@ Ref<PhysicsBody> PhysicalWorld::CreateStaticBody(
     if (body == nullptr)
         return nullptr;
 
-    physicsSystem->GetBodyInterface().AddBody(body->GetId(), JPH::EActivation::DontActivate);
-    OnPostBodyAdded(body);
+    if (addToWorld)
+    {
+        physicsSystem->GetBodyInterface().AddBody(body->GetId(), JPH::EActivation::DontActivate);
+        OnPostBodyAdded(*body);
+    }
 
     return body;
+}
+
+void PhysicalWorld::AddBody(PhysicsBody& body, bool activate)
+{
+    if (body.IsInWorld())
+    {
+        LOG_ERROR("Physics body is already in some world, not adding it to this world");
+        return;
+    }
+
+    // Create constraints if not done yet
+    for (auto& constraint : body.GetConstraints()){
+        if (!constraint->IsCreatedInWorld()){
+            physicsSystem->AddConstraint(constraint->GetConstraint().GetPtr());
+            constraint->OnRegisteredToWorld(*this);
+        }
+    }
+
+    physicsSystem->GetBodyInterface().AddBody(
+        body.GetId(), activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate);
+    OnPostBodyAdded(body);
 }
 
 void PhysicalWorld::DestroyBody(const Ref<PhysicsBody>& body)
@@ -193,6 +222,12 @@ void PhysicalWorld::DestroyBody(const Ref<PhysicsBody>& body)
         return;
 
     auto& bodyInterface = physicsSystem->GetBodyInterface();
+
+    // Destroy constraints
+    while (!body->GetConstraints().empty()){
+        DestroyConstraint(*body->GetConstraints().front());
+    }
+
     bodyInterface.RemoveBody(body->GetId());
     body->MarkRemovedFromWorld();
 
@@ -225,6 +260,27 @@ void PhysicalWorld::ReadBodyTransform(
         std::memset(&positionReceiver, 0, sizeof(positionReceiver));
         std::memset(&rotationReceiver, 0, sizeof(rotationReceiver));
     }
+}
+
+// ------------------------------------ //
+Ref<TrackedConstraint> PhysicalWorld::CreateAxisLockConstraint(PhysicsBody& body, JPH::Vec3 axis)
+{
+    const auto constraint = JPH::Ref<AxisLockConstraint>(new AxisLockConstraint());
+
+
+
+    const auto trackedConstraint = Ref<TrackedConstraint>(new TrackedConstraint(constraint, body));
+
+    if (body.IsInWorld()){
+        // Immediately register the constraint if in world
+
+        // TODO: multithreaded adding?
+        physicsSystem->AddConstraint(trackedConstraint->GetConstraint().get());
+        trackedConstraint->OnRegisteredToWorld(*this);
+    }
+
+
+    return trackedConstraint;
 }
 
 // ------------------------------------ //
@@ -361,13 +417,15 @@ Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotion
     return {new PhysicsBody(body, body->GetID())};
 }
 
-void PhysicalWorld::OnPostBodyAdded(const Ref<PhysicsBody>& body)
+void PhysicalWorld::OnPostBodyAdded(PhysicsBody& body)
 {
-    body->MarkUsedInWorld();
+    body.MarkUsedInWorld();
 
     // Add an extra reference to the body to keep it from being deleted while in this world
-    body->AddRef();
+    body.AddRef();
     ++bodyCount;
 }
+
+
 
 } // namespace Thrive::Physics

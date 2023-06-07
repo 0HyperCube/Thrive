@@ -99,11 +99,11 @@ bool ProcessPhysicalWorld(PhysicalWorld* physicalWorld, float delta)
 }
 
 PhysicsBody* PhysicalWorldCreateMovingBody(
-    PhysicalWorld* physicalWorld, PhysicsShape* shape, JVec3 position, JQuat rotation /*= QuatIdentity*/)
+    PhysicalWorld* physicalWorld, PhysicsShape* shape, JVec3 position, JQuat rotation, bool addToWorld)
 {
     const auto body = reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
                           ->CreateMovingBody(reinterpret_cast<Thrive::Physics::ShapeWrapper*>(shape)->GetShape(),
-                              Thrive::DVec3FromCAPI(position), Thrive::QuatFromCAPI(rotation));
+                              Thrive::DVec3FromCAPI(position), Thrive::QuatFromCAPI(rotation), addToWorld);
 
     if (body)
         body->AddRef();
@@ -112,16 +112,25 @@ PhysicsBody* PhysicalWorldCreateMovingBody(
 }
 
 PhysicsBody* PhysicalWorldCreateStaticBody(
-    PhysicalWorld* physicalWorld, PhysicsShape* shape, JVec3 position, JQuat rotation)
+    PhysicalWorld* physicalWorld, PhysicsShape* shape, JVec3 position, JQuat rotation, bool addToWorld)
 {
     const auto body = reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
                           ->CreateStaticBody(reinterpret_cast<Thrive::Physics::ShapeWrapper*>(shape)->GetShape(),
-                              Thrive::DVec3FromCAPI(position), Thrive::QuatFromCAPI(rotation));
+                              Thrive::DVec3FromCAPI(position), Thrive::QuatFromCAPI(rotation), addToWorld);
 
     if (body)
         body->AddRef();
 
     return reinterpret_cast<PhysicsBody*>(body.get());
+}
+
+void PhysicalWorldAddBody(PhysicalWorld* physicalWorld, PhysicsBody* body, bool activate)
+{
+    if (body == nullptr)
+        return;
+
+    reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+        ->AddBody(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body), activate);
 }
 
 void DestroyPhysicalWorldBody(PhysicalWorld* physicalWorld, PhysicsBody* body)
@@ -170,6 +179,11 @@ float PhysicalWorldGetPhysicsAverageTime(PhysicalWorld* physicalWorld)
 }
 
 // ------------------------------------ //
+void PhysicsBodyAddAxisLock(PhysicsBody* body, JVecF3 axis)
+{
+    reinterpret_cast<Thrive::Physics::PhysicsBody*>(body)->CreateAxisLockConstraint(Thrive::Vec3FromCAPI(axis));
+}
+
 void ReleasePhysicsBodyReference(PhysicsBody* body)
 {
     if (body == nullptr)
@@ -211,6 +225,8 @@ void ReleaseShape(PhysicsShape* shape)
 
     reinterpret_cast<Thrive::Physics::ShapeWrapper*>(shape)->Release();
 }
+
+
 
 #pragma clang diagnostic pop
 

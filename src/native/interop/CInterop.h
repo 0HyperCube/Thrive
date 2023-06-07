@@ -40,10 +40,13 @@ extern "C"
 
     [[maybe_unused]] THRIVE_NATIVE_API bool ProcessPhysicalWorld(PhysicalWorld* physicalWorld, float delta);
 
-    [[maybe_unused]] THRIVE_NATIVE_API PhysicsBody* PhysicalWorldCreateMovingBody(
-        PhysicalWorld* physicalWorld, PhysicsShape* shape, JVec3 position, JQuat rotation = QuatIdentity);
-    [[maybe_unused]] THRIVE_NATIVE_API PhysicsBody* PhysicalWorldCreateStaticBody(
-        PhysicalWorld* physicalWorld, PhysicsShape* shape, JVec3 position, JQuat rotation = QuatIdentity);
+    [[maybe_unused]] THRIVE_NATIVE_API PhysicsBody* PhysicalWorldCreateMovingBody(PhysicalWorld* physicalWorld,
+        PhysicsShape* shape, JVec3 position, JQuat rotation = QuatIdentity, bool addToWorld = true);
+    [[maybe_unused]] THRIVE_NATIVE_API PhysicsBody* PhysicalWorldCreateStaticBody(PhysicalWorld* physicalWorld,
+        PhysicsShape* shape, JVec3 position, JQuat rotation = QuatIdentity, bool addToWorld = true);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicalWorldAddBody(
+        PhysicalWorld* physicalWorld, PhysicsBody* body, bool activate);
 
     [[maybe_unused]] THRIVE_NATIVE_API void DestroyPhysicalWorldBody(PhysicalWorld* physicalWorld, PhysicsBody* body);
 
@@ -55,6 +58,7 @@ extern "C"
 
     // ------------------------------------ //
     // Body functions
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyAddAxisLock(PhysicsBody* body, JVecF3 axis);
     [[maybe_unused]] THRIVE_NATIVE_API void ReleasePhysicsBodyReference(PhysicsBody* body);
 
     // ------------------------------------ //
