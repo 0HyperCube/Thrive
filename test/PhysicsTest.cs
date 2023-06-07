@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 
 /// <summary>
@@ -35,7 +36,9 @@ public class PhysicsTest : Node
     private readonly List<PhysicsBody> allCreatedBodies = new();
     private readonly List<PhysicsBody> sphereBodies = new();
 
-    private readonly List<Spatial> sphereVisuals = new();
+    private readonly List<Spatial> testVisuals = new();
+
+    private readonly List<PhysicsBody> microbeAnalogueBodies = new();
 
 #pragma warning disable CA2213
     private Node worldVisuals = null!;
@@ -49,6 +52,8 @@ public class PhysicsTest : Node
     private MultiMesh? sphereMultiMesh;
     private PhysicalWorld physicalWorld = null!;
 #pragma warning restore CA2213
+
+    private JVecF3[]? testMicrobeOrganellePositions;
 
     private float timeSincePhysicsReport;
 
@@ -149,7 +154,7 @@ public class PhysicsTest : Node
             var count = sphereBodies.Count;
             for (int i = 0; i < count; ++i)
             {
-                if (i >= sphereVisuals.Count)
+                if (i >= testVisuals.Count)
                 {
                     var sphere = new MeshInstance
                     {
@@ -158,11 +163,30 @@ public class PhysicsTest : Node
 
                     sphere.Transform = physicalWorld.ReadBodyTransform(sphereBodies[i]);
                     worldVisuals.AddChild(sphere);
-                    sphereVisuals.Add(sphere);
+                    testVisuals.Add(sphere);
                 }
                 else
                 {
-                    sphereVisuals[i].Transform = physicalWorld.ReadBodyTransform(sphereBodies[i]);
+                    testVisuals[i].Transform = physicalWorld.ReadBodyTransform(sphereBodies[i]);
+                }
+            }
+        }
+        else if (Type == TestType.MicrobePlaceholders)
+        {
+            var count = microbeAnalogueBodies.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                if (i >= testVisuals.Count)
+                {
+                    var visuals = CreateTestMicrobeVisuals(testMicrobeOrganellePositions!);
+
+                    visuals.Transform = physicalWorld.ReadBodyTransform(sphereBodies[i]);
+                    worldVisuals.AddChild(visuals);
+                    testVisuals.Add(visuals);
+                }
+                else
+                {
+                    testVisuals[i].Transform = physicalWorld.ReadBodyTransform(sphereBodies[i]);
                 }
             }
         }
@@ -215,12 +239,18 @@ public class PhysicsTest : Node
         // This is not translated as the test folder is not extracted in terms of translations (and this is only used
         // in here)
         // physicsTimingLabel.Text = new LocalizedString("PHYSICS_TEST_TIMINGS", physicsTime, physicsFPSLimit).ToString();
-        physicsTimingLabel.Text = $"Avg physics time: {physicsTime} (Max FPS from physics: {physicsFPSLimit})";
+        physicsTimingLabel.Text = $"Avg physics: {physicsTime} (physics FPS limit: {physicsFPSLimit})";
         guiWindowRoot.WindowTitle = new LocalizedString("FPS", Engine.GetFramesPerSecond()).ToString();
     }
 
     private void SetupPhysicsBodies()
     {
+        if (Type == TestType.MicrobePlaceholders)
+        {
+            SetupMicrobeTest();
+            return;
+        }
+
         var random = new Random(234654642);
 
         if (Type == TestType.SpheresGodotPhysics)
@@ -291,6 +321,68 @@ public class PhysicsTest : Node
 
             allCreatedBodies.AddRange(sphereBodies);
         }
+    }
+
+    private void SetupMicrobeTest()
+    {
+        var random = new Random(234546798);
+
+        var mutator = new Mutations(random);
+
+        // Generate a random, pretty big microbe species to use for testing
+        var microbeSpecies =
+            mutator.CreateRandomSpecies(new MicrobeSpecies(1, string.Empty, string.Empty), 1, false, 25);
+
+        testMicrobeOrganellePositions =
+            microbeSpecies.Organelles.Select(o => new JVecF3(Hex.AxialToCartesian(o.Position))).ToArray();
+
+        for (int x = -200; x < 200; x += 10)
+        {
+            for (int z = -200; z < 200; z += 10)
+            {
+                x = 0;
+                z = 0;
+
+                // Don't optimize shapes as microbes can almost all be different shapes
+                var shape = PhysicsShape.CreateMicrobeShape(testMicrobeOrganellePositions, false);
+
+                var body = physicalWorld.CreateMovingBody(shape,
+                    new Vector3(x, 0, z), Quat.Identity, false);
+
+                body.AddAxisLockConstraint(new Vector3(0, 1, 0));
+
+                // TODO: add an initial impulse
+
+                physicalWorld.AddBody(body);
+                microbeAnalogueBodies.Add(body);
+                break;
+            }
+
+            break;
+        }
+
+        GD.Print("Created microbe physics test instances: ", microbeAnalogueBodies.Count);
+        allCreatedBodies.AddRange(microbeAnalogueBodies);
+    }
+
+    private Spatial CreateTestMicrobeVisuals(IReadOnlyList<JVecF3> organellePositions)
+    {
+        var multiMesh = new MultiMesh
+        {
+            Mesh = CreateSphereMesh().Mesh,
+        };
+
+        multiMesh.InstanceCount = organellePositions.Count;
+
+        for (int i = 0; i < organellePositions.Count; ++i)
+        {
+            multiMesh.SetInstanceTransform(i, new Transform(Basis.Identity, new Vector3(organellePositions[i])));
+        }
+
+        return new MultiMeshInstance
+        {
+            Multimesh = multiMesh,
+        };
     }
 
     private void SetupCamera()
