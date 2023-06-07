@@ -8,7 +8,7 @@ using Godot;
 public class PhysicsTest : Node
 {
     [Export]
-    public TestType Type = TestType.Spheres;
+    public TestType Type = TestType.MicrobePlaceholders;
 
     /// <summary>
     ///   Sets MultiMesh position data with a single array assignment. Faster when all of the data has changed, but
@@ -20,6 +20,18 @@ public class PhysicsTest : Node
     [Export]
     public NodePath? WorldVisualsPath;
 
+    [Export]
+    public NodePath CameraPath = null!;
+
+    [Export]
+    public NodePath GUIWindowRootPath = null!;
+
+    [Export]
+    public NodePath DeltaLabelPath = null!;
+
+    [Export]
+    public NodePath PhysicsTimingLabelPath = null!;
+
     private readonly List<PhysicsBody> allCreatedBodies = new();
     private readonly List<PhysicsBody> sphereBodies = new();
 
@@ -27,6 +39,13 @@ public class PhysicsTest : Node
 
 #pragma warning disable CA2213
     private Node worldVisuals = null!;
+
+    private Camera camera = null!;
+
+    private CustomWindow guiWindowRoot = null!;
+    private Label deltaLabel = null!;
+    private Label physicsTimingLabel = null!;
+
     private MultiMesh? sphereMultiMesh;
     private PhysicalWorld physicalWorld = null!;
 #pragma warning restore CA2213
@@ -38,14 +57,23 @@ public class PhysicsTest : Node
         Spheres,
         SpheresIndividualNodes,
         SpheresGodotPhysics,
+        MicrobePlaceholders,
     }
 
     public override void _Ready()
     {
         worldVisuals = GetNode(WorldVisualsPath);
+        camera = GetNode<Camera>(CameraPath);
+
+        guiWindowRoot = GetNode<CustomWindow>(GUIWindowRootPath);
+        deltaLabel = GetNode<Label>(DeltaLabelPath);
+        physicsTimingLabel = GetNode<Label>(PhysicsTimingLabelPath);
 
         physicalWorld = PhysicalWorld.Create();
         SetupPhysicsBodies();
+        SetupCamera();
+
+        guiWindowRoot.Open(false);
     }
 
     public override void _PhysicsProcess(float delta)
@@ -154,6 +182,11 @@ public class PhysicsTest : Node
             if (WorldVisualsPath != null)
             {
                 WorldVisualsPath.Dispose();
+                CameraPath.Dispose();
+                GUIWindowRootPath.Dispose();
+                DeltaLabelPath.Dispose();
+                PhysicsTimingLabelPath.Dispose();
+
                 physicalWorld.Dispose();
             }
         }
@@ -166,19 +199,24 @@ public class PhysicsTest : Node
         // Console logging of performance
         timeSincePhysicsReport += delta;
 
+        var physicsTime = GetPhysicsTime();
+        var physicsFPSLimit = 1 / physicsTime;
+
         if (timeSincePhysicsReport > 0.5)
         {
             timeSincePhysicsReport = 0;
-            GD.Print($"Physics time: {GetPhysicsTime()} Physics FPS limit: " +
-                $"{1 / GetPhysicsTime()}, FPS: {Engine.GetFramesPerSecond()}");
+            GD.Print($"Physics time: {physicsTime} Physics FPS limit: " +
+                $"{physicsFPSLimit}, FPS: {Engine.GetFramesPerSecond()}");
         }
 
         // The actual GUI update part
+        deltaLabel.Text = new LocalizedString("FRAME_DURATION", delta).ToString();
 
-        // deltaLabel.Text = new LocalizedString("FRAME_DURATION", delta).ToString();
-
-        // TODO: GUI with text on it to show the physics times and FPS
-        // fpsLabel.Text = new LocalizedString("FPS", Engine.GetFramesPerSecond()).ToString();
+        // This is not translated as the test folder is not extracted in terms of translations (and this is only used
+        // in here)
+        // physicsTimingLabel.Text = new LocalizedString("PHYSICS_TEST_TIMINGS", physicsTime, physicsFPSLimit).ToString();
+        physicsTimingLabel.Text = $"Avg physics time: {physicsTime} (Max FPS from physics: {physicsFPSLimit})";
+        guiWindowRoot.WindowTitle = new LocalizedString("FPS", Engine.GetFramesPerSecond()).ToString();
     }
 
     private void SetupPhysicsBodies()
@@ -252,6 +290,16 @@ public class PhysicsTest : Node
                 Quat.Identity));
 
             allCreatedBodies.AddRange(sphereBodies);
+        }
+    }
+
+    private void SetupCamera()
+    {
+        if (Type == TestType.MicrobePlaceholders)
+        {
+            // Top down view
+            camera.Translation = new Vector3(0, 25, 0);
+            camera.LookAt(new Vector3(0, 0, 0), Vector3.Forward);
         }
     }
 
