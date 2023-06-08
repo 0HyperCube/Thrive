@@ -32,12 +32,22 @@ public class PhysicsShape : IDisposable
         return new PhysicsShape(NativeMethods.CreateSphereShape(radius));
     }
 
-    public static PhysicsShape CreateMicrobeShape(JVecF3[] organellePositions, bool scaleAsBacteria)
+    // TODO: hashing and caching based on the parameters to avoid needing to constantly create new shapes
+    public static PhysicsShape CreateMicrobeShape(JVecF3[] organellePositions, float overallDensity,
+        bool scaleAsBacteria)
     {
-        var gch = GCHandle.Alloc(organellePositions);
+        var gch = GCHandle.Alloc(organellePositions, GCHandleType.Pinned);
 
-        var result = new PhysicsShape(NativeMethods.CreateMicrobeShape(GCHandle.ToIntPtr(gch), scaleAsBacteria));
-        gch.Free();
+        PhysicsShape result;
+        try
+        {
+            result = new PhysicsShape(NativeMethods.CreateMicrobeShapeConvex(gch.AddrOfPinnedObject(),
+                (uint)organellePositions.Length, overallDensity, scaleAsBacteria ? 0.5f : 1));
+        }
+        finally
+        {
+            gch.Free();
+        }
 
         return result;
     }
@@ -90,7 +100,12 @@ internal static partial class NativeMethods
     internal static extern IntPtr CreateSphereShape(float radius);
 
     [DllImport("thrive_native")]
-    internal static extern IntPtr CreateMicrobeShape(IntPtr microbePoints, bool isBacteria);
+    internal static extern IntPtr CreateMicrobeShapeConvex(IntPtr microbePoints, uint pointCount, float density,
+        float scale);
+
+    [DllImport("thrive_native")]
+    internal static extern IntPtr CreateMicrobeShapeSpheres(IntPtr microbePoints, uint pointCount, float density,
+        float scale);
 
     [DllImport("thrive_native")]
     internal static extern void ReleaseShape(IntPtr shape);

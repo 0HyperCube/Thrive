@@ -24,20 +24,6 @@ public class PhysicsBody : IDisposable
         Dispose(false);
     }
 
-    /// <summary>
-    ///   Makes this body unable to move on the given axis. Used to make microbes move only in a 2D plane.
-    /// </summary>
-    /// <param name="axis">The axis to lock this body on</param>
-    /// <remarks>
-    ///   <para>
-    ///     TODO: test if this can be used before/after adding the body to the world
-    ///   </para>
-    /// </remarks>
-    public void AddAxisLockConstraint(Vector3 axis)
-    {
-        NativeMethods.PhysicsBodyAddAxisLock(AccessBodyInternal(), new JVecF3(axis));
-    }
-
     public void Dispose()
     {
         Dispose(true);
@@ -76,9 +62,6 @@ public class PhysicsBody : IDisposable
 /// </summary>
 internal static partial class NativeMethods
 {
-    [DllImport("thrive_native")]
-    internal static extern void PhysicsBodyAddAxisLock(IntPtr body, JVecF3 axis);
-
     [DllImport("thrive_native")]
     internal static extern void ReleasePhysicsBodyReference(IntPtr body);
 }
