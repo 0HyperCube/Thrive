@@ -39,6 +39,7 @@ public class PhysicsTest : Node
     private readonly List<Spatial> testVisuals = new();
 
     private readonly List<PhysicsBody> microbeAnalogueBodies = new();
+    private readonly List<TestMicrobeAnalogue> testMicrobesToProcess = new();
 
 #pragma warning disable CA2213
     private Node worldVisuals = null!;
@@ -55,6 +56,8 @@ public class PhysicsTest : Node
 
     private JVecF3[]? testMicrobeOrganellePositions;
 
+    private int followedTestVisualIndex;
+
     private float timeSincePhysicsReport;
 
     public enum TestType
@@ -63,6 +66,7 @@ public class PhysicsTest : Node
         SpheresIndividualNodes,
         SpheresGodotPhysics,
         MicrobePlaceholders,
+        MicrobePlaceholdersGodotPhysics,
     }
 
     public override void _Ready()
@@ -87,12 +91,14 @@ public class PhysicsTest : Node
 
         if (Type == TestType.SpheresGodotPhysics)
         {
+            ProcessTestMicrobes(delta);
         }
     }
 
     public override void _Process(float delta)
     {
         UpdateGUI(delta);
+        HandleInput();
 
         if (Type == TestType.SpheresGodotPhysics)
             return;
@@ -173,6 +179,9 @@ public class PhysicsTest : Node
         }
         else if (Type == TestType.MicrobePlaceholders)
         {
+            // The delta here is based on the physics framerate
+            ProcessTestMicrobes(1 / 60.0f);
+
             var count = microbeAnalogueBodies.Count;
             for (int i = 0; i < count; ++i)
             {
@@ -180,15 +189,17 @@ public class PhysicsTest : Node
                 {
                     var visuals = CreateTestMicrobeVisuals(testMicrobeOrganellePositions!);
 
-                    visuals.Transform = physicalWorld.ReadBodyTransform(sphereBodies[i]);
+                    visuals.Transform = physicalWorld.ReadBodyTransform(microbeAnalogueBodies[i]);
                     worldVisuals.AddChild(visuals);
                     testVisuals.Add(visuals);
                 }
                 else
                 {
-                    testVisuals[i].Transform = physicalWorld.ReadBodyTransform(sphereBodies[i]);
+                    testVisuals[i].Transform = physicalWorld.ReadBodyTransform(microbeAnalogueBodies[i]);
                 }
             }
+
+            UpdateCameraFollow();
         }
     }
 
@@ -218,6 +229,14 @@ public class PhysicsTest : Node
         base.Dispose(disposing);
     }
 
+    private void ProcessTestMicrobes(float delta)
+    {
+        foreach (var testMicrobe in testMicrobesToProcess)
+        {
+            testMicrobe.Process(delta, physicalWorld);
+        }
+    }
+
     private void UpdateGUI(float delta)
     {
         // Console logging of performance
@@ -243,9 +262,18 @@ public class PhysicsTest : Node
         guiWindowRoot.WindowTitle = new LocalizedString("FPS", Engine.GetFramesPerSecond()).ToString();
     }
 
+    private void HandleInput()
+    {
+        if (Input.IsActionJustPressed("e_rotate_right"))
+            ++followedTestVisualIndex;
+
+        if (Input.IsActionJustPressed("e_rotate_left"))
+            --followedTestVisualIndex;
+    }
+
     private void SetupPhysicsBodies()
     {
-        if (Type == TestType.MicrobePlaceholders)
+        if (Type is TestType.MicrobePlaceholders or TestType.MicrobePlaceholdersGodotPhysics)
         {
             SetupMicrobeTest();
             return;
@@ -336,30 +364,39 @@ public class PhysicsTest : Node
         testMicrobeOrganellePositions =
             microbeSpecies.Organelles.Select(o => new JVecF3(Hex.AxialToCartesian(o.Position))).ToArray();
 
-        for (int x = -200; x < 200; x += 10)
+        if (Type == TestType.MicrobePlaceholdersGodotPhysics)
         {
-            for (int z = -200; z < 200; z += 10)
-            {
-                x = 0;
-                z = 0;
+            throw new NotImplementedException();
+        }
 
+        // for (int x = -200; x < 200; x += 10)
+        // {
+        //     for (int z = -200; z < 200; z += 10)
+        //     {
+        for (int x = -20; x < 20; x += 5)
+        {
+            for (int z = -20; z < 20; z += 5)
+            {
                 // Don't optimize shapes as microbes can almost all be different shapes
-                var shape = PhysicsShape.CreateMicrobeShape(testMicrobeOrganellePositions, false);
+                // TODO: calculate actual density
+                var shape = PhysicsShape.CreateMicrobeShape(testMicrobeOrganellePositions, 1000, false);
 
                 var body = physicalWorld.CreateMovingBody(shape,
-                    new Vector3(x, 0, z), Quat.Identity, false);
+                    new Vector3(x, 0, z), Quat.Identity);
 
-                body.AddAxisLockConstraint(new Vector3(0, 1, 0));
+                physicalWorld.AddAxisLockConstraint(body, Vector3.Up, true);
 
-                // TODO: add an initial impulse
+                // Add an initial impulse
+                physicalWorld.GiveImpulse(body,
+                    new Vector3(random.NextFloat(), random.NextFloat(), random.NextFloat()));
 
-                physicalWorld.AddBody(body);
                 microbeAnalogueBodies.Add(body);
-                break;
+                testMicrobesToProcess.Add(new TestMicrobeAnalogue(body, random.Next()));
             }
-
-            break;
         }
+
+        // Follow the middle microbe
+        followedTestVisualIndex = (int)Math.Floor(testMicrobesToProcess.Count * 0.5f);
 
         GD.Print("Created microbe physics test instances: ", microbeAnalogueBodies.Count);
         allCreatedBodies.AddRange(microbeAnalogueBodies);
@@ -370,6 +407,7 @@ public class PhysicsTest : Node
         var multiMesh = new MultiMesh
         {
             Mesh = CreateSphereMesh().Mesh,
+            TransformFormat = MultiMesh.TransformFormatEnum.Transform3d,
         };
 
         multiMesh.InstanceCount = organellePositions.Count;
@@ -390,9 +428,18 @@ public class PhysicsTest : Node
         if (Type == TestType.MicrobePlaceholders)
         {
             // Top down view
-            camera.Translation = new Vector3(0, 25, 0);
+            camera.Translation = new Vector3(0, 50, 0);
             camera.LookAt(new Vector3(0, 0, 0), Vector3.Forward);
         }
+    }
+
+    private void UpdateCameraFollow()
+    {
+        var index = followedTestVisualIndex % testVisuals.Count;
+
+        var target = testVisuals[index].Translation;
+
+        camera.Translation = new Vector3(target.x, camera.Translation.y, target.z);
     }
 
     private float GetPhysicsTime()
@@ -409,11 +456,77 @@ public class PhysicsTest : Node
         {
             Mesh = new SphereMesh
             {
-                Radius = 0.5f,
-                Height = 1.0f,
+                Radius = 1.0f,
+                Height = 2.0f,
             },
         };
 
         return sphere;
+    }
+
+    private class TestMicrobeAnalogue
+    {
+        private const float JoltImpulseStrength = 50000;
+
+        private readonly PhysicsBody body;
+        private readonly Random random;
+
+        private float timeUntilDirectionChange = 1;
+        private float timeUntilMovementChange = 1;
+
+        private int notMovedToOrigin = 15;
+
+        private Quat lookDirection;
+        private Vector3 movementDirection;
+
+        public TestMicrobeAnalogue(PhysicsBody body, int randomSeed)
+        {
+            this.body = body;
+            random = new Random(randomSeed);
+
+            SetLookDirection();
+        }
+
+        public void Process(float delta, PhysicalWorld physicalWorld)
+        {
+            timeUntilDirectionChange -= delta;
+            timeUntilMovementChange -= delta;
+
+            if (timeUntilDirectionChange < 0)
+            {
+                timeUntilDirectionChange = 2.5f;
+                SetLookDirection();
+            }
+
+            if (timeUntilMovementChange < 0)
+            {
+                --notMovedToOrigin;
+                timeUntilMovementChange = 1.5f;
+
+                if (notMovedToOrigin < 0)
+                {
+                    notMovedToOrigin = 30;
+
+                    var currentPosition = physicalWorld.ReadBodyTransform(body).origin;
+
+                    if (currentPosition.Length() < 1)
+                    {
+                        movementDirection = (-currentPosition).Normalized();
+                    }
+                }
+                else
+                {
+                    movementDirection = new Vector3(random.NextFloat() + 0.001f, 0, random.NextFloat()).Normalized();
+                }
+            }
+
+            physicalWorld.ApplyBodyMicrobeControl(body, movementDirection * delta * JoltImpulseStrength, lookDirection,
+                0.8f);
+        }
+
+        private void SetLookDirection()
+        {
+            lookDirection = new Quat(Vector3.Up, random.NextFloat() * 2 * Mathf.Pi);
+        }
     }
 }
