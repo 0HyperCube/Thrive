@@ -67,11 +67,11 @@ void PhysicsBody::NotifyConstraintAdded(TrackedConstraint& constraint) noexcept
 
 void PhysicsBody::NotifyConstraintRemoved(TrackedConstraint& constraint) noexcept
 {
-    for (auto iter = constraintsThisIsPartOf.begin(); iter != constraintsThisIsPartOf.end(); ++iter)
+    for (auto iter = constraintsThisIsPartOf.rbegin(); iter != constraintsThisIsPartOf.rend(); ++iter)
     {
         if (iter->get() == &constraint)
         {
-            constraintsThisIsPartOf.erase(iter);
+            constraintsThisIsPartOf.erase((iter + 1).base());
             return;
         }
     }

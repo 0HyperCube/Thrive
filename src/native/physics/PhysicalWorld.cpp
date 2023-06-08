@@ -3,12 +3,14 @@
 
 #include <cstring>
 
-// TODO: switch to a custom thread pool
 #include "boost/circular_buffer.hpp"
+
+// TODO: switch to a custom thread pool
 #include "Jolt/Core/JobSystemThreadPool.h"
 #include "Jolt/Physics/Body/BodyCreationSettings.h"
 #include "Jolt/Physics/Collision/CastResult.h"
 #include "Jolt/Physics/Collision/RayCast.h"
+#include "Jolt/Physics/Constraints/SixDOFConstraint.h"
 #include "Jolt/Physics/PhysicsSettings.h"
 #include "Jolt/Physics/PhysicsSystem.h"
 
@@ -16,7 +18,6 @@
 
 #include "core/Time.hpp"
 
-#include "AxisLockConstraint.hpp"
 #include "BodyActivationListener.hpp"
 #include "ContactListener.hpp"
 #include "PhysicsBody.hpp"
@@ -204,8 +205,10 @@ void PhysicalWorld::AddBody(PhysicsBody& body, bool activate)
     }
 
     // Create constraints if not done yet
-    for (auto& constraint : body.GetConstraints()){
-        if (!constraint->IsCreatedInWorld()){
+    for (auto& constraint : body.GetConstraints())
+    {
+        if (!constraint->IsCreatedInWorld())
+        {
             physicsSystem->AddConstraint(constraint->GetConstraint().GetPtr());
             constraint->OnRegisteredToWorld(*this);
         }
@@ -224,8 +227,9 @@ void PhysicalWorld::DestroyBody(const Ref<PhysicsBody>& body)
     auto& bodyInterface = physicsSystem->GetBodyInterface();
 
     // Destroy constraints
-    while (!body->GetConstraints().empty()){
-        DestroyConstraint(*body->GetConstraints().front());
+    while (!body->GetConstraints().empty())
+    {
+        DestroyConstraint(*body->GetConstraints().back());
     }
 
     bodyInterface.RemoveBody(body->GetId());
@@ -262,25 +266,197 @@ void PhysicalWorld::ReadBodyTransform(
     }
 }
 
-// ------------------------------------ //
-Ref<TrackedConstraint> PhysicalWorld::CreateAxisLockConstraint(PhysicsBody& body, JPH::Vec3 axis)
+void PhysicalWorld::GiveImpulse(JPH::BodyID bodyId, JPH::Vec3Arg impulse)
 {
-    const auto constraint = JPH::Ref<AxisLockConstraint>(new AxisLockConstraint());
+    JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterface(), bodyId);
+    if (!lock.Succeeded())
+    {
+        LOG_ERROR("Couldn't lock body for giving impulse");
+        return;
+    }
 
+    JPH::Body& body = lock.GetBody();
+    body.AddImpulse(impulse);
+}
 
+void PhysicalWorld::SetVelocity(JPH::BodyID bodyId, JPH::Vec3Arg velocity)
+{
+    JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterface(), bodyId);
+    if (!lock.Succeeded())
+    {
+        LOG_ERROR("Couldn't lock body for setting velocity");
+        return;
+    }
 
-    const auto trackedConstraint = Ref<TrackedConstraint>(new TrackedConstraint(constraint, body));
+    JPH::Body& body = lock.GetBody();
+    body.SetLinearVelocityClamped(velocity);
+}
 
-    if (body.IsInWorld()){
-        // Immediately register the constraint if in world
+void PhysicalWorld::SetAngularVelocity(JPH::BodyID bodyId, JPH::Vec3Arg velocity)
+{
+    JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterface(), bodyId);
+    if (!lock.Succeeded())
+    {
+        LOG_ERROR("Couldn't lock body for setting angular velocity");
+        return;
+    }
+
+    JPH::Body& body = lock.GetBody();
+    body.SetAngularVelocityClamped(velocity);
+}
+
+void PhysicalWorld::GiveAngularImpulse(JPH::BodyID bodyId, JPH::Vec3Arg impulse)
+{
+    JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterface(), bodyId);
+    if (!lock.Succeeded())
+    {
+        LOG_ERROR("Couldn't lock body for giving angular impulse");
+        return;
+    }
+
+    JPH::Body& body = lock.GetBody();
+    body.AddAngularImpulse(impulse);
+}
+
+void PhysicalWorld::ApplyBodyControl(
+    JPH::BodyID bodyId, JPH::Vec3Arg movementImpulse, JPH::Quat targetRotation, float reachTargetInSeconds)
+{
+    if (reachTargetInSeconds <= 0)
+    {
+        LOG_ERROR("Invalid reachTargetInSeconds variable for controlling a body, needs to be positive");
+        return;
+    }
+
+    JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterface(), bodyId);
+    if (!lock.Succeeded())
+    {
+        LOG_ERROR("Couldn't lock body for applying body control");
+        return;
+    }
+
+    JPH::Body& body = lock.GetBody();
+
+    body.AddImpulse(movementImpulse);
+
+    const auto& currentRotation = body.GetRotation();
+
+    // TODO: make sure the math is fine here for the body control to feel file
+    const auto difference = currentRotation * targetRotation.Inversed();
+
+    if (difference.IsClose(JPH::Quat::sIdentity()))
+    {
+        body.SetAngularVelocityClamped({0, 0, 0});
+    }
+    else
+    {
+        body.SetAngularVelocityClamped(difference.GetEulerAngles() / reachTargetInSeconds);
+    }
+}
+
+// ------------------------------------ //
+Ref<TrackedConstraint> PhysicalWorld::CreateAxisLockConstraint(
+    PhysicsBody& body, JPH::Vec3 axis, bool lockRotation, bool useInertiaToLockRotation /*= false*/)
+{
+    JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterface(), body.GetId());
+    if (!lock.Succeeded())
+    {
+        LOG_ERROR("Locking body for adding a constraint failed");
+        return nullptr;
+    }
+
+    JPH::SixDOFConstraintSettings constraintSettings;
+
+    // This was in an example at https://github.com/jrouwe/JoltPhysics/issues/359 but would require some extra
+    // space calculation so this is left out
+    // constraintSettings.mSpace = JPH::EConstraintSpace::LocalToBodyCOM;
+
+    if (axis.GetX() != 0)
+        constraintSettings.MakeFixedAxis(JPH::SixDOFConstraintSettings::TranslationX);
+
+    if (axis.GetY() != 0)
+        constraintSettings.MakeFixedAxis(JPH::SixDOFConstraintSettings::TranslationY);
+
+    if (axis.GetZ() != 0)
+        constraintSettings.MakeFixedAxis(JPH::SixDOFConstraintSettings::TranslationZ);
+
+    if (lockRotation && !useInertiaToLockRotation)
+    {
+        if (axis.GetX() != 0)
+        {
+            constraintSettings.MakeFixedAxis(JPH::SixDOFConstraintSettings::RotationY);
+            constraintSettings.MakeFixedAxis(JPH::SixDOFConstraintSettings::RotationZ);
+        }
+
+        if (axis.GetY() != 0)
+        {
+            constraintSettings.MakeFixedAxis(JPH::SixDOFConstraintSettings::RotationX);
+            constraintSettings.MakeFixedAxis(JPH::SixDOFConstraintSettings::RotationZ);
+        }
+
+        if (axis.GetZ() != 0)
+        {
+            constraintSettings.MakeFixedAxis(JPH::SixDOFConstraintSettings::RotationY);
+            constraintSettings.MakeFixedAxis(JPH::SixDOFConstraintSettings::RotationZ);
+        }
+    }
+    else if (lockRotation)
+    {
+        // Locking approach by inertia from: https://github.com/jrouwe/JoltPhysics/pull/378/files
+        // JoltPhysics/Samples/Tests/General/TwoDFunnelTest.cpp
+        // This disallows changing the object mass properties (likely shape) after doing this
+        // TODO: check if this is the better approach overall compared to the above locking of rotational axes
+        JPH::MassProperties mass_properties = lock.GetBody().GetShape()->GetMassProperties();
+        JPH::MotionProperties* mp = lock.GetBody().GetMotionProperties();
+        mp->SetInverseMass(1.0f / mass_properties.mMass);
+
+        // Start off with allowing all rotation
+        JPH::Vec3 inverseInertiaVector = JPH::Vec3(1.0f / mass_properties.mInertia.GetAxisX().Length(),
+            1.0f / mass_properties.mInertia.GetAxisY().Length(), 1.0f / mass_properties.mInertia.GetAxisZ().Length());
+
+        // And then remove the axes that are not allowed
+        if (axis.GetX() != 0)
+        {
+            inverseInertiaVector.SetY(0);
+            inverseInertiaVector.SetZ(0);
+        }
+
+        if (axis.GetY() != 0)
+        {
+            inverseInertiaVector.SetX(0);
+            inverseInertiaVector.SetZ(0);
+        }
+
+        if (axis.GetZ() != 0)
+        {
+            inverseInertiaVector.SetX(0);
+            inverseInertiaVector.SetY(0);
+        }
+
+        mp->SetInverseInertia(inverseInertiaVector, JPH::Quat::sIdentity());
+    }
+
+    auto constraintPtr = (JPH::SixDOFConstraint*)constraintSettings.Create(JPH::Body::sFixedToWorld, lock.GetBody());
+
+    auto trackedConstraint = Ref<TrackedConstraint>(
+        new TrackedConstraint(JPH::Ref<JPH::Constraint>(constraintPtr), Ref<PhysicsBody>(&body)));
+
+    if (body.IsInWorld())
+    {
+        // Immediately register the constraint if the body is in the world currently
 
         // TODO: multithreaded adding?
-        physicsSystem->AddConstraint(trackedConstraint->GetConstraint().get());
+        physicsSystem->AddConstraint(trackedConstraint->GetConstraint().GetPtr());
         trackedConstraint->OnRegisteredToWorld(*this);
     }
 
-
     return trackedConstraint;
+}
+
+void PhysicalWorld::DestroyConstraint(TrackedConstraint& constraint)
+{
+    // TODO: allow multithreading
+    physicsSystem->RemoveConstraint(constraint.GetConstraint().GetPtr());
+    constraint.OnDestroyByWorld(*this);
 }
 
 // ------------------------------------ //
@@ -396,12 +572,14 @@ void PhysicalWorld::StepPhysics(JPH::JobSystemThreadPool& jobs, float time)
 Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotionType motionType, JPH::ObjectLayer layer,
     JPH::RVec3Arg position, JPH::Quat rotation /*= JPH::Quat::sIdentity()*/)
 {
-    // TODO: should we add these kinds of checks
-    // // Sanity check some layer stuff
-    // if (motionType == JPH::EMotionType::Dynamic && layer == Layers::NON_MOVING){
-    //     LOG_ERROR("Incorrect motion type for layer specified");
-    //     return nullptr;
-    // }
+#ifndef NDEBUG
+    // Sanity check some layer stuff
+    if (motionType == JPH::EMotionType::Dynamic && layer == Layers::NON_MOVING)
+    {
+        LOG_ERROR("Incorrect motion type for layer specified");
+        return nullptr;
+    }
+#endif
 
     const auto body = physicsSystem->GetBodyInterface().CreateBody(
         JPH::BodyCreationSettings(&shape, position, rotation, motionType, layer));
@@ -425,7 +603,5 @@ void PhysicalWorld::OnPostBodyAdded(PhysicsBody& body)
     body.AddRef();
     ++bodyCount;
 }
-
-
 
 } // namespace Thrive::Physics

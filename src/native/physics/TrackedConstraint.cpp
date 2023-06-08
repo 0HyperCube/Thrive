@@ -32,6 +32,22 @@ TrackedConstraint::TrackedConstraint(
 
 TrackedConstraint::~TrackedConstraint()
 {
+    if (IsAttachedToBodies())
+    {
+        firstBody->NotifyConstraintRemoved(*this);
+
+        if (optionalSecondBody != nullptr)
+        {
+            optionalSecondBody->NotifyConstraintRemoved(*this);
+        }
+    }
+
+    if (createdInWorld != nullptr)
+        LOG_ERROR("Constraint on destruction still exists in a world, this will likely crash the physics system");
+}
+
+void TrackedConstraint::DetachFromBodies()
+{
     firstBody->NotifyConstraintRemoved(*this);
 
     if (optionalSecondBody != nullptr)
@@ -39,10 +55,7 @@ TrackedConstraint::~TrackedConstraint()
         optionalSecondBody->NotifyConstraintRemoved(*this);
     }
 
-    if (createdInWorld != nullptr)
-        LOG_ERROR("Constraint on destruction still exists in a world, this will likely crash the physics system");
-
-    if (IsAttachedToBodies())
-        LOG_ERROR("Constraint still attached to physics bodies when it is being destroyed");
+    attachedToBodies = false;
 }
+
 } // namespace Thrive::Physics

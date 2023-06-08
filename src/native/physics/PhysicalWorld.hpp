@@ -46,12 +46,11 @@ public:
 
     // ------------------------------------ //
     // Bodies
+    Ref<PhysicsBody> CreateMovingBody(const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position,
+        JPH::Quat rotation = JPH::Quat::sIdentity(), bool addToWorld = true);
 
-    Ref<PhysicsBody> CreateMovingBody(
-        const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position, JPH::Quat rotation = JPH::Quat::sIdentity(), bool addToWorld = true);
-
-    Ref<PhysicsBody> CreateStaticBody(
-        const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position, JPH::Quat rotation = JPH::Quat::sIdentity(), bool addToWorld = true);
+    Ref<PhysicsBody> CreateStaticBody(const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position,
+        JPH::Quat rotation = JPH::Quat::sIdentity(), bool addToWorld = true);
 
     /// \brief Add a body that has been created but not added to the physics simulation in this world
     void AddBody(PhysicsBody& body, bool activate);
@@ -60,9 +59,20 @@ public:
 
     void ReadBodyTransform(JPH::BodyID bodyId, JPH::RVec3& positionReceiver, JPH::Quat& rotationReceiver) const;
 
+    void GiveImpulse(JPH::BodyID bodyId, JPH::Vec3Arg impulse);
+    void SetVelocity(JPH::BodyID bodyId, JPH::Vec3Arg velocity);
+
+    void SetAngularVelocity(JPH::BodyID bodyId, JPH::Vec3Arg velocity);
+    void GiveAngularImpulse(JPH::BodyID bodyId, JPH::Vec3Arg impulse);
+
+    void ApplyBodyControl(
+        JPH::BodyID bodyId, JPH::Vec3Arg movementImpulse, JPH::Quat targetRotation, float reachTargetInSeconds);
+
     // ------------------------------------ //
     // Constraints
-    Ref<TrackedConstraint> CreateAxisLockConstraint(PhysicsBody& body, JPH::Vec3 axis);
+    Ref<TrackedConstraint> CreateAxisLockConstraint(
+        PhysicsBody& body, JPH::Vec3 axis, bool lockRotation, bool useInertiaToLockRotation = false);
+
     void DestroyConstraint(TrackedConstraint& constraint);
 
     void SetGravity(JPH::Vec3 newGravity);

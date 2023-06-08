@@ -60,7 +60,31 @@ protected:
         createdInWorld = nullptr;
     }
 
+    inline void OnDestroyByWorld(PhysicalWorld& world)
+    {
+        if (createdInWorld != &world)
+        {
+            LOG_ERROR("Constraint tried to be destroyed by world it is not in");
+            return;
+        }
+
+        OnRemoveFromWorld(world);
+
+        // Make sure destructor doesn't run while detaching
+        AddRef();
+
+        // To make this be released, tell both of the bodies that this is no longer wanted to exist to free up
+        // references
+        DetachFromBodies();
+
+        // This should get deleted now
+        Release();
+    }
+
     // TODO: method to delete the constraint from the bodies
+
+private:
+    void DetachFromBodies();
 
 private:
     const Ref<PhysicsBody> firstBody;

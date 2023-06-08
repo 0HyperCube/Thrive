@@ -9,7 +9,6 @@ add_library(thrive_native SHARED
   core/RefCounted.hpp
   core/TaskSystem.cpp core/TaskSystem.hpp
   core/Time.hpp
-  physics/AxisLockConstraint.cpp physics/AxisLockConstraint.hpp
   physics/BodyActivationListener.cpp physics/BodyActivationListener.hpp
   physics/ContactListener.cpp physics/ContactListener.hpp
   physics/CustomConstraintTypes.hpp
