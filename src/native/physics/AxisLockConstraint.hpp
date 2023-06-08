@@ -2,13 +2,20 @@
 
 #include "Jolt/Physics/Body/Body.h"
 #include "Jolt/Physics/Constraints/Constraint.h"
+#include "Jolt/Physics/Constraints/ConstraintPart/DualAxisConstraintPart.h"
+#include "Jolt/Physics/Constraints/ConstraintPart/PointConstraintPart.h"
+#include "Jolt/Physics/Constraints/ConstraintPart/RotationEulerConstraintPart.h"
 
 #include "CustomConstraintTypes.hpp"
 
 namespace Thrive::Physics
 {
-
 class AxisLockConstraint;
+
+using namespace JPH;
+
+JPH_SUPPRESS_WARNING_PUSH
+JPH_SUPPRESS_WARNINGS
 
 /// \brief AxisLockConstraint settings, used to create them
 class JPH_EXPORT AxisLockConstraintSettings final : public JPH::ConstraintSettings
@@ -16,10 +23,8 @@ class JPH_EXPORT AxisLockConstraintSettings final : public JPH::ConstraintSettin
 public:
     JPH_DECLARE_SERIALIZABLE_VIRTUAL(JPH_EXPORT, AxisLockConstraintSettings)
 
-    // See: ConstraintSettings::SaveBinaryState
     void SaveBinaryState(JPH::StreamOut& inStream) const override;
 
-    /// Create an an instance of this constraint
     AxisLockConstraint* Create(JPH::Body& body) const;
 
     JPH::Vec3 lockAxis = JPH::Vec3::sAxisY();
@@ -29,6 +34,13 @@ protected:
     /// \copydoc JPH::ConstraintSettings::RestoreBinaryState
     void RestoreBinaryState(JPH::StreamIn& inStream) override;
 };
+
+JPH_SUPPRESS_WARNING_POP
+
+} // namespace Thrive::Physics
+
+namespace Thrive::Physics
+{
 
 /// \brief Constraints a physics body to not allow it to move on an axis
 class AxisLockConstraint : public JPH::Constraint
@@ -48,19 +60,31 @@ public:
     void WarmStartVelocityConstraint(float inWarmStartImpulseRatio) override;
     bool SolveVelocityConstraint(float inDeltaTime) override;
     bool SolvePositionConstraint(float inDeltaTime, float inBaumgarte) override;
-    void BuildIslands(
-        JPH::uint32 inConstraintIndex, JPH::IslandBuilder& ioBuilder, JPH::BodyManager& inBodyManager) override;
-    uint BuildIslandSplits(JPH::LargeIslandSplitter& ioSplitter) const override;
-    JPH::Ref<JPH::ConstraintSettings> GetConstraintSettings() const override;
+
+    void BuildIslands(uint32 inConstraintIndex, IslandBuilder& ioBuilder, BodyManager& inBodyManager) override;
+    uint BuildIslandSplits(LargeIslandSplitter& ioSplitter) const override;
 
 #ifdef JPH_DEBUG_RENDERER
     // Drawing interface
-    virtual void DrawConstraint(DebugRenderer* inRenderer) const = 0;
+    void DrawConstraint(DebugRenderer* inRenderer) const override;
 #endif
 
+    void SaveState(JPH::StateRecorder& inStream) const override;
+    void RestoreState(JPH::StateRecorder& inStream) override;
+
+    JPH::Ref<ConstraintSettings> GetConstraintSettings() const override;
+
 private:
+    JPH::BodyID bodyId;
+    JPH::Body* body;
+
     JPH::Vec3 lockAxis;
     bool lockRotation;
+
+    // Ephemeral runtime info
+    JPH::DualAxisConstraintPart			axisConstraintPart;
+
+    // TODO: needs a custom 2 axis rotation support
 };
 
 } // namespace Thrive::Physics
