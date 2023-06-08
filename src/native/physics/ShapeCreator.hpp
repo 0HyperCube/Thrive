@@ -46,8 +46,10 @@ public:
     // Advanced game related shapes
 
     // TODO: pili
-    static JPH::RefConst<JPH::Shape> CreateMicrobeShapeConvex(JVecF3* points, uint32_t pointCount, float density = 1000, float scale = 1, const JPH::PhysicsMaterial* material = nullptr);
-    static JPH::RefConst<JPH::Shape> CreateMicrobeShapeSpheres(JVecF3* points, uint32_t pointCount, float density = 1000, float scale = 1, const JPH::PhysicsMaterial* material = nullptr);
+    static JPH::RefConst<JPH::Shape> CreateMicrobeShapeConvex(JVecF3* points, uint32_t pointCount, float density = 1000,
+        float scale = 1, float thickness = 0.1f, const JPH::PhysicsMaterial* material = nullptr);
+    static JPH::RefConst<JPH::Shape> CreateMicrobeShapeSpheres(JVecF3* points, uint32_t pointCount,
+        float density = 1000, float scale = 1, const JPH::PhysicsMaterial* material = nullptr);
 };
 
 } // namespace Thrive::Physics

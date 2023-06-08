@@ -64,8 +64,8 @@ JPH::RefConst<JPH::Shape> ShapeCreator::CreateMesh(
 }
 
 // ------------------------------------ //
-JPH::RefConst<JPH::Shape> ShapeCreator::CreateMicrobeShapeConvex(
-    JVecF3* points, uint32_t pointCount, float density, float scale, const JPH::PhysicsMaterial* material /*= nullptr*/)
+JPH::RefConst<JPH::Shape> ShapeCreator::CreateMicrobeShapeConvex(JVecF3* points, uint32_t pointCount, float density,
+    float scale, float thickness /*= 0.1f*/, const JPH::PhysicsMaterial* material /*= nullptr*/)
 {
     if (pointCount < 1)
     {
@@ -79,11 +79,7 @@ JPH::RefConst<JPH::Shape> ShapeCreator::CreateMicrobeShapeConvex(
     settings.mMaxConvexRadius = JPH::cDefaultConvexRadius;
 
     auto& pointTarget = settings.mPoints;
-    pointTarget.reserve(pointCount + 2);
-
-    // Add a center and a top point to ensure some volume for the shape without duplicating all of the points
-    pointTarget.emplace_back(0, 0, 0);
-    pointTarget.emplace_back(0, 1, 0);
+    pointTarget.reserve(pointCount * 2);
 
     if (scale != 1)
     {
@@ -91,7 +87,12 @@ JPH::RefConst<JPH::Shape> ShapeCreator::CreateMicrobeShapeConvex(
         {
             const auto& sourcePoint = points[i];
 
-            pointTarget.emplace_back(sourcePoint.X * scale, sourcePoint.Y * scale, sourcePoint.Z * scale);
+            const auto scaledX = sourcePoint.X * scale;
+            const auto scaledY = sourcePoint.Y * scale;
+            const auto scaledZ = sourcePoint.Z * scale;
+
+            pointTarget.emplace_back(scaledX, scaledY, scaledZ);
+            pointTarget.emplace_back(scaledX, scaledY + thickness, scaledZ);
         }
     }
     else
@@ -101,6 +102,7 @@ JPH::RefConst<JPH::Shape> ShapeCreator::CreateMicrobeShapeConvex(
             const auto& sourcePoint = points[i];
 
             pointTarget.emplace_back(sourcePoint.X, sourcePoint.Y, sourcePoint.Z);
+            pointTarget.emplace_back(sourcePoint.X, sourcePoint.Y + thickness, sourcePoint.Z);
         }
     }
 
