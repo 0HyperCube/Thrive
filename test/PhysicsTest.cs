@@ -199,7 +199,7 @@ public class PhysicsTest : Node
                 }
             }
 
-            UpdateCameraFollow();
+            UpdateCameraFollow(1 / 60.0f);
         }
     }
 
@@ -433,13 +433,16 @@ public class PhysicsTest : Node
         }
     }
 
-    private void UpdateCameraFollow()
+    private void UpdateCameraFollow(float delta)
     {
         var index = followedTestVisualIndex % testVisuals.Count;
 
         var target = testVisuals[index].Translation;
 
-        camera.Translation = new Vector3(target.x, camera.Translation.y, target.z);
+        var currentPos = camera.Translation;
+        var targetPos = new Vector3(target.x, currentPos.y, target.z);
+
+        camera.Translation = currentPos.LinearInterpolate(targetPos, 3 * delta);
     }
 
     private float GetPhysicsTime()
