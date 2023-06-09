@@ -34,15 +34,23 @@ public class PhysicsShape : IDisposable
 
     // TODO: hashing and caching based on the parameters to avoid needing to constantly create new shapes
     public static PhysicsShape CreateMicrobeShape(JVecF3[] organellePositions, float overallDensity,
-        bool scaleAsBacteria)
+        bool scaleAsBacteria, bool createAsSpheres = false)
     {
         var gch = GCHandle.Alloc(organellePositions, GCHandleType.Pinned);
 
         PhysicsShape result;
         try
         {
-            result = new PhysicsShape(NativeMethods.CreateMicrobeShapeConvex(gch.AddrOfPinnedObject(),
-                (uint)organellePositions.Length, overallDensity, scaleAsBacteria ? 0.5f : 1));
+            if (createAsSpheres)
+            {
+                result = new PhysicsShape(NativeMethods.CreateMicrobeShapeConvex(gch.AddrOfPinnedObject(),
+                    (uint)organellePositions.Length, overallDensity, scaleAsBacteria ? 0.5f : 1));
+            }
+            else
+            {
+                result = new PhysicsShape(NativeMethods.CreateMicrobeShapeSpheres(gch.AddrOfPinnedObject(),
+                    (uint)organellePositions.Length, overallDensity, scaleAsBacteria ? 0.5f : 1));
+            }
         }
         finally
         {
