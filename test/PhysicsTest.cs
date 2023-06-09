@@ -702,7 +702,7 @@ public class PhysicsTest : Node
 
     private class TestMicrobeAnalogue
     {
-        private const float JoltImpulseStrength = 3000;
+        private const float JoltImpulseStrength = 2800;
         private const float GodotImpulseStrength = 1;
 
         private const float ReachTargetRotationSpeed = 0.8f;
