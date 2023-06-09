@@ -22,6 +22,9 @@ public class PhysicsTest : Node
     public bool CreateMicrobeAsSpheres;
 
     [Export]
+    public bool EnforceNoYDrift = true;
+
+    [Export]
     public NodePath? WorldVisualsPath;
 
     [Export]
@@ -78,6 +81,8 @@ public class PhysicsTest : Node
 
     private bool resetTest;
 
+    private float driftingCheckTimer = 30;
+
     public enum TestType
     {
         Spheres,
@@ -123,6 +128,8 @@ public class PhysicsTest : Node
             RestartTest();
             return;
         }
+
+        driftingCheckTimer -= delta;
 
         UpdateGUI(delta);
         HandleInput();
@@ -235,10 +242,15 @@ public class PhysicsTest : Node
                         var transform = physicalWorld.ReadBodyTransform(microbeAnalogueBodies[i]);
                         testVisuals[i].Transform = transform;
 
-                        if (Math.Abs(transform.origin.y) > 0.05f)
+                        if (EnforceNoYDrift && Math.Abs(transform.origin.y) > 0.05f)
                         {
                             // Fix drifting body
                             physicalWorld.FixBodyYCoordinateToZero(microbeAnalogueBodies[i]);
+                        }
+                        else if (!EnforceNoYDrift && Math.Abs(transform.origin.y) > 0.1f)
+                        {
+                            if (driftingCheckTimer < 0)
+                                GD.Print($"Still drifting (body index: {i})");
                         }
                     }
                 }
@@ -247,6 +259,9 @@ public class PhysicsTest : Node
             UpdateCameraFollow(1 / 60.0f);
             UpdateBodyCountGUI(count);
         }
+
+        if (driftingCheckTimer < 0)
+            driftingCheckTimer = 10;
     }
 
     protected override void Dispose(bool disposing)
@@ -319,6 +334,9 @@ public class PhysicsTest : Node
         microbeAnalogueBodies.Clear();
         sphereBodies.Clear();
         testMicrobesToProcess.Clear();
+
+        driftingCheckTimer = 30;
+        timeSincePhysicsReport = 0;
 
         StartTest();
     }
