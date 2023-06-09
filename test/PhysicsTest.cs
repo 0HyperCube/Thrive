@@ -469,7 +469,7 @@ public class PhysicsTest : Node
 
     private class TestMicrobeAnalogue
     {
-        private const float JoltImpulseStrength = 50000;
+        private const float JoltImpulseStrength = 840;
 
         private readonly PhysicsBody body;
         private readonly Random random;
@@ -523,7 +523,8 @@ public class PhysicsTest : Node
                 }
             }
 
-            physicalWorld.ApplyBodyMicrobeControl(body, movementDirection * delta * JoltImpulseStrength, lookDirection,
+            // Impulse should not be scaled by delta as the physics update happens with consistent
+            physicalWorld.ApplyBodyMicrobeControl(body, movementDirection * JoltImpulseStrength, lookDirection,
                 0.8f);
         }
 
