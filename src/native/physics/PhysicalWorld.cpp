@@ -362,7 +362,9 @@ void PhysicalWorld::ApplyBodyControl(
     // TODO: make sure the math is fine here for the body control to feel file
     const auto difference = currentRotation * targetRotation.Inversed();
 
-    if (difference.IsClose(JPH::Quat::sIdentity()))
+    // TODO: tweak this parameter to make sure there's no jitter around the right orientation (this is now slightly
+    // smaller than the default value)
+    if (difference.IsClose(JPH::Quat::sIdentity(), 1.0e-10f))
     {
         body.SetAngularVelocityClamped({0, 0, 0});
     }
