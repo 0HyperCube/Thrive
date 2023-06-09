@@ -217,19 +217,30 @@ public class PhysicsTest : Node
             ProcessTestMicrobes(1 / 60.0f);
 
             var count = microbeAnalogueBodies.Count;
-            for (int i = 0; i < count; ++i)
-            {
-                if (i >= testVisuals.Count)
-                {
-                    var visuals = CreateTestMicrobeVisuals(testMicrobeOrganellePositions!);
 
-                    visuals.Transform = physicalWorld.ReadBodyTransform(microbeAnalogueBodies[i]);
-                    worldVisuals.AddChild(visuals);
-                    testVisuals.Add(visuals);
-                }
-                else
+            if (Type == TestType.MicrobePlaceholders)
+            {
+                for (int i = 0; i < count; ++i)
                 {
-                    testVisuals[i].Transform = physicalWorld.ReadBodyTransform(microbeAnalogueBodies[i]);
+                    if (i >= testVisuals.Count)
+                    {
+                        var visuals = CreateTestMicrobeVisuals(testMicrobeOrganellePositions!);
+
+                        visuals.Transform = physicalWorld.ReadBodyTransform(microbeAnalogueBodies[i]);
+                        worldVisuals.AddChild(visuals);
+                        testVisuals.Add(visuals);
+                    }
+                    else
+                    {
+                        var transform = physicalWorld.ReadBodyTransform(microbeAnalogueBodies[i]);
+                        testVisuals[i].Transform = transform;
+
+                        if (Math.Abs(transform.origin.y) > 0.05f)
+                        {
+                            // Fix drifting body
+                            physicalWorld.FixBodyYCoordinateToZero(microbeAnalogueBodies[i]);
+                        }
+                    }
                 }
             }
 
@@ -364,6 +375,8 @@ public class PhysicsTest : Node
 
     private void SetupPhysicsBodies()
     {
+        physicalWorld.SetGravity();
+
         if (Type is TestType.MicrobePlaceholders or TestType.MicrobePlaceholdersGodotPhysics)
         {
             SetupMicrobeTest();
@@ -448,6 +461,8 @@ public class PhysicsTest : Node
     {
         var random = new Random(234546798);
 
+        physicalWorld.RemoveGravity();
+
         var mutator = new Mutations(random);
 
         // Generate a random, pretty big microbe species to use for testing
@@ -479,6 +494,7 @@ public class PhysicsTest : Node
                     new Vector3(x, 0, z), Quat.Identity);
 
                 physicalWorld.AddAxisLockConstraint(body, Vector3.Up, true);
+                physicalWorld.SetDamping(body, 0.2f);
 
                 // Add an initial impulse
                 physicalWorld.GiveImpulse(body,
@@ -579,7 +595,7 @@ public class PhysicsTest : Node
 
     private class TestMicrobeAnalogue
     {
-        private const float JoltImpulseStrength = 840;
+        private const float JoltImpulseStrength = 2000;
 
         private readonly PhysicsBody body;
         private readonly Random random;
@@ -587,7 +603,7 @@ public class PhysicsTest : Node
         private float timeUntilDirectionChange = 1;
         private float timeUntilMovementChange = 1;
 
-        private int notMovedToOrigin = 8;
+        private int notMovedToOrigin = 5;
 
         private Quat lookDirection;
         private Vector3 movementDirection;
@@ -601,6 +617,16 @@ public class PhysicsTest : Node
         }
 
         public void Process(float delta, PhysicalWorld physicalWorld)
+        {
+            HandleMovementDirectionAndRotation(delta,
+                new Lazy<Vector3>(() => physicalWorld.ReadBodyTransform(body).origin));
+
+            // Impulse should not be scaled by delta as the physics update happens with consistent
+            physicalWorld.ApplyBodyMicrobeControl(body, movementDirection * JoltImpulseStrength, lookDirection,
+                0.8f);
+        }
+
+        private void HandleMovementDirectionAndRotation(float delta, Lazy<Vector3> currentPosition)
         {
             timeUntilDirectionChange -= delta;
             timeUntilMovementChange -= delta;
@@ -618,24 +644,21 @@ public class PhysicsTest : Node
 
                 if (notMovedToOrigin < 0)
                 {
-                    notMovedToOrigin = 15;
+                    notMovedToOrigin = 10;
+                    timeUntilMovementChange = 5;
 
-                    var currentPosition = physicalWorld.ReadBodyTransform(body).origin;
-
-                    if (currentPosition.Length() < 1)
+                    if (currentPosition.Value.Length() > 1)
                     {
-                        movementDirection = (-currentPosition).Normalized();
+                        movementDirection = (-currentPosition.Value).Normalized();
+                        movementDirection.y = 0;
                     }
                 }
                 else
                 {
-                    movementDirection = new Vector3(random.NextFloat() + 0.001f, 0, random.NextFloat()).Normalized();
+                    movementDirection = new Vector3(random.NextFloat() * 2 - 1 + 0.001f, 0,
+                        random.NextFloat() * 2 - 1 - 0.001f).Normalized();
                 }
             }
-
-            // Impulse should not be scaled by delta as the physics update happens with consistent
-            physicalWorld.ApplyBodyMicrobeControl(body, movementDirection * JoltImpulseStrength, lookDirection,
-                0.8f);
         }
 
         private void SetLookDirection()
