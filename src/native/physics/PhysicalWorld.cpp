@@ -247,6 +247,25 @@ void PhysicalWorld::DestroyBody(const Ref<PhysicsBody>& body)
 }
 
 // ------------------------------------ //
+void PhysicalWorld::SetDamping(JPH::BodyID bodyId, float damping, const float* angularDamping /*= nullptr*/)
+{
+    JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterface(), bodyId);
+    if (!lock.Succeeded())
+    {
+        LOG_ERROR("Couldn't lock body for setting damping");
+        return;
+    }
+
+    JPH::Body& body = lock.GetBody();
+    auto* motionProperties = body.GetMotionProperties();
+
+    motionProperties->SetLinearDamping(damping);
+
+    if (angularDamping != nullptr)
+        motionProperties->SetAngularDamping(*angularDamping);
+}
+
+// ------------------------------------ //
 void PhysicalWorld::ReadBodyTransform(
     JPH::BodyID bodyId, JPH::RVec3& positionReceiver, JPH::Quat& rotationReceiver) const
 {
@@ -351,6 +370,39 @@ void PhysicalWorld::ApplyBodyControl(
     {
         body.SetAngularVelocityClamped(difference.GetEulerAngles() / reachTargetInSeconds);
     }
+}
+
+void PhysicalWorld::SetPosition(JPH::BodyID bodyId, JPH::DVec3Arg position, bool activate)
+{
+    physicsSystem->GetBodyInterface().SetPosition(
+        bodyId, position, activate ? JPH::EActivation::Activate : JPH::EActivation::DontActivate);
+}
+
+bool PhysicalWorld::FixBodyYCoordinateToZero(JPH::BodyID bodyId)
+{
+    decltype(std::declval<JPH::Body>().GetPosition()) position;
+
+    {
+        // TODO: maybe there's a way to avoid the double lock here? (setting position takes a lock as well)
+        JPH::BodyLockRead lock(physicsSystem->GetBodyLockInterface(), bodyId);
+        if (!lock.Succeeded())
+        {
+            LOG_ERROR("Can't lock body for y-position fix");
+            return false;
+        }
+
+        const JPH::Body& body = lock.GetBody();
+
+        position = body.GetPosition();
+    }
+
+    if (std::abs(position.GetY()) > 0.001f)
+    {
+        SetPosition(bodyId, {position.GetX(), 0, position.GetZ()}, false);
+        return true;
+    }
+
+    return false;
 }
 
 // ------------------------------------ //
