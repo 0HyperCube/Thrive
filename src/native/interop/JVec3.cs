@@ -18,7 +18,10 @@ public struct JVec3
         Z = vector.z;
     }
 
-    public static implicit operator Vector3(JVec3 d) => new((float)d.X, (float)d.Y, (float)d.Z);
+    public static implicit operator Vector3(JVec3 d)
+    {
+        return new Vector3((float)d.X, (float)d.Y, (float)d.Z);
+    }
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -39,7 +42,10 @@ public struct JQuat
         W = quat.w;
     }
 
-    public static implicit operator Quat(JQuat d) => new(d.X, d.Y, d.Z, d.W);
+    public static implicit operator Quat(JQuat d)
+    {
+        return new Quat(d.X, d.Y, d.Z, d.W);
+    }
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -63,5 +69,8 @@ public struct JVecF3
         Z = z;
     }
 
-    public static implicit operator Vector3(JVecF3 d) => new(d.X, d.Y, d.Z);
+    public static implicit operator Vector3(JVecF3 d)
+    {
+        return new Vector3(d.X, d.Y, d.Z);
+    }
 }
