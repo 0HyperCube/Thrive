@@ -19,6 +19,7 @@
 #include "core/Time.hpp"
 
 #include "BodyActivationListener.hpp"
+#include "BodyControlState.hpp"
 #include "ContactListener.hpp"
 #include "PhysicsBody.hpp"
 #include "TrackedConstraint.hpp"
@@ -338,13 +339,21 @@ void PhysicalWorld::GiveAngularImpulse(JPH::BodyID bodyId, JPH::Vec3Arg impulse)
 }
 
 void PhysicalWorld::ApplyBodyControl(
-    JPH::BodyID bodyId, JPH::Vec3Arg movementImpulse, JPH::Quat targetRotation, float reachTargetInSeconds)
+    PhysicsBody& bodyWrapper, JPH::Vec3Arg movementImpulse, JPH::Quat targetRotation, float rotationRate)
 {
-    if (reachTargetInSeconds <= 0)
+    constexpr auto allowedRotationDifference = 0.0001f;
+    constexpr auto newRotationTargetAfter = 0.001f;
+    constexpr auto overshootDetectWhenAllAnglesLessThan = PI * 0.025f;
+
+    if (rotationRate <= 0)
     {
-        LOG_ERROR("Invalid reachTargetInSeconds variable for controlling a body, needs to be positive");
+        LOG_ERROR("Invalid rotationRate variable for controlling a body, needs to be positive");
         return;
     }
+
+    bool justStarted = bodyWrapper.EnableBodyControlIfNotAlready();
+
+    const auto bodyId = bodyWrapper.GetId();
 
     JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterface(), bodyId);
     if (!lock.Succeeded())
@@ -357,21 +366,63 @@ void PhysicalWorld::ApplyBodyControl(
 
     body.AddImpulse(movementImpulse);
 
+    BodyControlState* controlState = bodyWrapper.GetBodyControlState();
+
+    if (controlState == nullptr)
+    {
+        LOG_ERROR("Logic error in body control state creation (state should have been created)");
+        return;
+    }
+
     const auto& currentRotation = body.GetRotation();
 
-    // TODO: make sure the math is fine here for the body control to feel file
     const auto difference = currentRotation * targetRotation.Inversed();
 
-    // TODO: tweak this parameter to make sure there's no jitter around the right orientation (this is now slightly
-    // smaller than the default value)
-    if (difference.IsClose(JPH::Quat::sIdentity(), 1.0e-5f))
+    bool targetChanged = justStarted || !targetRotation.IsClose(controlState->previousTarget, newRotationTargetAfter);
+
+    if (difference.IsClose(JPH::Quat::sIdentity(), allowedRotationDifference))
     {
         body.SetAngularVelocityClamped({0, 0, 0});
     }
+    else if (!justStarted && !targetChanged)
+    {
+        // Check if we overshot the target and should stop to avoid oscillating
+        const auto oldDifference = controlState->previousRotation * targetRotation.Inversed();
+        const auto oldAngles = oldDifference.GetEulerAngles();
+
+        const auto differenceAngles = difference.GetEulerAngles();
+
+        const auto angleDifference = oldAngles - differenceAngles;
+
+        bool potentiallyOvershot = std::signbit(oldAngles.GetX()) != std::signbit(differenceAngles.GetX()) ||
+            std::signbit(oldAngles.GetY()) != std::signbit(differenceAngles.GetY()) ||
+            std::signbit(oldAngles.GetZ()) != std::signbit(differenceAngles.GetZ());
+
+        if (potentiallyOvershot && std::abs(angleDifference.GetX()) < overshootDetectWhenAllAnglesLessThan &&
+            std::abs(angleDifference.GetY()) < overshootDetectWhenAllAnglesLessThan &&
+            std::abs(angleDifference.GetZ()) < overshootDetectWhenAllAnglesLessThan)
+        {
+            // Overshot and we are otherwise within limits, reset velocity to 0 to prevent oscillation
+            body.SetAngularVelocityClamped({0, 0, 0});
+        }
+        else
+        {
+            // Didn't overshoot, use normal logic
+            body.SetAngularVelocityClamped(differenceAngles / rotationRate);
+        }
+    }
     else
     {
-        body.SetAngularVelocityClamped(difference.GetEulerAngles() / reachTargetInSeconds);
+        body.SetAngularVelocityClamped(difference.GetEulerAngles() / rotationRate);
     }
+
+    controlState->previousRotation = currentRotation;
+
+    if (targetChanged)
+        controlState->previousTarget = targetRotation;
+
+    if (justStarted)
+        controlState->justStarted = false;
 }
 
 void PhysicalWorld::SetPosition(JPH::BodyID bodyId, JPH::DVec3Arg position, bool activate)

@@ -68,7 +68,7 @@ public:
     void GiveAngularImpulse(JPH::BodyID bodyId, JPH::Vec3Arg impulse);
 
     void ApplyBodyControl(
-        JPH::BodyID bodyId, JPH::Vec3Arg movementImpulse, JPH::Quat targetRotation, float reachTargetInSeconds);
+        PhysicsBody& bodyWrapper, JPH::Vec3Arg movementImpulse, JPH::Quat targetRotation, float rotationRate);
 
     void SetPosition(JPH::BodyID bodyId, JPH::DVec3Arg position, bool activate = true);
 

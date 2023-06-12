@@ -10,6 +10,7 @@ add_library(thrive_native SHARED
   core/TaskSystem.cpp core/TaskSystem.hpp
   core/Time.hpp
   physics/BodyActivationListener.cpp physics/BodyActivationListener.hpp
+  physics/BodyControlState.hpp
   physics/ContactListener.cpp physics/ContactListener.hpp
   physics/CustomConstraintTypes.hpp
   physics/Layers.hpp
