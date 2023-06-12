@@ -190,11 +190,17 @@ void GiveImpulse(PhysicalWorld* physicalWorld, PhysicsBody* body, JVecF3 impulse
 }
 
 void ApplyBodyControl(PhysicalWorld* physicalWorld, PhysicsBody* body, JVecF3 movementImpulse, JQuat targetRotation,
-    float reachTargetInSeconds)
+    float rotationRate)
 {
+    if (physicalWorld == nullptr || body == nullptr)
+    {
+        LOG_ERROR("Invalid call to physics body applying control");
+        return;
+    }
+
     reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
-        ->ApplyBodyControl(reinterpret_cast<Thrive::Physics::PhysicsBody*>(body)->GetId(),
-            Thrive::Vec3FromCAPI(movementImpulse), Thrive::QuatFromCAPI(targetRotation), reachTargetInSeconds);
+        ->ApplyBodyControl(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body),
+            Thrive::Vec3FromCAPI(movementImpulse), Thrive::QuatFromCAPI(targetRotation), rotationRate);
 }
 
 void SetBodyPosition(PhysicalWorld* physicalWorld, PhysicsBody* body, JVec3 position, bool activate)

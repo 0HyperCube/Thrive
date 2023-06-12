@@ -100,10 +100,13 @@ public class PhysicalWorld : IDisposable
     }
 
     public void ApplyBodyMicrobeControl(PhysicsBody body, Vector3 movementImpulse, Quat lookDirection,
-        float rotationSpeedSeconds)
+        float rotationRate)
     {
+        if (rotationRate <= 0)
+            throw new ArgumentException("Rotation rate needs to be above 0");
+
         NativeMethods.ApplyBodyControl(AccessWorldInternal(), body.AccessBodyInternal(),
-            new JVecF3(movementImpulse), new JQuat(lookDirection), rotationSpeedSeconds);
+            new JVecF3(movementImpulse), new JQuat(lookDirection), rotationRate);
     }
 
     public void SetBodyPosition(PhysicsBody body, Vector3 position)
