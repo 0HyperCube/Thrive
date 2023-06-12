@@ -364,7 +364,7 @@ void PhysicalWorld::ApplyBodyControl(
 
     // TODO: tweak this parameter to make sure there's no jitter around the right orientation (this is now slightly
     // smaller than the default value)
-    if (difference.IsClose(JPH::Quat::sIdentity(), 1.0e-10f))
+    if (difference.IsClose(JPH::Quat::sIdentity(), 1.0e-5f))
     {
         body.SetAngularVelocityClamped({0, 0, 0});
     }
