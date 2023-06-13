@@ -83,6 +83,8 @@ extern "C"
     [[maybe_unused]] THRIVE_NATIVE_API float PhysicalWorldGetPhysicsLatestTime(PhysicalWorld* physicalWorld);
     [[maybe_unused]] THRIVE_NATIVE_API float PhysicalWorldGetPhysicsAverageTime(PhysicalWorld* physicalWorld);
 
+    [[maybe_unused]] THRIVE_NATIVE_API bool PhysicalWorldDumpPhysicsState(PhysicalWorld* physicalWorld, const char* path);
+
     // ------------------------------------ //
     // Body functions
     [[maybe_unused]] THRIVE_NATIVE_API void ReleasePhysicsBodyReference(PhysicsBody* body);

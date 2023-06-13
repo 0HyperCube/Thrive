@@ -1077,6 +1077,8 @@ public static class Constants
 
     public const string BUILD_INFO_FILE = "res://simulation_parameters/revision.json";
 
+    public const string PHYSICS_DUMP_PATH = LOGS_FOLDER + "/physics_dump.bin";
+
     public const bool VERBOSE_SIMULATION_PARAMETER_LOADING = false;
 
     /// <summary>

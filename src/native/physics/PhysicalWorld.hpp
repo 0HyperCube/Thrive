@@ -109,6 +109,8 @@ public:
         return averagePhysicsTime;
     }
 
+    bool DumpSystemState(std::string_view path);
+
 protected:
     void PerformPhysicsStepOperations(float delta);
 

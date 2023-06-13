@@ -255,6 +255,11 @@ float PhysicalWorldGetPhysicsAverageTime(PhysicalWorld* physicalWorld)
     return reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)->GetAveragePhysicsTime();
 }
 
+bool PhysicalWorldDumpPhysicsState(PhysicalWorld* physicalWorld, const char* path)
+{
+    return reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)->DumpSystemState(path);
+}
+
 // ------------------------------------ //
 
 void ReleasePhysicsBodyReference(PhysicsBody* body)

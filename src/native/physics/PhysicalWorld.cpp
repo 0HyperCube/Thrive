@@ -2,15 +2,18 @@
 #include "PhysicalWorld.hpp"
 
 #include <cstring>
+#include <fstream>
 
 #include "boost/circular_buffer.hpp"
 
 // TODO: switch to a custom thread pool
 #include "Jolt/Core/JobSystemThreadPool.h"
+#include "Jolt/Core/StreamWrapper.h"
 #include "Jolt/Physics/Body/BodyCreationSettings.h"
 #include "Jolt/Physics/Collision/CastResult.h"
 #include "Jolt/Physics/Collision/RayCast.h"
 #include "Jolt/Physics/Constraints/SixDOFConstraint.h"
+#include "Jolt/Physics/PhysicsScene.h"
 #include "Jolt/Physics/PhysicsSettings.h"
 #include "Jolt/Physics/PhysicsSystem.h"
 
@@ -604,6 +607,29 @@ void PhysicalWorld::SetGravity(JPH::Vec3 newGravity)
 void PhysicalWorld::RemoveGravity()
 {
     SetGravity(JPH::Vec3(0, 0, 0));
+}
+
+// ------------------------------------ //
+bool PhysicalWorld::DumpSystemState(std::string_view path)
+{
+    // Dump a Jolt snapshot to the path
+    JPH::Ref<JPH::PhysicsScene> scene = new JPH::PhysicsScene();
+    scene->FromPhysicsSystem(physicsSystem.get());
+
+    std::ofstream stream(path.data(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+    JPH::StreamOutWrapper wrapper(stream);
+
+    if (stream.is_open())
+    {
+        scene->SaveBinaryState(wrapper, true, true);
+    }
+    else
+    {
+        LOG_ERROR(std::string("Can't dump physics state to non-writable file at: ") + path.data());
+        return false;
+    }
+
+    return true;
 }
 
 // ------------------------------------ //

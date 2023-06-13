@@ -151,6 +151,11 @@ public class PhysicalWorld : IDisposable
         NativeMethods.PhysicalWorldRemoveGravity(AccessWorldInternal());
     }
 
+    public bool DumpPhysicsState(string path)
+    {
+        return NativeMethods.PhysicalWorldDumpPhysicsState(AccessWorldInternal(), path);
+    }
+
     public void Dispose()
     {
         Dispose(true);
@@ -254,4 +259,7 @@ internal static partial class NativeMethods
 
     [DllImport("thrive_native")]
     internal static extern float PhysicalWorldGetPhysicsAverageTime(IntPtr physicalWorld);
+
+    [DllImport("thrive_native", CharSet = CharSet.Ansi, BestFitMapping = false)]
+    internal static extern bool PhysicalWorldDumpPhysicsState(IntPtr physicalWorld, string path);
 }
