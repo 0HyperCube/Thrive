@@ -189,8 +189,8 @@ void GiveImpulse(PhysicalWorld* physicalWorld, PhysicsBody* body, JVecF3 impulse
         ->GiveImpulse(reinterpret_cast<Thrive::Physics::PhysicsBody*>(body)->GetId(), Thrive::Vec3FromCAPI(impulse));
 }
 
-void ApplyBodyControl(PhysicalWorld* physicalWorld, PhysicsBody* body, JVecF3 movementImpulse, JQuat targetRotation,
-    float rotationRate)
+void SetBodyControl(
+    PhysicalWorld* physicalWorld, PhysicsBody* body, JVecF3 movementImpulse, JQuat targetRotation, float rotationRate)
 {
     if (physicalWorld == nullptr || body == nullptr)
     {
@@ -199,8 +199,19 @@ void ApplyBodyControl(PhysicalWorld* physicalWorld, PhysicsBody* body, JVecF3 mo
     }
 
     reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
-        ->ApplyBodyControl(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body),
-            Thrive::Vec3FromCAPI(movementImpulse), Thrive::QuatFromCAPI(targetRotation), rotationRate);
+        ->SetBodyControl(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body), Thrive::Vec3FromCAPI(movementImpulse),
+            Thrive::QuatFromCAPI(targetRotation), rotationRate);
+}
+
+void DisableBodyControl(PhysicalWorld* physicalWorld, PhysicsBody* body)
+{
+    if (physicalWorld == nullptr || body == nullptr)
+    {
+        return;
+    }
+
+    reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+        ->DisableBodyControl(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body));
 }
 
 void SetBodyPosition(PhysicalWorld* physicalWorld, PhysicsBody* body, JVec3 position, bool activate)

@@ -23,6 +23,7 @@ namespace Thrive::Physics
 {
 
 class PhysicsBody;
+class StepListener;
 
 /// \brief Main handling class of the physics simulation
 ///
@@ -30,6 +31,8 @@ class PhysicsBody;
 /// does this) and collision types registered.
 class PhysicalWorld
 {
+    friend StepListener;
+
     // Pimpl-idiom class for hiding some properties to reduce needed headers and size of this class
     class Pimpl;
 
@@ -67,8 +70,9 @@ public:
     void SetAngularVelocity(JPH::BodyID bodyId, JPH::Vec3Arg velocity);
     void GiveAngularImpulse(JPH::BodyID bodyId, JPH::Vec3Arg impulse);
 
-    void ApplyBodyControl(
+    void SetBodyControl(
         PhysicsBody& bodyWrapper, JPH::Vec3Arg movementImpulse, JPH::Quat targetRotation, float rotationRate);
+    void DisableBodyControl(PhysicsBody& bodyWrapper);
 
     void SetPosition(JPH::BodyID bodyId, JPH::DVec3Arg position, bool activate = true);
 
@@ -105,6 +109,9 @@ public:
         return averagePhysicsTime;
     }
 
+protected:
+    void PerformPhysicsStepOperations(float delta);
+
 private:
     /// \brief Creates the physics system
     void InitPhysicsWorld();
@@ -115,6 +122,8 @@ private:
         JPH::RVec3Arg position, JPH::Quat rotation = JPH::Quat::sIdentity());
 
     void OnPostBodyAdded(PhysicsBody& body);
+
+    void ApplyBodyControl(PhysicsBody& bodyWrapper);
 
 private:
     float elapsedSinceUpdate = 0;
@@ -130,6 +139,7 @@ private:
 
     std::unique_ptr<ContactListener> contactListener;
     std::unique_ptr<BodyActivationListener> activationListener;
+    std::unique_ptr<StepListener> stepListener;
 
     // TODO: switch to this custom one
     // std::unique_ptr<TaskSystem> jobSystem;

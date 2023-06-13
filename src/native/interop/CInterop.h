@@ -65,6 +65,10 @@ extern "C"
     [[maybe_unused]] THRIVE_NATIVE_API void ApplyBodyControl(PhysicalWorld* physicalWorld, PhysicsBody* body,
         JVecF3 movementImpulse, JQuat targetRotation, float rotationRate);
 
+    [[maybe_unused]] THRIVE_NATIVE_API void SetBodyControl(PhysicalWorld* physicalWorld, PhysicsBody* body,
+        JVecF3 movementImpulse, JQuat targetRotation, float rotationRate);
+    [[maybe_unused]] THRIVE_NATIVE_API void DisableBodyControl(PhysicalWorld* physicalWorld, PhysicsBody* body);
+
     [[maybe_unused]] THRIVE_NATIVE_API void SetBodyPosition(
         PhysicalWorld* physicalWorld, PhysicsBody* body, JVec3 position, bool activate);
 

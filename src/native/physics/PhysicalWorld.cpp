@@ -22,6 +22,7 @@
 #include "BodyControlState.hpp"
 #include "ContactListener.hpp"
 #include "PhysicsBody.hpp"
+#include "StepListener.hpp"
 #include "TrackedConstraint.hpp"
 
 JPH_SUPPRESS_WARNINGS
@@ -67,6 +68,8 @@ public:
     JPH::PhysicsSettings physicsSettings;
 
     boost::circular_buffer<float> durationBuffer;
+
+    std::vector<Ref<PhysicsBody>> bodiesWithPerStepControl;
 
     JPH::Vec3 gravity = JPH::Vec3(0, -9.81f, 0);
 };
@@ -117,6 +120,9 @@ void PhysicalWorld::InitPhysicsWorld()
     // Activation listening
     activationListener = std::make_unique<BodyActivationListener>();
     physicsSystem->SetBodyActivationListener(activationListener.get());
+
+    stepListener = std::make_unique<StepListener>(*this);
+    physicsSystem->AddStepListener(stepListener.get());
 }
 
 // ------------------------------------ //
@@ -233,6 +239,9 @@ void PhysicalWorld::DestroyBody(const Ref<PhysicsBody>& body)
         DestroyConstraint(*body->GetConstraints().back());
     }
 
+    if (body->GetBodyControlState() != nullptr)
+        DisableBodyControl(*body);
+
     bodyInterface.RemoveBody(body->GetId());
     body->MarkRemovedFromWorld();
 
@@ -338,12 +347,12 @@ void PhysicalWorld::GiveAngularImpulse(JPH::BodyID bodyId, JPH::Vec3Arg impulse)
     body.AddAngularImpulse(impulse);
 }
 
-void PhysicalWorld::ApplyBodyControl(
+void PhysicalWorld::SetBodyControl(
     PhysicsBody& bodyWrapper, JPH::Vec3Arg movementImpulse, JPH::Quat targetRotation, float rotationRate)
 {
-    constexpr auto allowedRotationDifference = 0.0001f;
-    constexpr auto newRotationTargetAfter = 0.001f;
-    constexpr auto overshootDetectWhenAllAnglesLessThan = PI * 0.025f;
+    // This needs to be pretty small now to make sure we send in the new target value very often, we could have
+    // another level of indirection if we wanted to only detect a new rotation target with big changes
+    constexpr auto newRotationTargetAfter = 0.00001f;
 
     if (rotationRate <= 0)
     {
@@ -351,78 +360,60 @@ void PhysicalWorld::ApplyBodyControl(
         return;
     }
 
-    bool justStarted = bodyWrapper.EnableBodyControlIfNotAlready();
+    BodyControlState* state;
 
-    const auto bodyId = bodyWrapper.GetId();
+    bool justEnabled = bodyWrapper.EnableBodyControlIfNotAlready();
 
-    JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterface(), bodyId);
-    if (!lock.Succeeded())
-    {
-        LOG_ERROR("Couldn't lock body for applying body control");
-        return;
-    }
+    state = bodyWrapper.GetBodyControlState();
 
-    JPH::Body& body = lock.GetBody();
-
-    body.AddImpulse(movementImpulse);
-
-    BodyControlState* controlState = bodyWrapper.GetBodyControlState();
-
-    if (controlState == nullptr)
+    if (state == nullptr)
     {
         LOG_ERROR("Logic error in body control state creation (state should have been created)");
         return;
     }
 
-    const auto& currentRotation = body.GetRotation();
-
-    const auto difference = currentRotation * targetRotation.Inversed();
-
-    bool targetChanged = justStarted || !targetRotation.IsClose(controlState->previousTarget, newRotationTargetAfter);
-
-    if (difference.IsClose(JPH::Quat::sIdentity(), allowedRotationDifference))
+    if (justEnabled)
     {
-        body.SetAngularVelocityClamped({0, 0, 0});
-    }
-    else if (!justStarted && !targetChanged)
-    {
-        // Check if we overshot the target and should stop to avoid oscillating
-        const auto oldDifference = controlState->previousRotation * targetRotation.Inversed();
-        const auto oldAngles = oldDifference.GetEulerAngles();
+        // TODO: avoid duplicates if someone else will also add items to this list
+        pimpl->bodiesWithPerStepControl.emplace_back(&bodyWrapper);
 
-        const auto differenceAngles = difference.GetEulerAngles();
-
-        const auto angleDifference = oldAngles - differenceAngles;
-
-        bool potentiallyOvershot = std::signbit(oldAngles.GetX()) != std::signbit(differenceAngles.GetX()) ||
-            std::signbit(oldAngles.GetY()) != std::signbit(differenceAngles.GetY()) ||
-            std::signbit(oldAngles.GetZ()) != std::signbit(differenceAngles.GetZ());
-
-        if (potentiallyOvershot && std::abs(angleDifference.GetX()) < overshootDetectWhenAllAnglesLessThan &&
-            std::abs(angleDifference.GetY()) < overshootDetectWhenAllAnglesLessThan &&
-            std::abs(angleDifference.GetZ()) < overshootDetectWhenAllAnglesLessThan)
-        {
-            // Overshot and we are otherwise within limits, reset velocity to 0 to prevent oscillation
-            body.SetAngularVelocityClamped({0, 0, 0});
-        }
-        else
-        {
-            // Didn't overshoot, use normal logic
-            body.SetAngularVelocityClamped(differenceAngles / rotationRate);
-        }
+        state->previousTarget = targetRotation;
+        state->targetRotation = targetRotation;
+        state->targetChanged = true;
+        state->justStarted = true;
     }
     else
     {
-        body.SetAngularVelocityClamped(difference.GetEulerAngles() / rotationRate);
+        if (!targetRotation.IsClose(state->targetRotation, newRotationTargetAfter))
+        {
+            state->targetChanged = true;
+            state->previousTarget = state->targetRotation;
+            state->targetRotation = targetRotation;
+        }
     }
 
-    controlState->previousRotation = currentRotation;
+    state->movement = movementImpulse;
+    state->rotationRate = rotationRate;
+}
 
-    if (targetChanged)
-        controlState->previousTarget = targetRotation;
+void PhysicalWorld::DisableBodyControl(PhysicsBody& bodyWrapper)
+{
+    if (bodyWrapper.DisableBodyControl())
+    {
+        auto& registeredIn = pimpl->bodiesWithPerStepControl;
 
-    if (justStarted)
-        controlState->justStarted = false;
+        for (auto iter = registeredIn.begin(); iter != registeredIn.end(); ++iter)
+        {
+            if ((*iter).get() == &bodyWrapper)
+            {
+                // TODO: if items can be in this vector for multiple reasons this will need to check that
+                registeredIn.erase(iter);
+                return;
+            }
+        }
+
+        LOG_ERROR("Didn't find body in internal vector of bodies needing operations for control disable");
+    }
 }
 
 void PhysicalWorld::SetPosition(JPH::BodyID bodyId, JPH::DVec3Arg position, bool activate)
@@ -674,6 +665,19 @@ void PhysicalWorld::StepPhysics(JPH::JobSystemThreadPool& jobs, float time)
     averagePhysicsTime = pimpl->AddAndCalculateAverageTime(elapsed);
 }
 
+void PhysicalWorld::PerformPhysicsStepOperations(float delta)
+{
+    // Apply per-step physics body state
+    // TODO: multithreading if there's a ton of bodies using this
+    for (const auto& bodyPtr : pimpl->bodiesWithPerStepControl)
+    {
+        auto& body = *bodyPtr;
+
+        if (body.GetBodyControlState() != nullptr)
+            ApplyBodyControl(body);
+    }
+}
+
 Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotionType motionType, JPH::ObjectLayer layer,
     JPH::RVec3Arg position, JPH::Quat rotation /*= JPH::Quat::sIdentity()*/)
 {
@@ -707,6 +711,72 @@ void PhysicalWorld::OnPostBodyAdded(PhysicsBody& body)
     // Add an extra reference to the body to keep it from being deleted while in this world
     body.AddRef();
     ++bodyCount;
+}
+
+// ------------------------------------ //
+void PhysicalWorld::ApplyBodyControl(PhysicsBody& bodyWrapper)
+{
+    constexpr auto allowedRotationDifference = 0.0001f;
+    constexpr auto overshootDetectWhenAllAnglesLessThan = PI * 0.025f;
+
+    BodyControlState* controlState = bodyWrapper.GetBodyControlState();
+    const auto bodyId = bodyWrapper.GetId();
+
+    // This method is called by the step listener meaning that all bodies are already locked so this needs to be used
+    // like this
+    JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterfaceNoLock(), bodyId);
+    if (!lock.Succeeded())
+    {
+        LOG_ERROR("Couldn't lock body for applying body control");
+        return;
+    }
+
+    JPH::Body& body = lock.GetBody();
+
+    body.AddImpulse(controlState->movement);
+
+    const auto& currentRotation = body.GetRotation();
+
+    const auto difference = currentRotation * controlState->targetRotation.Inversed();
+
+    if (difference.IsClose(JPH::Quat::sIdentity(), allowedRotationDifference))
+    {
+        body.SetAngularVelocityClamped({0, 0, 0});
+    }
+    else if (!controlState->justStarted && !controlState->targetChanged)
+    {
+        // Check if we overshot the target and should stop to avoid oscillating
+        const auto oldDifference = controlState->previousRotation * controlState->targetRotation.Inversed();
+        const auto oldAngles = oldDifference.GetEulerAngles();
+
+        const auto differenceAngles = difference.GetEulerAngles();
+
+        const auto angleDifference = oldAngles - differenceAngles;
+
+        bool potentiallyOvershot = std::signbit(oldAngles.GetX()) != std::signbit(differenceAngles.GetX()) ||
+            std::signbit(oldAngles.GetY()) != std::signbit(differenceAngles.GetY()) ||
+            std::signbit(oldAngles.GetZ()) != std::signbit(differenceAngles.GetZ());
+
+        if (potentiallyOvershot && std::abs(angleDifference.GetX()) < overshootDetectWhenAllAnglesLessThan &&
+            std::abs(angleDifference.GetY()) < overshootDetectWhenAllAnglesLessThan &&
+            std::abs(angleDifference.GetZ()) < overshootDetectWhenAllAnglesLessThan)
+        {
+            // Overshot and we are otherwise within limits, reset velocity to 0 to prevent oscillation
+            body.SetAngularVelocityClamped({0, 0, 0});
+        }
+        else
+        {
+            // Didn't overshoot, use normal logic
+            body.SetAngularVelocityClamped(differenceAngles / controlState->rotationRate);
+        }
+    }
+    else
+    {
+        body.SetAngularVelocityClamped(difference.GetEulerAngles() / controlState->rotationRate);
+    }
+
+    controlState->previousRotation = currentRotation;
+    controlState->justStarted = false;
 }
 
 } // namespace Thrive::Physics

@@ -44,9 +44,6 @@ public:
 
     [[nodiscard]] static PhysicsBody* FromJoltBody(uint64_t bodyUserData) noexcept;
 
-    bool EnableBodyControlIfNotAlready() noexcept;
-    bool DisableBodyControl() noexcept;
-
     [[nodiscard]] inline bool IsActive() const noexcept
     {
         return active;
@@ -62,15 +59,20 @@ public:
         return id;
     }
 
-    [[nodiscard]] inline const auto& GetConstraints() const noexcept{
+    [[nodiscard]] const inline auto& GetConstraints() const noexcept
+    {
         return constraintsThisIsPartOf;
     }
 
-    [[nodiscard]] inline BodyControlState* GetBodyControlState() const noexcept{
+    [[nodiscard]] inline BodyControlState* GetBodyControlState() const noexcept
+    {
         return bodyControlStateIfActive.get();
     }
 
 protected:
+    bool EnableBodyControlIfNotAlready() noexcept;
+    bool DisableBodyControl() noexcept;
+
     void MarkUsedInWorld() noexcept;
     void MarkRemovedFromWorld() noexcept;
 

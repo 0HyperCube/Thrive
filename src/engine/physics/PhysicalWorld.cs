@@ -100,13 +100,18 @@ public class PhysicalWorld : IDisposable
     }
 
     public void ApplyBodyMicrobeControl(PhysicsBody body, Vector3 movementImpulse, Quat lookDirection,
-        float rotationRate)
+        float rotationSpeedDivisor)
     {
-        if (rotationRate <= 0)
-            throw new ArgumentException("Rotation rate needs to be above 0");
+        if (rotationSpeedDivisor < 1)
+            throw new ArgumentException("Rotation rate divisor needs to be 1 or above");
 
-        NativeMethods.ApplyBodyControl(AccessWorldInternal(), body.AccessBodyInternal(),
-            new JVecF3(movementImpulse), new JQuat(lookDirection), rotationRate);
+        NativeMethods.SetBodyControl(AccessWorldInternal(), body.AccessBodyInternal(),
+            new JVecF3(movementImpulse), new JQuat(lookDirection), rotationSpeedDivisor);
+    }
+
+    public void DisableMicrobeBodyControl(PhysicsBody body)
+    {
+        NativeMethods.DisableBodyControl(AccessWorldInternal(), body.AccessBodyInternal());
     }
 
     public void SetBodyPosition(PhysicsBody body, Vector3 position)
@@ -222,8 +227,11 @@ internal static partial class NativeMethods
     internal static extern void GiveImpulse(IntPtr world, IntPtr body, JVecF3 impulse);
 
     [DllImport("thrive_native")]
-    internal static extern void ApplyBodyControl(IntPtr world, IntPtr body, JVecF3 movementImpulse,
+    internal static extern void SetBodyControl(IntPtr world, IntPtr body, JVecF3 movementImpulse,
         JQuat targetRotation, float reachTargetInSeconds);
+
+    [DllImport("thrive_native")]
+    internal static extern void DisableBodyControl(IntPtr world, IntPtr body);
 
     [DllImport("thrive_native")]
     internal static extern void SetBodyPosition(IntPtr world, IntPtr body, JVec3 position, bool activate = true);

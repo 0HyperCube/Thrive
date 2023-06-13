@@ -11,8 +11,14 @@ public:
 
     JPH::Quat previousRotation = {};
     JPH::Quat previousTarget = {};
+    JPH::Quat targetRotation = {};
+
+    JPH::Vec3 movement = {};
+
+    float rotationRate = 1;
 
     bool justStarted = true;
+    bool targetChanged = false;
 };
 
 } // namespace Thrive::Physics
