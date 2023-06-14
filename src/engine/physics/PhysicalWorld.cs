@@ -13,6 +13,20 @@ public class PhysicalWorld : IDisposable
     private PhysicalWorld(IntPtr nativeInstance)
     {
         this.nativeInstance = nativeInstance;
+
+        var debugDrawer = DebugDrawer.Instance;
+        debugDrawer.OnPhysicsDebugLevelChangedHandler += SetUpdatedDebugLevel;
+        debugDrawer.OnPhysicsDebugCameraPositionChangedHandler += UpdateDebugCameraInfo;
+
+        // Apply debug level set before this object was created (as we can't have received the signal about the
+        // incremented debug level
+        var currentDebugLevel = debugDrawer.DebugLevel;
+
+        if (currentDebugLevel > 0)
+        {
+            SetUpdatedDebugLevel(currentDebugLevel);
+            UpdateDebugCameraInfo(debugDrawer.DebugCameraLocation);
+        }
     }
 
     ~PhysicalWorld()
@@ -175,6 +189,8 @@ public class PhysicalWorld : IDisposable
         ReleaseUnmanagedResources();
         if (disposing)
         {
+            DebugDrawer.Instance.OnPhysicsDebugLevelChangedHandler -= SetUpdatedDebugLevel;
+
             disposed = true;
         }
     }
