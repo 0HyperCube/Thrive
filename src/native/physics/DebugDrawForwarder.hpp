@@ -11,7 +11,8 @@
 namespace Thrive::Physics
 {
 
-constexpr float MaxDebugDrawRate = 1 / 30.0f;
+constexpr float MaxDebugDrawRate = 1 / 60.0f;
+constexpr bool AutoAdjustDebugDrawRateWhenSlow = true;
 constexpr float DebugDrawLODBias = 2;
 
 /// \brief Forwards debug draw from the physics system out of this native library
@@ -96,6 +97,11 @@ public:
         minDrawDelta = 1 / framerate;
     }
 
+    inline void SetAutoAdjustMaxDrawFPS(bool autoAdjustOnLag)
+    {
+        adjustRateOnLag = autoAdjustOnLag;
+    }
+
 private:
     void DrawTriangleInternal(
         const DVertex& vertex1, const DVertex& vertex2, const DVertex& vertex3, JPH::Float4 colourTint, bool wireFrame);
@@ -125,6 +131,7 @@ private:
     JPH::Vec3 cameraPosition = {};
     float cameraLODBias = DebugDrawLODBias;
     float minDrawDelta = MaxDebugDrawRate;
+    bool adjustRateOnLag = AutoAdjustDebugDrawRateWhenSlow;
 
     float timeSinceDraw = 1;
 };

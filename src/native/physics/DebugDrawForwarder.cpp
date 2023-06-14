@@ -4,6 +4,7 @@
 #include "Jolt/Math/Float4.h"
 
 #include "core/Logger.hpp"
+#include "core/Time.hpp"
 
 // #define ENSURE_NO_COLOUR_OVER_SATURATION
 
@@ -84,6 +85,8 @@ DebugDrawForwarder::DebugDrawForwarder()
 // ------------------------------------ //
 void DebugDrawForwarder::FlushOutput()
 {
+    const auto startTime = TimingClock::now();
+
     Lock lock(mutex);
 
     // Send the accumulated data
@@ -108,6 +111,29 @@ void DebugDrawForwarder::FlushOutput()
     triangleBuffer.clear();
 
     // TODO: clear geometries that haven't been used for a long time?
+
+    if (adjustRateOnLag)
+    {
+        const auto duration = std::chrono::duration_cast<SecondDuration>(TimingClock::now() - startTime).count();
+
+        if (duration < 0.012f)
+        {
+            minDrawDelta = MaxDebugDrawRate;
+        }
+        else if (duration < 0.018f)
+        {
+            minDrawDelta = 1 / 30.0f;
+        }
+        else if (duration < 0.025f)
+        {
+            minDrawDelta = 1 / 15.0f;
+        }
+        else
+        {
+            // Lag is bad, set to the lowest possible time
+            minDrawDelta = 1 / 10.0f;
+        }
+    }
 }
 
 void DebugDrawForwarder::SetOutputLineReceiver(std::function<LineCallback> callback)
