@@ -20,7 +20,8 @@ add_library(thrive_native SHARED
   physics/ShapeWrapper.cpp physics/ShapeWrapper.hpp
   physics/SimpleShapes.cpp physics/SimpleShapes.hpp
   physics/TrackedConstraint.cpp physics/TrackedConstraint.hpp
-   physics/StepListener.cpp physics/StepListener.hpp)
+  physics/StepListener.cpp physics/StepListener.hpp
+  physics/DebugDrawForwarder.cpp physics/DebugDrawForwarder.hpp)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   target_compile_options(thrive_native PRIVATE /W4 /wd4068)

@@ -111,6 +111,13 @@ public:
 
     bool DumpSystemState(std::string_view path);
 
+    inline void SetDebugLevel(int level) noexcept
+    {
+        debugDrawLevel = level;
+    }
+
+    void SetDebugCameraLocation(JPH::Vec3Arg position) noexcept;
+
 protected:
     void PerformPhysicsStepOperations(float delta);
 
@@ -127,6 +134,8 @@ private:
 
     void ApplyBodyControl(PhysicsBody& bodyWrapper);
 
+    void DrawPhysics(float delta);
+
 private:
     float elapsedSinceUpdate = 0;
 
@@ -135,6 +144,16 @@ private:
     int simulationsToNextOptimization = 1;
     float latestPhysicsTime = 0;
     float averagePhysicsTime = 0;
+
+    /// \brief Debug draw level (0 is disabled)
+    ///
+    /// 1 is just bodies
+    /// 2 is also contacts
+    /// 3 is also body bounding boxes and velocities
+    /// 4 is also constraints
+    /// 5 is also constraint limits
+    /// 6 is also constraint reference frames
+    int debugDrawLevel = 0;
 
     /// \brief The main part, the physics system that simulates this world
     std::unique_ptr<JPH::PhysicsSystem> physicsSystem;

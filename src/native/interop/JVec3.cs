@@ -74,3 +74,33 @@ public struct JVecF3
         return new Vector3(d.X, d.Y, d.Z);
     }
 }
+
+[StructLayout(LayoutKind.Sequential)]
+public struct JColour
+{
+    public float R;
+    public float G;
+    public float B;
+    public float A;
+
+    public JColour(Color color)
+    {
+        R = color.r;
+        G = color.g;
+        B = color.b;
+        A = color.a;
+    }
+
+    public JColour(float r, float g, float b, float a)
+    {
+        R = r;
+        G = g;
+        B = b;
+        A = a;
+    }
+
+    public static implicit operator Color(JColour d)
+    {
+        return new Color(d.R, d.G, d.B, d.A);
+    }
+}

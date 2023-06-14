@@ -187,6 +187,22 @@ public class PhysicalWorld : IDisposable
             nativeInstance = new IntPtr(0);
         }
     }
+
+    private void SetUpdatedDebugLevel(int level)
+    {
+        if (nativeInstance.ToInt64() != 0)
+        {
+            NativeMethods.PhysicalWorldSetDebugDrawLevel(AccessWorldInternal(), level);
+        }
+    }
+
+    private void UpdateDebugCameraInfo(Vector3 position)
+    {
+        if (nativeInstance.ToInt64() != 0)
+        {
+            NativeMethods.PhysicalWorldSetDebugDrawCameraLocation(AccessWorldInternal(), new JVecF3(position));
+        }
+    }
 }
 
 /// <summary>
@@ -262,4 +278,10 @@ internal static partial class NativeMethods
 
     [DllImport("thrive_native", CharSet = CharSet.Ansi, BestFitMapping = false)]
     internal static extern bool PhysicalWorldDumpPhysicsState(IntPtr physicalWorld, string path);
+
+    [DllImport("thrive_native")]
+    internal static extern void PhysicalWorldSetDebugDrawLevel(IntPtr physicalWorld, int level);
+
+    [DllImport("thrive_native")]
+    internal static extern void PhysicalWorldSetDebugDrawCameraLocation(IntPtr physicalWorld, JVecF3 position);
 }

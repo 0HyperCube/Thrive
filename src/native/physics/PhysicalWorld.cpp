@@ -24,6 +24,7 @@
 #include "BodyActivationListener.hpp"
 #include "BodyControlState.hpp"
 #include "ContactListener.hpp"
+#include "DebugDrawForwarder.hpp"
 #include "PhysicsBody.hpp"
 #include "StepListener.hpp"
 #include "TrackedConstraint.hpp"
@@ -39,6 +40,18 @@ class PhysicalWorld::Pimpl
 public:
     Pimpl() : durationBuffer(30)
     {
+#ifdef JPH_DEBUG_RENDERER
+        // Convex shapes
+        // This is very expensive in terms of debug rendering data amount
+        bodyDrawSettings.mDrawGetSupportFunction = false;
+
+        // Wireframe is preferred when
+        bodyDrawSettings.mDrawShapeWireframe = true;
+
+        bodyDrawSettings.mDrawCenterOfMassTransform = true;
+
+        // TODO: some of the extra settings should be enableable
+#endif
     }
 
     float AddAndCalculateAverageTime(float duration)
@@ -75,6 +88,12 @@ public:
     std::vector<Ref<PhysicsBody>> bodiesWithPerStepControl;
 
     JPH::Vec3 gravity = JPH::Vec3(0, -9.81f, 0);
+
+#ifdef JPH_DEBUG_RENDERER
+    JPH::BodyManager::DrawSettings bodyDrawSettings;
+
+    JPH::Vec3Arg debugDrawCameraLocation = {};
+#endif
 };
 
 PhysicalWorld::PhysicalWorld() : pimpl(std::make_unique<Pimpl>())
@@ -138,6 +157,7 @@ bool PhysicalWorld::Process(float delta)
     const auto singlePhysicsFrame = 1 / physicsFrameRate;
 
     bool simulatedPhysics = false;
+    float simulatedTime = 0;
 
     // TODO: limit max steps per frame to avoid massive potential for lag spikes
     // TODO: alternatively to this it is possible to use a bigger timestep at once but then collision steps and
@@ -145,6 +165,7 @@ bool PhysicalWorld::Process(float delta)
     while (elapsedSinceUpdate > singlePhysicsFrame)
     {
         elapsedSinceUpdate -= singlePhysicsFrame;
+        simulatedTime += singlePhysicsFrame;
         StepPhysics(*jobSystem, singlePhysicsFrame);
         simulatedPhysics = true;
     }
@@ -153,6 +174,8 @@ bool PhysicalWorld::Process(float delta)
         return false;
 
     // TODO: Trigger stuff from the collision detection (but maybe some stuff needs to trigger for each step?)
+
+    DrawPhysics(simulatedTime);
 
     return true;
 }
@@ -803,6 +826,70 @@ void PhysicalWorld::ApplyBodyControl(PhysicsBody& bodyWrapper)
 
     controlState->previousRotation = currentRotation;
     controlState->justStarted = false;
+}
+
+void PhysicalWorld::DrawPhysics(float delta)
+{
+    if (debugDrawLevel < 1)
+    {
+#ifdef JPH_DEBUG_RENDERER
+        contactListener->SetDebugDraw(nullptr);
+#endif
+
+        return;
+    }
+
+#ifdef JPH_DEBUG_RENDERER
+    auto& drawer = DebugDrawForwarder::GetInstance();
+
+    if (!drawer.HasAReceiver())
+        return;
+
+    drawer.SetCameraPositionForLOD(pimpl->debugDrawCameraLocation);
+
+    if (!drawer.TimeToRenderDebug(delta))
+    {
+        // Rate limiting the drawing
+        // New contacts will be drawn on the next non-rate limited frame
+        contactListener->SetDrawOnlyNewContacts(true);
+        return;
+    }
+
+    if (debugDrawLevel > 2)
+    {
+        contactListener->SetDebugDraw(&drawer);
+        contactListener->SetDrawOnlyNewContacts(false);
+    }
+    else
+    {
+        contactListener->SetDebugDraw(nullptr);
+    }
+
+    pimpl->bodyDrawSettings.mDrawBoundingBox = debugDrawLevel > 1;
+    pimpl->bodyDrawSettings.mDrawVelocity = debugDrawLevel > 1;
+
+    physicsSystem->DrawBodies(pimpl->bodyDrawSettings, &drawer);
+
+    if (debugDrawLevel > 3)
+        physicsSystem->DrawConstraints(&drawer);
+
+    if (debugDrawLevel > 4)
+        physicsSystem->DrawConstraintLimits(&drawer);
+
+    if (debugDrawLevel > 5)
+        physicsSystem->DrawConstraintReferenceFrame(&drawer);
+
+    drawer.FlushOutput();
+#endif
+}
+
+void PhysicalWorld::SetDebugCameraLocation(JPH::Vec3Arg position) noexcept
+{
+#ifdef JPH_DEBUG_RENDERER
+    pimpl->debugDrawCameraLocation = position;
+#else
+    UNUSED(position);
+#endif
 }
 
 } // namespace Thrive::Physics
