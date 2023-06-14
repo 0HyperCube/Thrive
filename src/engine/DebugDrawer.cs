@@ -11,11 +11,23 @@ public class DebugDrawer : ControlWithInput
     /// </summary>
     private const int MaxPhysicsDebugLevel = 7;
 
-    // 2 vector3's and a colour
-    private const long SingleLineDrawMemoryUse = sizeof(float) * 3 * 2 + sizeof(float) * 4;
+    /// <summary>
+    ///   Assumption of what the vertex layout memory use is for immediate geometry (3 floats for position,
+    ///   3 floats for normal, 2 floats for UVs, 4 floats for colour).
+    /// </summary>
+    /// <remarks>
+    ///   <para>
+    ///     It's really hard to find this in Godot source code so this is a pure assumption that has been tested to
+    ///     work fine.
+    ///   </para>
+    /// </remarks>
+    private const long MemoryUseOfIntermediateVertex = sizeof(float) * (3 + 3 + 2 + 4);
 
-    // 3 vector3's and a colour
-    private const long SingleTriangleDrawMemoryUse = sizeof(float) * 3 * 3 + sizeof(float) * 4;
+    // 2 vertices + space in index buffer
+    private const long SingleLineDrawMemoryUse = MemoryUseOfIntermediateVertex * 2 + sizeof(uint);
+
+    // 3 vertices
+    private const long SingleTriangleDrawMemoryUse = MemoryUseOfIntermediateVertex * 3 + sizeof(uint);
 
     private static DebugDrawer? instance;
 
@@ -227,8 +239,6 @@ public class DebugDrawer : ControlWithInput
             }
 
             lineDrawer.SetColor(colour);
-
-            // lineDrawer.SetColor(Colors.Chocolate);
             lineDrawer.AddVertex(from);
             lineDrawer.AddVertex(to);
 
