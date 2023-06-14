@@ -37,6 +37,7 @@ public class DebugDrawer : ControlWithInput
 
     private long usedDrawMemory;
     private long drawMemoryLimit;
+    private long extraNeededDrawMemory;
 
     private bool drawnThisFrame;
 
@@ -159,8 +160,13 @@ public class DebugDrawer : ControlWithInput
             if (!warnedAboutHittingMemoryLimit && usedDrawMemory + SingleTriangleDrawMemoryUse * 100 >= drawMemoryLimit)
             {
                 warnedAboutHittingMemoryLimit = true;
+
+                // Put some extra buffer in the memory advice
+                extraNeededDrawMemory += SingleTriangleDrawMemoryUse * 100;
+
                 GD.PrintErr(
-                    "Debug drawer hit immediate geometry memory limit, some things were not rendered " +
+                    "Debug drawer hit immediate geometry memory limit (extra needed memory: " +
+                    $"{extraNeededDrawMemory / 1024} KiB), some things were not rendered " +
                     "(this message won't repeat even if the problem occurs again)");
             }
 
@@ -199,7 +205,10 @@ public class DebugDrawer : ControlWithInput
     private void DrawLine(Vector3 from, Vector3 to, Color colour)
     {
         if (usedDrawMemory + SingleLineDrawMemoryUse >= drawMemoryLimit)
+        {
+            extraNeededDrawMemory += SingleLineDrawMemoryUse;
             return;
+        }
 
         try
         {
@@ -234,7 +243,10 @@ public class DebugDrawer : ControlWithInput
     private void DrawTriangle(Vector3 vertex1, Vector3 vertex2, Vector3 vertex3, Color colour)
     {
         if (usedDrawMemory + SingleTriangleDrawMemoryUse >= drawMemoryLimit)
+        {
+            extraNeededDrawMemory += SingleLineDrawMemoryUse;
             return;
+        }
 
         try
         {
@@ -273,6 +285,7 @@ public class DebugDrawer : ControlWithInput
 
         lineDrawer.Clear();
         usedDrawMemory = 0;
+        extraNeededDrawMemory = 0;
         lineDrawStarted = false;
 
         triangleDrawer.Clear();
