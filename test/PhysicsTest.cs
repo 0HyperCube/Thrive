@@ -809,7 +809,7 @@ public class PhysicsTest : Node
         private const float JoltImpulseStrength = 2820;
         private const float GodotImpulseStrength = 0.9f;
 
-        private const float ReachTargetRotationSpeed = 0.8f;
+        private const float ReachTargetRotationSpeed = 1.2f;
 
         private readonly PhysicsBody? body;
         private readonly RigidBody? godotBody;
@@ -846,7 +846,8 @@ public class PhysicsTest : Node
             HandleMovementDirectionAndRotation(delta,
                 new Lazy<Vector3>(() => physicalWorld.ReadBodyTransform(body!).origin));
 
-            // Impulse should not be scaled by delta as the physics update happens with consistent timing
+            // Impulse should not be scaled by delta here as the physics system applies the control for each physics
+            // step
             physicalWorld.ApplyBodyMicrobeControl(body!, movementDirection * JoltImpulseStrength, lookDirection,
                 ReachTargetRotationSpeed);
         }
