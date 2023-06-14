@@ -11,6 +11,12 @@ public class DebugDrawer : ControlWithInput
     /// </summary>
     private const int MaxPhysicsDebugLevel = 6;
 
+    // 2 vector3's and a colour
+    private const long SingleLineDrawMemoryUse = sizeof(float) * 3 * 2 + sizeof(float) * 4;
+
+    // 3 vector3's and a colour
+    private const long SingleTriangleDrawMemoryUse = sizeof(float) * 3 * 3 + sizeof(float) * 4;
+
     private static DebugDrawer? instance;
 
 #pragma warning disable CA2213
@@ -22,11 +28,15 @@ public class DebugDrawer : ControlWithInput
 
     private bool physicsDebugSupported;
     private bool warnedAboutNotBeingSupported;
+    private bool warnedAboutHittingMemoryLimit;
 
     // Note that only one debug draw geometry can be going on at once so drawing lines intermixed with triangles is
     // note very efficient
     private bool lineDrawStarted;
     private bool triangleDrawStarted;
+
+    private long usedDrawMemory;
+    private long drawMemoryLimit;
 
     private bool drawnThisFrame;
 
@@ -73,6 +83,18 @@ public class DebugDrawer : ControlWithInput
             float.MaxValue, float.MaxValue));
 
         // TODO: implement debug text drawing (this is a Control to support that in the future)
+
+        // Determine how much stuff we can draw before having all of the drawn stuff disappear
+        var limit = ProjectSettings.Singleton.Get("rendering/limits/buffers/immediate_buffer_size_kb");
+
+        if (limit == null)
+        {
+            GD.PrintErr("Unknown immediate geometry buffer size limit, can't draw debug lines");
+        }
+        else
+        {
+            drawMemoryLimit = (int)limit * 1024;
+        }
 
         if (GetTree().DebugCollisionsHint)
         {
@@ -133,6 +155,17 @@ public class DebugDrawer : ControlWithInput
             {
                 GD.PrintErr("Failed to send camera position to physics debug draw", e);
             }
+
+            if (!warnedAboutHittingMemoryLimit && usedDrawMemory + SingleTriangleDrawMemoryUse * 100 >= drawMemoryLimit)
+            {
+                warnedAboutHittingMemoryLimit = true;
+                GD.PrintErr(
+                    "Debug drawer hit immediate geometry memory limit, some things were not rendered " +
+                    "(this message won't repeat even if the problem occurs again)");
+            }
+
+            // This needs to reset here so that StartDrawingIfNotYetThisFrame gets called again
+            usedDrawMemory = 0;
         }
         else if (currentPhysicsDebugLevel < 1)
         {
@@ -165,6 +198,9 @@ public class DebugDrawer : ControlWithInput
 
     private void DrawLine(Vector3 from, Vector3 to, Color colour)
     {
+        if (usedDrawMemory + SingleLineDrawMemoryUse >= drawMemoryLimit)
+            return;
+
         try
         {
             StartDrawingIfNotYetThisFrame();
@@ -186,6 +222,8 @@ public class DebugDrawer : ControlWithInput
             // lineDrawer.SetColor(Colors.Chocolate);
             lineDrawer.AddVertex(from);
             lineDrawer.AddVertex(to);
+
+            usedDrawMemory += SingleLineDrawMemoryUse;
         }
         catch (Exception e)
         {
@@ -195,6 +233,9 @@ public class DebugDrawer : ControlWithInput
 
     private void DrawTriangle(Vector3 vertex1, Vector3 vertex2, Vector3 vertex3, Color colour)
     {
+        if (usedDrawMemory + SingleTriangleDrawMemoryUse >= drawMemoryLimit)
+            return;
+
         try
         {
             StartDrawingIfNotYetThisFrame();
@@ -216,6 +257,8 @@ public class DebugDrawer : ControlWithInput
             triangleDrawer.AddVertex(vertex1);
             triangleDrawer.AddVertex(vertex2);
             triangleDrawer.AddVertex(vertex3);
+
+            usedDrawMemory += SingleTriangleDrawMemoryUse;
         }
         catch (Exception e)
         {
@@ -229,6 +272,7 @@ public class DebugDrawer : ControlWithInput
             return;
 
         lineDrawer.Clear();
+        usedDrawMemory = 0;
         lineDrawStarted = false;
 
         triangleDrawer.Clear();
