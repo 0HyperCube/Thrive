@@ -188,7 +188,7 @@ public class DebugDrawer : ControlWithInput
         }
         else
         {
-            currentPhysicsDebugLevel += 1 % MaxPhysicsDebugLevel;
+            currentPhysicsDebugLevel = (currentPhysicsDebugLevel + 1) % MaxPhysicsDebugLevel;
 
             GD.Print("Setting physics debug level to: ", currentPhysicsDebugLevel);
 
