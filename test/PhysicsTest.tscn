@@ -138,6 +138,8 @@ align = 2
 transform = Transform( 1, 0, 0, 0, 0.834617, 0.55083, 0, -0.55083, 0.834617, 0, 5.382, 9.099 )
 current = true
 fov = 90.0
+near = 0.01
+far = 200.0
 
 [node name="Listener" type="Listener" parent="RenderingRoot/Camera"]
 
