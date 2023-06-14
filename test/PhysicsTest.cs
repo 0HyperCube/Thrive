@@ -12,7 +12,7 @@ public class PhysicsTest : Node
     public TestType Type = TestType.MicrobePlaceholders;
 
     [Export]
-    public int SpawnPattern = 3;
+    public int SpawnPattern = 4;
 
     /// <summary>
     ///   Sets MultiMesh position data with a single array assignment. Faster when all of the data has changed, but
@@ -617,6 +617,14 @@ public class PhysicsTest : Node
                     SpawnMicrobe(new Vector3(x, 0, z), random);
                 }
             }
+        }
+        else if (SpawnPattern == 4)
+        {
+            // Pattern 4: just a single cell for debug purposes
+
+            ++created;
+
+            SpawnMicrobe(new Vector3(0, 0, 0), random);
         }
         else
         {
