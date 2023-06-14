@@ -179,6 +179,11 @@ void DebugDrawForwarder::DrawGeometry(JPH::RMat44Arg inModelMatrix, const JPH::A
     JPH::DebugRenderer::ECullMode inCullMode, JPH::DebugRenderer::ECastShadow inCastShadow,
     JPH::DebugRenderer::EDrawMode inDrawMode)
 {
+    // Skip rendering too faraway objects
+    const auto distance = inWorldSpaceBounds.GetSqDistanceTo(cameraPosition);
+    if (distance > maxModelDistance * maxModelDistance)
+        return;
+
     const JPH::RMat44 transformMatrix = inModelMatrix;
 
     // TODO: support for different cull modes and shadows (front face probably needs to flip the triangles and no cull
@@ -211,8 +216,6 @@ void DebugDrawForwarder::DrawGeometry(JPH::RMat44Arg inModelMatrix, const JPH::A
     }*/
 
     const auto modelTint = ColorToFloat4(inModelColor);
-
-    auto distance = inWorldSpaceBounds.GetSqDistanceTo(cameraPosition);
 
     for (const LOD& lod : inGeometry->mLODs)
     {

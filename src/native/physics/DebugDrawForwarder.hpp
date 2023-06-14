@@ -14,6 +14,7 @@ namespace Thrive::Physics
 constexpr float MaxDebugDrawRate = 1 / 60.0f;
 constexpr bool AutoAdjustDebugDrawRateWhenSlow = true;
 constexpr float DebugDrawLODBias = 2;
+constexpr float DefaultMaxDistanceToDrawLinesFromCamera = 100;
 
 /// \brief Forwards debug draw from the physics system out of this native library
 /// \todo It would probably benefit the performance a ton if this was directly made to interact with the Godot C++ API
@@ -102,6 +103,10 @@ public:
         adjustRateOnLag = autoAdjustOnLag;
     }
 
+    inline void SetMaxDrawDistance(float drawDistance){
+        maxModelDistance = drawDistance;
+    }
+
 private:
     void DrawTriangleInternal(
         const DVertex& vertex1, const DVertex& vertex2, const DVertex& vertex3, JPH::Float4 colourTint, bool wireFrame);
@@ -132,6 +137,7 @@ private:
     float cameraLODBias = DebugDrawLODBias;
     float minDrawDelta = MaxDebugDrawRate;
     bool adjustRateOnLag = AutoAdjustDebugDrawRateWhenSlow;
+    float maxModelDistance = DefaultMaxDistanceToDrawLinesFromCamera;
 
     float timeSinceDraw = 1;
 };
