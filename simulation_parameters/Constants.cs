@@ -1219,6 +1219,11 @@ public static class Constants
     public const int PATCH_GENERATION_MAX_RETRIES = 100;
 
     /// <summary>
+    ///   If set to true then physics debug draw gets enabled when the game starts
+    /// </summary>
+    public const bool AUTOMATICALLY_TURN_ON_PHYSICS_DEBUG_DRAW = false;
+
+    /// <summary>
     ///   Extra time passed to <see cref="HUDMessages"/> when exiting the editor. Needs to be close to (or higher)
     ///   than the long message time as defined in <see cref="HUDMessages.TimeToFadeFromDuration"/>
     /// </summary>

@@ -81,11 +81,16 @@ public class DebugDrawer : ControlWithInput
         }
         else
         {
+            // ReSharper disable HeuristicUnreachableCode
+#pragma warning disable CS0162
             if (Constants.AUTOMATICALLY_TURN_ON_PHYSICS_DEBUG_DRAW)
             {
                 GD.Print("Starting with debug draw on due to debug draw constant being enabled");
                 Invoke.Instance.Queue(IncrementPhysicsDebugLevel);
             }
+
+            // ReSharper restore HeuristicUnreachableCode
+#pragma warning restore CS0162
         }
     }
 
