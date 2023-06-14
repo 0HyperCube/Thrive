@@ -97,8 +97,8 @@ public:
     }
 
 private:
-    void DrawTriangleInternal(const DVertex& vertex1, const DVertex& vertex2, const DVertex& vertex3,
-        JPH::Float4 colourTint, bool wireFrame);
+    void DrawTriangleInternal(
+        const DVertex& vertex1, const DVertex& vertex2, const DVertex& vertex3, JPH::Float4 colourTint, bool wireFrame);
 
 private:
     /// Apparently debug rendering happens from multiple threads so we need a lock

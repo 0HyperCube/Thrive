@@ -36,6 +36,8 @@ public:
     }
 
 #ifdef JPH_DEBUG_RENDERER
+    void DrawActiveContacts(JPH::DebugRenderer& debugRenderer);
+
     inline void SetDebugDraw(JPH::DebugRenderer* debugRenderer)
     {
         debugDrawer = debugRenderer;

@@ -871,12 +871,17 @@ void PhysicalWorld::DrawPhysics(float delta)
     physicsSystem->DrawBodies(pimpl->bodyDrawSettings, &drawer);
 
     if (debugDrawLevel > 3)
-        physicsSystem->DrawConstraints(&drawer);
+    {
+        contactListener->DrawActiveContacts(drawer);
+    }
 
     if (debugDrawLevel > 4)
-        physicsSystem->DrawConstraintLimits(&drawer);
+        physicsSystem->DrawConstraints(&drawer);
 
     if (debugDrawLevel > 5)
+        physicsSystem->DrawConstraintLimits(&drawer);
+
+    if (debugDrawLevel > 6)
         physicsSystem->DrawConstraintReferenceFrame(&drawer);
 
     drawer.FlushOutput();

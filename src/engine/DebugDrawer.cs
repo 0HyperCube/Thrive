@@ -9,7 +9,7 @@ public class DebugDrawer : ControlWithInput
     /// <summary>
     ///   Needs to match what's defined in PhysicalWorld.hpp
     /// </summary>
-    private const int MaxPhysicsDebugLevel = 6;
+    private const int MaxPhysicsDebugLevel = 7;
 
     // 2 vector3's and a colour
     private const long SingleLineDrawMemoryUse = sizeof(float) * 3 * 2 + sizeof(float) * 4;

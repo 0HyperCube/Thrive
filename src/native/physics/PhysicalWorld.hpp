@@ -149,10 +149,11 @@ private:
     ///
     /// 1 is just bodies
     /// 2 is also contacts
-    /// 3 is also body bounding boxes and velocities
-    /// 4 is also constraints
-    /// 5 is also constraint limits
-    /// 6 is also constraint reference frames
+    /// 3 is also active contact points
+    /// 4 is also body bounding boxes and velocities
+    /// 5 is also constraints
+    /// 6 is also constraint limits
+    /// 7 is also constraint reference frames
     int debugDrawLevel = 0;
 
     /// \brief The main part, the physics system that simulates this world
