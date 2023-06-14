@@ -15,7 +15,7 @@ public class PhysicsTest : Node
     public int SpawnPattern = 2;
 
     [Export]
-    public float CameraZoomSpeed = 1.4f;
+    public float CameraZoomSpeed = 11.4f;
 
     /// <summary>
     ///   Sets MultiMesh position data with a single array assignment. Faster when all of the data has changed, but
@@ -177,7 +177,7 @@ public class PhysicsTest : Node
         }
 
         UpdateGUI(delta);
-        HandleInput();
+        HandleInput(delta);
 
         driftingCheckTimer -= delta;
 
@@ -471,7 +471,7 @@ public class PhysicsTest : Node
         physicsBodiesCountLabel.Text = count.ToString();
     }
 
-    private void HandleInput()
+    private void HandleInput(float delta)
     {
         if (Input.IsActionJustPressed("e_rotate_right"))
             ++followedTestVisualIndex;
@@ -482,11 +482,13 @@ public class PhysicsTest : Node
         if (Input.IsActionJustPressed("e_reset_camera"))
             resetTest = true;
 
+        // The zoom here doesn't work with mouse wheel, but as this had a bunch of other stuff already not using the
+        // custom input system, this doesn't either
         if (Input.IsActionPressed("g_zoom_in"))
-            cameraHeightOffset -= CameraZoomSpeed;
+            cameraHeightOffset -= CameraZoomSpeed * delta;
 
         if (Input.IsActionPressed("g_zoom_out"))
-            cameraHeightOffset += CameraZoomSpeed;
+            cameraHeightOffset += CameraZoomSpeed * delta;
     }
 
     private void SetupPhysicsBodies()
