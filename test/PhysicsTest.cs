@@ -12,7 +12,10 @@ public class PhysicsTest : Node
     public TestType Type = TestType.MicrobePlaceholders;
 
     [Export]
-    public int SpawnPattern = 4;
+    public int SpawnPattern = 2;
+
+    [Export]
+    public float CameraZoomSpeed = 1.4f;
 
     /// <summary>
     ///   Sets MultiMesh position data with a single array assignment. Faster when all of the data has changed, but
@@ -68,6 +71,8 @@ public class PhysicsTest : Node
     /// </summary>
     private const float InitialVisibilityRangeIncrease = 100;
 
+    private const float MicrobeCameraDefaultHeight = 50;
+
     private readonly List<PhysicsBody> allCreatedBodies = new();
     private readonly List<PhysicsBody> sphereBodies = new();
 
@@ -97,6 +102,11 @@ public class PhysicsTest : Node
     private JVecF3[]? testMicrobeOrganellePositions;
 
     private int followedTestVisualIndex;
+
+    /// <summary>
+    ///   Player controller camera zoom level
+    /// </summary>
+    private float cameraHeightOffset;
 
     private float timeSincePhysicsReport;
 
@@ -471,6 +481,12 @@ public class PhysicsTest : Node
 
         if (Input.IsActionJustPressed("e_reset_camera"))
             resetTest = true;
+
+        if (Input.IsActionPressed("g_zoom_in"))
+            cameraHeightOffset -= CameraZoomSpeed;
+
+        if (Input.IsActionPressed("g_zoom_out"))
+            cameraHeightOffset += CameraZoomSpeed;
     }
 
     private void SetupPhysicsBodies()
@@ -746,7 +762,7 @@ public class PhysicsTest : Node
         if (Type is TestType.MicrobePlaceholders or TestType.MicrobePlaceholdersGodotPhysics)
         {
             // Top down view
-            camera.Translation = new Vector3(0, 50, 0);
+            camera.Translation = new Vector3(0, MicrobeCameraDefaultHeight, 0);
             camera.LookAt(new Vector3(0, 0, 0), Vector3.Forward);
         }
 
@@ -761,7 +777,8 @@ public class PhysicsTest : Node
         var target = testVisuals[index].Translation;
 
         var currentPos = camera.Translation;
-        var targetPos = new Vector3(target.x, currentPos.y, target.z);
+
+        var targetPos = new Vector3(target.x, MicrobeCameraDefaultHeight + cameraHeightOffset, target.z);
 
         camera.Translation = currentPos.LinearInterpolate(targetPos, 3 * delta);
     }
