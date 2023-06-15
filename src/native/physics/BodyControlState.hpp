@@ -15,6 +15,8 @@ public:
 
     JPH::Vec3 movement = {};
 
+    /// \brief Rotation speed divisor. Should at smallest be 1 for full speed, any higher value has chance of causing
+    /// unwanted oscillation. Higher values slow down rotation.
     float rotationRate = 1;
 
     bool justStarted = true;
