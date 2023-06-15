@@ -853,6 +853,10 @@ void PhysicalWorld::ApplyBodyControl(PhysicsBody& bodyWrapper)
     controlState->targetChanged = false;
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "readability-make-member-function-const"
+#pragma ide diagnostic ignored "readability-convert-member-functions-to-static"
+
 void PhysicalWorld::DrawPhysics(float delta)
 {
     if (debugDrawLevel < 1)
@@ -921,5 +925,7 @@ void PhysicalWorld::SetDebugCameraLocation(JPH::Vec3Arg position) noexcept
     UNUSED(position);
 #endif
 }
+
+#pragma clang diagnostic pop
 
 } // namespace Thrive::Physics
