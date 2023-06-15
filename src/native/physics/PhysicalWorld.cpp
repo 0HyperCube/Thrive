@@ -376,9 +376,9 @@ void PhysicalWorld::GiveAngularImpulse(JPH::BodyID bodyId, JPH::Vec3Arg impulse)
 void PhysicalWorld::SetBodyControl(
     PhysicsBody& bodyWrapper, JPH::Vec3Arg movementImpulse, JPH::Quat targetRotation, float rotationRate)
 {
-    // This needs to be pretty small now to make sure we send in the new target value very often, we could have
-    // another level of indirection if we wanted to only detect a new rotation target with big changes
-    constexpr auto newRotationTargetAfter = 0.00001f;
+    // Used to detect when the target has changed enough to warrant logic change in the control apply. This needs
+    // to be relatively large to avoid oscillation
+    constexpr auto newRotationTargetAfter = 0.01f;
 
     if (rotationRate <= 0)
     {
@@ -410,11 +410,12 @@ void PhysicalWorld::SetBodyControl(
     }
     else
     {
-        if (!targetRotation.IsClose(state->targetRotation, newRotationTargetAfter))
+        state->targetRotation = targetRotation;
+
+        if (!targetRotation.IsClose(state->previousTarget, newRotationTargetAfter))
         {
             state->targetChanged = true;
             state->previousTarget = state->targetRotation;
-            state->targetRotation = targetRotation;
         }
     }
 
@@ -766,6 +767,7 @@ void PhysicalWorld::OnPostBodyAdded(PhysicsBody& body)
 void PhysicalWorld::ApplyBodyControl(PhysicsBody& bodyWrapper)
 {
     constexpr auto allowedRotationDifference = 0.0001f;
+    constexpr auto closeToTargetThreshold = 0.15f;
     constexpr auto overshootDetectWhenAllAnglesLessThan = PI * 0.025f;
 
     BodyControlState* controlState = bodyWrapper.GetBodyControlState();
@@ -786,46 +788,69 @@ void PhysicalWorld::ApplyBodyControl(PhysicsBody& bodyWrapper)
 
     const auto& currentRotation = body.GetRotation();
 
-    const auto difference = currentRotation * controlState->targetRotation.Inversed();
+    const auto inversedTargetRotation = controlState->targetRotation.Inversed();
+    const auto difference = currentRotation * inversedTargetRotation;
 
     if (difference.IsClose(JPH::Quat::sIdentity(), allowedRotationDifference))
     {
-        body.SetAngularVelocityClamped({0, 0, 0});
-    }
-    else if (!controlState->justStarted && !controlState->targetChanged)
-    {
-        // Check if we overshot the target and should stop to avoid oscillating
-        const auto oldDifference = controlState->previousRotation * controlState->targetRotation.Inversed();
-        const auto oldAngles = oldDifference.GetEulerAngles();
-
-        const auto differenceAngles = difference.GetEulerAngles();
-
-        const auto angleDifference = oldAngles - differenceAngles;
-
-        bool potentiallyOvershot = std::signbit(oldAngles.GetX()) != std::signbit(differenceAngles.GetX()) ||
-            std::signbit(oldAngles.GetY()) != std::signbit(differenceAngles.GetY()) ||
-            std::signbit(oldAngles.GetZ()) != std::signbit(differenceAngles.GetZ());
-
-        if (potentiallyOvershot && std::abs(angleDifference.GetX()) < overshootDetectWhenAllAnglesLessThan &&
-            std::abs(angleDifference.GetY()) < overshootDetectWhenAllAnglesLessThan &&
-            std::abs(angleDifference.GetZ()) < overshootDetectWhenAllAnglesLessThan)
-        {
-            // Overshot and we are otherwise within limits, reset velocity to 0 to prevent oscillation
-            body.SetAngularVelocityClamped({0, 0, 0});
-        }
-        else
-        {
-            // Didn't overshoot, use normal logic
-            body.SetAngularVelocityClamped(differenceAngles / controlState->rotationRate);
-        }
+        // At rotation target, stop rotation
+        // TODO: we could allow small velocities to allow external objects to force our rotation off a bit after which
+        // this would correct itself
+        body.SetAngularVelocity({0, 0, 0});
     }
     else
     {
-        body.SetAngularVelocityClamped(difference.GetEulerAngles() / controlState->rotationRate);
+        // Not currently at the rotation target
+        const auto differenceAngles = difference.GetEulerAngles();
+
+        bool setNormalVelocity = true;
+
+        if (!controlState->justStarted && !controlState->targetChanged)
+        {
+            // Check if we overshot the target and should stop to avoid oscillating
+
+            // Compare the current rotation state with the previous one to detect if we are now on different side of
+            // the target rotation than the previous rotation was
+            const auto oldDifference = controlState->previousRotation * inversedTargetRotation;
+            const auto oldAngles = oldDifference.GetEulerAngles();
+
+            const auto angleDifference = oldAngles - differenceAngles;
+
+            bool potentiallyOvershot = std::signbit(oldAngles.GetX()) != std::signbit(differenceAngles.GetX()) ||
+                std::signbit(oldAngles.GetY()) != std::signbit(differenceAngles.GetY()) ||
+                std::signbit(oldAngles.GetZ()) != std::signbit(differenceAngles.GetZ());
+
+            // If the signs are different and the angles are close enough (to make sure if we overshoot a ton we
+            // correct) then detect an overshoot
+            if (potentiallyOvershot && std::abs(angleDifference.GetX()) < overshootDetectWhenAllAnglesLessThan &&
+                std::abs(angleDifference.GetY()) < overshootDetectWhenAllAnglesLessThan &&
+                std::abs(angleDifference.GetZ()) < overshootDetectWhenAllAnglesLessThan)
+            {
+                // Overshot and we are within angle limits, reset velocity to 0 to prevent oscillation
+                body.SetAngularVelocity({0, 0, 0});
+                setNormalVelocity = false;
+            }
+        }
+
+        if (setNormalVelocity)
+        {
+            // When near the target slow down rotation
+            const bool nearTarget = difference.IsClose(JPH::Quat::sIdentity(), closeToTargetThreshold);
+
+            if (nearTarget)
+            {
+                body.SetAngularVelocityClamped(differenceAngles / controlState->rotationRate * 0.5f);
+            }
+            else
+            {
+                body.SetAngularVelocityClamped(differenceAngles / controlState->rotationRate);
+            }
+        }
     }
 
     controlState->previousRotation = currentRotation;
     controlState->justStarted = false;
+    controlState->targetChanged = false;
 }
 
 void PhysicalWorld::DrawPhysics(float delta)
