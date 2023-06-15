@@ -767,7 +767,7 @@ void PhysicalWorld::OnPostBodyAdded(PhysicsBody& body)
 void PhysicalWorld::ApplyBodyControl(PhysicsBody& bodyWrapper)
 {
     constexpr auto allowedRotationDifference = 0.0001f;
-    constexpr auto closeToTargetThreshold = 0.15f;
+    constexpr auto closeToTargetThreshold = 0.23f;
     constexpr auto overshootDetectWhenAllAnglesLessThan = PI * 0.025f;
 
     BodyControlState* controlState = bodyWrapper.GetBodyControlState();
