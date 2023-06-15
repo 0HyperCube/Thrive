@@ -653,7 +653,7 @@ public class PhysicsTest : Node
 
         if (Type == TestType.MicrobePlaceholdersGodotPhysics)
         {
-            GD.Print("Created microbe physics test Godot rigid bodies: ", microbeAnalogueBodies.Count);
+            GD.Print("Created microbe physics test Godot rigid bodies: ", created);
         }
         else
         {
