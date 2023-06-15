@@ -14,7 +14,7 @@ namespace Thrive::Physics
 constexpr float MaxDebugDrawRate = 1 / 60.0f;
 constexpr bool AutoAdjustDebugDrawRateWhenSlow = true;
 constexpr float DebugDrawLODBias = 2;
-constexpr float DefaultMaxDistanceToDrawLinesFromCamera = 100;
+constexpr float DefaultMaxDistanceToDrawLinesFromCamera = 120;
 
 /// \brief Forwards debug draw from the physics system out of this native library
 /// \todo It would probably benefit the performance a ton if this was directly made to interact with the Godot C++ API
