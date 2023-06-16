@@ -29,9 +29,29 @@ public class TimedLifeSystem
             if (timed.TimeToLiveRemaining <= 0.0f)
             {
                 timed.OnTimeOver();
+
+                if (timed.FadeTimeRemaining != null && timed.FadeTimeRemaining.Value > 0)
+                {
+                    // It wants a bit of extra time to fade
+
+                    // Consider it already dead to not have it be saved
+                    timed.AliveMarker.Alive = false;
+                }
             }
         }
+        
+        // TODO: implement fading
+        public override void _Process(float delta)
+        {
+            if (FadeTimeRemaining == null)
+                return;
+
+            FadeTimeRemaining -= delta;
+            if (FadeTimeRemaining <= 0)
+                this.DestroyDetachAndQueueFree();
+        }
     }
+    
 
     /// <summary>
     ///   Despawns all timed entities

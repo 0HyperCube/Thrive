@@ -6,8 +6,8 @@ using Newtonsoft.Json;
 ///   This is a shot agent projectile, does damage on hitting a cell of different species
 /// </summary>
 [JSONAlwaysDynamicType]
-[SceneLoadedClass("res://src/microbe_stage/AgentProjectile.tscn", UsesEarlyResolve = false)]
-public class AgentProjectile : RigidBody, ITimedLife, IInspectableEntity
+// TODO: reimplement inspectable
+public class AgentProjectile : SimulatedPhysicsEntity, ISimulatedEntityWithDirectVisuals, ITimedLife /*, IInspectableEntity*/
 {
 #pragma warning disable CA2213
     private Particles particles = null!;
@@ -16,11 +16,7 @@ public class AgentProjectile : RigidBody, ITimedLife, IInspectableEntity
     public float TimeToLiveRemaining { get; set; }
     public float Amount { get; set; }
     public AgentProperties? Properties { get; set; }
-    public EntityReference<IEntity> Emitter { get; set; } = new();
-
-    public Spatial EntityNode => this;
-
-    public AliveMarker AliveMarker { get; } = new();
+    public EntityReference<SimulatedPhysicsEntity> Emitter { get; set; } = new();
 
     [JsonIgnore]
     public string ReadableName => Properties?.ToString() ?? TranslationServer.Translate("N_A");
@@ -28,12 +24,15 @@ public class AgentProjectile : RigidBody, ITimedLife, IInspectableEntity
     [JsonProperty]
     private float? FadeTimeRemaining { get; set; }
 
-    public override void _Ready()
+    [JsonIgnore]
+    public Spatial VisualNode { get; private set; }
+
+    public override void OnAddedToSimulation(WorldSimulation simulation)
     {
         if (Properties == null)
             throw new InvalidOperationException($"{nameof(Properties)} is required");
 
-        particles = GetNode<Particles>("Particles");
+        base.OnAddedToSimulation(simulation);
 
         var emitterNode = Emitter.Value?.EntityNode;
 
@@ -41,35 +40,17 @@ public class AgentProjectile : RigidBody, ITimedLife, IInspectableEntity
             AddCollisionExceptionWith(emitterNode);
 
         Connect("body_shape_entered", this, nameof(OnContactBegin));
+
+        particles = GD.Load<PackedScene>("res://src/microbe_stage/AgentProjectile.tscn").Instance<Particles>();
+        VisualNode = particles;
     }
 
-    public override void _Process(float delta)
-    {
-        if (FadeTimeRemaining == null)
-            return;
 
-        FadeTimeRemaining -= delta;
-        if (FadeTimeRemaining <= 0)
-            this.DestroyDetachAndQueueFree();
-    }
 
     public void OnTimeOver()
     {
         if (FadeTimeRemaining == null)
             BeginDestroy();
-    }
-
-    public void OnDestroyed()
-    {
-        AliveMarker.Alive = false;
-    }
-
-    public void OnMouseEnter(RaycastResult raycastResult)
-    {
-    }
-
-    public void OnMouseExit(RaycastResult raycastResult)
-    {
     }
 
     private void OnContactBegin(int bodyID, Node body, int bodyShape, int localShape)
@@ -115,7 +96,5 @@ public class AgentProjectile : RigidBody, ITimedLife, IInspectableEntity
 
         // Timer that delays despawn of projectiles
         FadeTimeRemaining = Constants.PROJECTILE_DESPAWN_DELAY;
-
-        AliveMarker.Alive = false;
     }
 }

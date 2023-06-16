@@ -967,49 +967,11 @@ public static class Constants
     public const string TIMED_GROUP = "timed";
 
     /// <summary>
-    ///   All RigidBody nodes tagged with this are affected by currents by the fluid system
-    /// </summary>
-    public const string FLUID_EFFECT_GROUP = "fluid_effect";
-
-    /// <summary>
-    ///   All Nodes tagged with this are handled by the process system. Can't be just "process" as that conflicts with
-    ///   godot idle_process and process, at least I think it does.
-    /// </summary>
-    public const string PROCESS_GROUP = "run_processes";
-
-    /// <summary>
     ///   All Nodes tagged with this are handled by the ai system
     /// </summary>
     public const string AI_GROUP = "ai";
 
-    /// <summary>
-    ///   Microbes tagged with this are handled by the <see cref="MicrobeSystem"/> to be processed.
-    /// </summary>
-    /// <remarks>
-    ///   <para>
-    ///     NOTE: This is not related to <see cref="PROCESS_GROUP"/> which is in the context of in-game compounds
-    ///     processes, this is related to the engine's <see cref="Node._Process(float)"/> on the nodes.
-    ///   </para>
-    /// </remarks>
-    public const string RUNNABLE_MICROBE_GROUP = "microbe_runnable";
-
-    /// <summary>
-    ///   All Nodes tagged with this are considered Microbes that the AI can react to
-    /// </summary>
-    /// <remarks>
-    ///   <para>
-    ///     TODO: quite a few of these AI_TAG starting constants need to be renamed as these are generally used to
-    ///     find relevant entities for things that aren't the AI system
-    ///   </para>
-    /// </remarks>
-    public const string AI_TAG_MICROBE = "microbe";
-
     public const string ENTITY_TAG_CREATURE = "creature";
-
-    /// <summary>
-    ///   All Nodes tagged with this are considered FloatingChunks that the AI can react to
-    /// </summary>
-    public const string AI_TAG_CHUNK = "chunk";
 
     public const string PLAYER_GROUP = "player";
 

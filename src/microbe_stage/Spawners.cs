@@ -39,26 +39,23 @@ public static class Spawners
 /// </summary>
 public static class SpawnHelpers
 {
-    public static Microbe SpawnMicrobe(Species species, Vector3 location,
-        Node worldRoot, PackedScene microbeScene, bool aiControlled,
-        CompoundCloudSystem cloudSystem, ISpawnSystem spawnSystem, GameProperties currentGame,
+    public static Microbe SpawnMicrobe(MicrobeWorldSimulation simulation, Species species, Vector3 location,
+        bool aiControlled, ISpawnSystem spawnSystem, GameProperties currentGame,
         CellType? multicellularCellType = null)
     {
-        var microbe = (Microbe)microbeScene.Instance();
+        var microbe = new Microbe();
 
         // The second parameter is (isPlayer), and we assume that if the
         // cell is not AI controlled it is the player's cell
-        microbe.Init(cloudSystem, spawnSystem, currentGame, !aiControlled);
+        microbe.Init(simulation.CloudSystem, spawnSystem, currentGame, !aiControlled);
 
-        worldRoot.AddChild(microbe);
-        microbe.Translation = location;
+        microbe.Position = location;
 
-        microbe.AddToGroup(Constants.AI_TAG_MICROBE);
-        microbe.AddToGroup(Constants.PROCESS_GROUP);
-        microbe.AddToGroup(Constants.RUNNABLE_MICROBE_GROUP);
-
-        if (aiControlled)
-            microbe.AddToGroup(Constants.AI_GROUP);
+        // TODO: this will be needed if we switch to an ECS system
+        // if (aiControlled)
+        // {
+        //     // Add the AI control component
+        // }
 
         if (multicellularCellType != null)
         {
@@ -70,6 +67,9 @@ public static class SpawnHelpers
         }
 
         microbe.SetInitialCompounds();
+
+        simulation.AddEntity(microbe);
+
         return microbe;
     }
 
@@ -101,30 +101,34 @@ public static class SpawnHelpers
         }
     }
 
-    // TODO: this is likely a huge cause of lag. Would be nice to be able
-    // to spawn these so that only one per tick is spawned.
     public static IEnumerable<Microbe> SpawnBacteriaColony(Species species, Vector3 location,
         Node worldRoot, PackedScene microbeScene, CompoundCloudSystem cloudSystem, ISpawnSystem spawnSystem,
         GameProperties currentGame, Random random)
     {
-        var curSpawn = new Vector3(random.Next(1, 8), 0, random.Next(1, 8));
+        // TODO: update this to take in a MicrobeWorldSimulation simulation
+        throw new NotImplementedException();
 
-        var clumpSize = random.Next(Constants.MIN_BACTERIAL_COLONY_SIZE,
-            Constants.MAX_BACTERIAL_COLONY_SIZE + 1);
-        for (int i = 0; i < clumpSize; i++)
-        {
-            // Dont spawn them on top of each other because it
-            // causes them to bounce around and lag
-            yield return SpawnMicrobe(species, location + curSpawn, worldRoot, microbeScene, true,
-                cloudSystem, spawnSystem, currentGame);
+        /*
+                var curSpawn = new Vector3(random.Next(1, 8), 0, random.Next(1, 8));
 
-            curSpawn += new Vector3(random.Next(-7, 8), 0, random.Next(-7, 8));
-        }
+                var clumpSize = random.Next(Constants.MIN_BACTERIAL_COLONY_SIZE,
+                    Constants.MAX_BACTERIAL_COLONY_SIZE + 1);
+                for (int i = 0; i < clumpSize; i++)
+                {
+                    // Dont spawn them on top of each other because it
+                    // causes them to bounce around and lag
+                    yield return SpawnMicrobe(species, location + curSpawn, worldRoot, microbeScene, true,
+                        cloudSystem, spawnSystem, currentGame);
+
+                    curSpawn += new Vector3(random.Next(-7, 8), 0, random.Next(-7, 8));
+                }
+        */
     }
 
     public static PackedScene LoadMicrobeScene()
     {
-        return GD.Load<PackedScene>("res://src/microbe_stage/Microbe.tscn");
+        // TODO: remove this method
+        throw new NotImplementedException();
     }
 
     public static FloatingChunk SpawnChunk(ChunkConfiguration chunkType,
@@ -155,8 +159,8 @@ public static class SpawnHelpers
         chunk.GetNode<Spatial>("NodeToScale").Scale = new Vector3(chunkType.ChunkScale, chunkType.ChunkScale,
             chunkType.ChunkScale);
 
-        chunk.AddToGroup(Constants.FLUID_EFFECT_GROUP);
-        chunk.AddToGroup(Constants.AI_TAG_CHUNK);
+        // TODO: reimplement detection for this needing the fluid effect on this
+        throw new NotImplementedException();
         return chunk;
     }
 
@@ -227,7 +231,6 @@ public static class SpawnHelpers
         creature.Translation = location;
 
         creature.AddToGroup(Constants.ENTITY_TAG_CREATURE);
-        creature.AddToGroup(Constants.PROCESS_GROUP);
         creature.AddToGroup(Constants.PROGRESS_ENTITY_GROUP);
 
         if (aiControlled)
@@ -467,7 +470,10 @@ public class MicrobeSpawner : Spawner
         if (Species.Obsolete)
             GD.PrintErr("Obsolete species microbe has spawned");
 
-        // The true here is that this is AI controlled
+        // TODO: change the constructor to take in the microbe simulation instead of the clouds
+        throw new NotImplementedException();
+
+        /*// The true here is that this is AI controlled
         var first = SpawnHelpers.SpawnMicrobe(Species, location, worldNode, microbeScene, true, cloudSystem,
             spawnSystem, currentGame);
 
@@ -490,7 +496,7 @@ public class MicrobeSpawner : Spawner
 
                 ModLoader.ModInterface.TriggerOnMicrobeSpawned(colonyMember);
             }
-        }
+        }*/
     }
 
     public override string ToString()
