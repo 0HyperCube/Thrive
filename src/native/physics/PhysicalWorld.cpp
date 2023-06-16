@@ -477,8 +477,7 @@ bool PhysicalWorld::FixBodyYCoordinateToZero(JPH::BodyID bodyId)
 }
 
 // ------------------------------------ //
-Ref<TrackedConstraint> PhysicalWorld::CreateAxisLockConstraint(
-    PhysicsBody& body, JPH::Vec3 axis, bool lockRotation, bool useInertiaToLockRotation /*= false*/)
+Ref<TrackedConstraint> PhysicalWorld::CreateAxisLockConstraint(PhysicsBody& body, JPH::Vec3 axis, bool lockRotation)
 {
     JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterface(), body.GetId());
     if (!lock.Succeeded())
@@ -502,7 +501,7 @@ Ref<TrackedConstraint> PhysicalWorld::CreateAxisLockConstraint(
     if (axis.GetZ() != 0)
         constraintSettings.MakeFixedAxis(JPH::SixDOFConstraintSettings::TranslationZ);
 
-    if (lockRotation && !useInertiaToLockRotation)
+    if (lockRotation)
     {
         if (axis.GetX() != 0)
         {
@@ -522,41 +521,47 @@ Ref<TrackedConstraint> PhysicalWorld::CreateAxisLockConstraint(
             constraintSettings.MakeFixedAxis(JPH::SixDOFConstraintSettings::RotationZ);
         }
     }
-    else if (lockRotation)
+
+    // Non-working inertia based approach. See:
+    // https://github.com/jrouwe/JoltPhysics/discussions/180#discussioncomment-6182600
+    // Locking approach by inertia from:
+    // JoltPhysics/Samples/Tests/General/TwoDFunnelTest.cpp
+    // This disallows changing the object mass properties (likely shape) after doing this
+    /*JPH::MassProperties mass_properties = lock.GetBody().GetShape()->GetMassProperties();
+    JPH::MotionProperties* mp = lock.GetBody().GetMotionProperties();
+    mp->SetInverseMass(1.0f / mass_properties.mMass);
+
+    // Start off with allowing all rotation
+    JPH::Vec3 inverseInertiaVector = JPH::Vec3(1.0f / mass_properties.mInertia.GetAxisX().Length(),
+        1.0f / mass_properties.mInertia.GetAxisY().Length(), 1.0f / mass_properties.mInertia.GetAxisZ().Length());
+
+    // And then remove the axes that are not allowed
+    if (axis.GetX() != 0)
     {
-        // Locking approach by inertia from: https://github.com/jrouwe/JoltPhysics/pull/378/files
-        // JoltPhysics/Samples/Tests/General/TwoDFunnelTest.cpp
-        // This disallows changing the object mass properties (likely shape) after doing this
-        // TODO: check if this is the better approach overall compared to the above locking of rotational axes
-        JPH::MassProperties mass_properties = lock.GetBody().GetShape()->GetMassProperties();
-        JPH::MotionProperties* mp = lock.GetBody().GetMotionProperties();
-        mp->SetInverseMass(1.0f / mass_properties.mMass);
-
-        // Start off with allowing all rotation
-        JPH::Vec3 inverseInertiaVector = JPH::Vec3(1.0f / mass_properties.mInertia.GetAxisX().Length(),
-            1.0f / mass_properties.mInertia.GetAxisY().Length(), 1.0f / mass_properties.mInertia.GetAxisZ().Length());
-
-        // And then remove the axes that are not allowed
-        if (axis.GetX() != 0)
-        {
-            inverseInertiaVector.SetY(0);
-            inverseInertiaVector.SetZ(0);
-        }
-
-        if (axis.GetY() != 0)
-        {
-            inverseInertiaVector.SetX(0);
-            inverseInertiaVector.SetZ(0);
-        }
-
-        if (axis.GetZ() != 0)
-        {
-            inverseInertiaVector.SetX(0);
-            inverseInertiaVector.SetY(0);
-        }
-
-        mp->SetInverseInertia(inverseInertiaVector, JPH::Quat::sIdentity());
+        inverseInertiaVector.SetY(0);
+        inverseInertiaVector.SetZ(0);
     }
+
+    if (axis.GetY() != 0)
+    {
+        inverseInertiaVector.SetX(0);
+        inverseInertiaVector.SetZ(0);
+    }
+
+    if (axis.GetZ() != 0)
+    {
+        inverseInertiaVector.SetX(0);
+        inverseInertiaVector.SetY(0);
+    }
+
+    // For some reason overriding this like the following results in slightly more stable physics (but still very
+    // wobly)
+    // inverseInertiaVector = JPH::Vec3(0, 1.0f / mass_properties.mInertia.GetAxisY().Length(), 0);
+
+    mp->SetInverseInertia(inverseInertiaVector, JPH::Quat::sIdentity());*/
+
+    // Needed for precision on the axis lock to actually stay relatively close to the target value
+    constraintSettings.mPosition1 = constraintSettings.mPosition2 = lock.GetBody().GetCenterOfMassPosition();
 
     auto constraintPtr = (JPH::SixDOFConstraint*)constraintSettings.Create(JPH::Body::sFixedToWorld, lock.GetBody());
 

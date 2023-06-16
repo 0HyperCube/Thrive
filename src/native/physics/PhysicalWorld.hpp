@@ -82,8 +82,7 @@ public:
 
     // ------------------------------------ //
     // Constraints
-    Ref<TrackedConstraint> CreateAxisLockConstraint(
-        PhysicsBody& body, JPH::Vec3 axis, bool lockRotation, bool useInertiaToLockRotation = false);
+    Ref<TrackedConstraint> CreateAxisLockConstraint(PhysicsBody& body, JPH::Vec3 axis, bool lockRotation);
 
     void DestroyConstraint(TrackedConstraint& constraint);
 

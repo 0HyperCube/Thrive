@@ -277,8 +277,8 @@ internal static partial class NativeMethods
     internal static extern bool FixBodyYCoordinateToZero(IntPtr world, IntPtr body);
 
     [DllImport("thrive_native")]
-    internal static extern IntPtr PhysicsBodyAddAxisLock(IntPtr physicalWorld, IntPtr body,
-        JVecF3 axis, bool lockRotation, bool useInertiaToLockRotation = false);
+    internal static extern IntPtr PhysicsBodyAddAxisLock(IntPtr physicalWorld, IntPtr body, JVecF3 axis,
+        bool lockRotation);
 
     [DllImport("thrive_native")]
     internal static extern void PhysicalWorldSetGravity(IntPtr physicalWorld, JVecF3 gravity);
