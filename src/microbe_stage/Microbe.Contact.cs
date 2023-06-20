@@ -90,11 +90,6 @@ public partial class Microbe
     [JsonProperty]
     private bool deathParticlesSpawned;
 
-    /// <summary>
-    ///   Used to log just once when the touched microbe disposed issue happens to reduce log spam
-    /// </summary>
-    private bool loggedTouchedDisposeIssue;
-
     [JsonProperty]
     private MicrobeState state;
 
@@ -158,9 +153,6 @@ public partial class Microbe
 
     [JsonProperty]
     public EntityReference<Microbe> HostileEngulfer { get; private set; } = new();
-
-    [JsonIgnore]
-    public AliveMarker AliveMarker { get; } = new();
 
     /// <summary>
     ///   The current state of the microbe. Shared across the colony
@@ -383,7 +375,8 @@ public partial class Microbe
 
         Hitpoints -= amount;
 
-        ModLoader.ModInterface.TriggerOnDamageReceived(this, amount, IsPlayerMicrobe);
+        // TODO: reimplement
+        // ModLoader.ModInterface.TriggerOnDamageReceived(this, amount, IsPlayerMicrobe);
 
         // Flash the microbe red
         Flash(1.0f, new Color(1, 0, 0, 0.5f), 1);
@@ -427,33 +420,12 @@ public partial class Microbe
 
         // Can't engulf already destroyed microbes. We don't use entity references so we need to manually check if
         // something is destroyed or not here (especially now that the Invoke the engulf start callback)
-        if (targetAsMicrobe != null && targetAsMicrobe.destroyed)
+        if (targetAsMicrobe != null && (targetAsMicrobe.destroyed || targetAsMicrobe.AliveMarker.Alive != true))
             return EngulfCheckResult.TargetDead;
 
         // Can't engulf dead microbes (unlikely to happen but this is fail-safe)
         if (targetAsMicrobe != null && targetAsMicrobe.Dead)
             return EngulfCheckResult.TargetDead;
-
-        // Log error if trying to engulf something that is disposed, we got a crash log trace with an error with that
-        // TODO: find out why disposed microbes can be attempted to be engulfed
-        try
-        {
-            if (targetAsMicrobe != null)
-            {
-                // Access a Godot property to throw disposed exception
-                _ = targetAsMicrobe.GlobalTransform;
-            }
-        }
-        catch (ObjectDisposedException)
-        {
-            if (!loggedTouchedDisposeIssue)
-            {
-                GD.PrintErr("Touched microbe has been disposed before engulfing could start");
-                loggedTouchedDisposeIssue = true;
-            }
-
-            return EngulfCheckResult.TargetDead;
-        }
 
         // The following checks are in a specific order to make sure the fail reporting logic gives sensible results
 
@@ -795,7 +767,7 @@ public partial class Microbe
         // Reset some stuff
         State = MicrobeState.Normal;
         MovementDirection = new Vector3(0, 0, 0);
-        LinearVelocity = new Vector3(0, 0, 0);
+        SetVelocityToZero();
         allOrganellesDivided = false;
 
         // Releasing all the agents.
@@ -952,7 +924,7 @@ public partial class Microbe
             droppedCorpseChunks.Add(chunk);
 
             // Add to the spawn system to make these chunks limit possible number of entities
-            spawnSystem!.AddEntityToTrack(chunk);
+            spawnSystem!.NotifyExternalEntitySpawned(chunk);
 
             ModLoader.ModInterface.TriggerOnChunkSpawned(chunk, false);
         }
@@ -982,8 +954,7 @@ public partial class Microbe
         }
 
         // Disable collisions
-        CollisionLayer = 0;
-        CollisionMask = 0;
+        DisableAllCollisions();
 
         return droppedCorpseChunks;
     }

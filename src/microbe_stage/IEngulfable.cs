@@ -4,7 +4,7 @@
 ///   Objects that can be engulfed by a microbe.
 /// </summary>
 [UseThriveSerializer]
-public interface IEngulfable : IGraphicalEntity
+public interface IEngulfable : IPhysicsEntity, IAttachableEntity
 {
     /// <summary>
     ///   The engulf size of this engulfable object.

@@ -9,13 +9,15 @@ using Newtonsoft.Json;
 ///   types implementing this interface are in charge of running the gameplay simulation side of things. For example
 ///   microbe moving around, processing compounds, colliding, rendering etc.
 /// </summary>
-public abstract class WorldSimulation : IEntityContainer<ISimulatedEntity>, IDisposable
+/// <typeparam name="TEntity">Type of entity handled by this simulation</typeparam>
+public abstract class WorldSimulation<TEntity> : IWorldSimulation, IDisposable
+    where TEntity : class, ISimulatedEntity
 {
     // TODO: did these protected property loading work?
     [JsonProperty]
-    protected readonly List<ISimulatedEntity> entities = new();
+    protected readonly List<TEntity> entities = new();
 
-    protected readonly List<ISimulatedEntity> queuedForDelete = new();
+    protected readonly List<TEntity> queuedForDelete = new();
 
     [JsonProperty]
     protected float minimumTimeBetweenLogicUpdates = 1 / 60.0f;
@@ -30,7 +32,7 @@ public abstract class WorldSimulation : IEntityContainer<ISimulatedEntity>, IDis
     public float EntityCount { get; protected set; }
 
     [JsonIgnore]
-    public IReadOnlyCollection<ISimulatedEntity> Entities => entities;
+    public IReadOnlyCollection<IEntityBase> Entities => entities;
 
     /// <summary>
     ///   When set to false disables AI running
@@ -80,20 +82,26 @@ public abstract class WorldSimulation : IEntityContainer<ISimulatedEntity>, IDis
         accumulatedLogicTime = 0;
     }
 
-    public void AddEntity(ISimulatedEntity entity)
+    public void AddEntity(IEntityBase entity)
     {
         if (entity.AliveMarker.Alive != true)
             throw new InvalidOperationException("Cannot add a non-alive entity");
 
-        entities.Add(entity);
-        entity.OnAddedToSimulation(this);
+        if (entity is not TEntity castedEntity)
+            throw new ArgumentException("Wrong type of entity passed");
+
+        entities.Add(castedEntity);
+        castedEntity.OnAddedToSimulation(this);
     }
 
-    public bool DestroyEntity(ISimulatedEntity entity)
+    public bool DestroyEntity(IEntityBase entity)
     {
-        if (!entities.Remove(entity))
+        if (entity is not TEntity castedEntity)
+            throw new ArgumentException("Wrong type of entity passed");
+
+        if (!entities.Remove(castedEntity))
         {
-            if (queuedForDelete.Contains(entity))
+            if (queuedForDelete.Contains(castedEntity))
             {
                 // Already queued for delete
                 return true;
@@ -103,21 +111,49 @@ public abstract class WorldSimulation : IEntityContainer<ISimulatedEntity>, IDis
             return false;
         }
 
-        queuedForDelete.Add(entity);
+        queuedForDelete.Add(castedEntity);
         return true;
     }
 
-    public void DestroyAllEntities(ISimulatedEntity? skip = null)
+    public void DestroyAllEntities(IEntityBase? skip = null)
     {
         ProcessDestroyQueue();
 
         foreach (var entity in entities)
         {
+            if (entity == skip)
+                continue;
+
             entity.OnDestroyed();
         }
 
-        entities.Clear();
+        entities.RemoveAll(e => e != skip);
         queuedForDelete.Clear();
+    }
+
+    public bool IsQueuedForDeletion(IEntityBase entity)
+    {
+        if (entity is not TEntity castedEntity)
+            throw new ArgumentException("Wrong type of entity passed");
+
+        return queuedForDelete.Contains(castedEntity);
+    }
+
+    public bool IsEntityInWorld(IEntityBase entity)
+    {
+        if (entity is not TEntity castedEntity)
+            throw new ArgumentException("Wrong type of entity passed");
+
+        return entities.Contains(castedEntity) && !queuedForDelete.Contains(castedEntity);
+    }
+
+    public IEnumerable<IEntityBase> EntitiesWithGroup(string group)
+    {
+        foreach (var entity in entities)
+        {
+            if (entity.EntityGroups.Contains(group))
+                yield return entity;
+        }
     }
 
     /// <summary>

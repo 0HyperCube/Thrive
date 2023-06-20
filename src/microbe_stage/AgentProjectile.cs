@@ -6,46 +6,66 @@ using Newtonsoft.Json;
 ///   This is a shot agent projectile, does damage on hitting a cell of different species
 /// </summary>
 [JSONAlwaysDynamicType]
+
 // TODO: reimplement inspectable
-public class AgentProjectile : SimulatedPhysicsEntity, ISimulatedEntityWithDirectVisuals, ITimedLife /*, IInspectableEntity*/
+public class
+    AgentProjectile : SimulatedPhysicsEntity, ISimulatedEntityWithDirectVisuals, ITimedLife /*, IInspectableEntity*/
 {
+    private static readonly Lazy<PackedScene> VisualsScene =
+        new(() => GD.Load<PackedScene>("res://src/microbe_stage/AgentProjectile.tscn"));
+
 #pragma warning disable CA2213
     private Particles particles = null!;
 #pragma warning restore CA2213
 
-    public float TimeToLiveRemaining { get; set; }
     public float Amount { get; set; }
     public AgentProperties? Properties { get; set; }
+
+    /// <summary>
+    ///   Entity that emitted this, is used to ignore collisions with it. Note that this must be set before adding this
+    ///   to a simulation.
+    /// </summary>
+    [JsonProperty]
     public EntityReference<SimulatedPhysicsEntity> Emitter { get; set; } = new();
+
+    [JsonProperty]
+    public float TimeToLiveRemaining { get; set; }
+
+    [JsonProperty]
+    public float? FadeTimeRemaining { get; set; }
 
     [JsonIgnore]
     public string ReadableName => Properties?.ToString() ?? TranslationServer.Translate("N_A");
 
-    [JsonProperty]
-    private float? FadeTimeRemaining { get; set; }
-
     [JsonIgnore]
-    public Spatial VisualNode { get; private set; }
+    public Spatial VisualNode => particles;
 
-    public override void OnAddedToSimulation(WorldSimulation simulation)
+    [JsonProperty]
+    public float VisualScale { get; set; } = 1;
+
+    public override void OnAddedToSimulation(IWorldSimulation simulation)
     {
+        if (simulation is not IWorldSimulationWithPhysics simulationWithPhysics)
+            throw new ArgumentException("This can only be used in a world with physics");
+
         if (Properties == null)
             throw new InvalidOperationException($"{nameof(Properties)} is required");
 
         base.OnAddedToSimulation(simulation);
 
-        var emitterNode = Emitter.Value?.EntityNode;
+        var emitterBody = Emitter.Value?.Body;
 
-        if (emitterNode != null)
-            AddCollisionExceptionWith(emitterNode);
+        if (emitterBody != null)
+        {
+            DisableCollisionsWith(emitterBody);
+        }
 
-        Connect("body_shape_entered", this, nameof(OnContactBegin));
+        RegisterCollisionCallback(OnContactBegin);
 
-        particles = GD.Load<PackedScene>("res://src/microbe_stage/AgentProjectile.tscn").Instance<Particles>();
-        VisualNode = particles;
+        particles = VisualsScene.Value.Instance<Particles>();
+
+        particles.Scale = new Vector3(VisualScale, VisualScale, VisualScale);
     }
-
-
 
     public void OnTimeOver()
     {
@@ -53,9 +73,10 @@ public class AgentProjectile : SimulatedPhysicsEntity, ISimulatedEntityWithDirec
             BeginDestroy();
     }
 
-    private void OnContactBegin(int bodyID, Node body, int bodyShape, int localShape)
+    private void OnContactBegin(PhysicsBody physicsBody, int collidedSubShapeDataOurs, int bodyShape)
     {
-        _ = bodyID;
+        throw new NotImplementedException();
+        /*_ = bodyID;
         _ = localShape;
 
         if (body is not Microbe microbe)
@@ -77,7 +98,7 @@ public class AgentProjectile : SimulatedPhysicsEntity, ISimulatedEntityWithDirec
         {
             // We should probably get some *POP* effect here.
             BeginDestroy();
-        }
+        }*/
     }
 
     /// <summary>
@@ -88,11 +109,8 @@ public class AgentProjectile : SimulatedPhysicsEntity, ISimulatedEntityWithDirec
         particles.Emitting = false;
 
         // Disable collisions and stop this entity
-        // This isn't the recommended way (disabling the collision shape), but as we don't have a reference to that here
-        // this should also work for disabling the collisions
-        CollisionLayer = 0;
-        CollisionMask = 0;
-        LinearVelocity = Vector3.Zero;
+        DisableAllCollisions();
+        SetVelocityToZero();
 
         // Timer that delays despawn of projectiles
         FadeTimeRemaining = Constants.PROJECTILE_DESPAWN_DELAY;

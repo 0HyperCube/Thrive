@@ -3,6 +3,7 @@
 /// <summary>
 ///   Any kind of object that is tracked to be alive or dead, allows <see cref="EntityReference{T}"/> to work
 /// </summary>
+[JSONAlwaysDynamicType]
 public interface IAliveTracked
 {
     /// <summary>

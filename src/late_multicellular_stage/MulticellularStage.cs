@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 [SceneLoadedClass("res://src/late_multicellular_stage/MulticellularStage.tscn")]
 [DeserializedCallbackTarget]
 [UseThriveSerializer]
-public class MulticellularStage : CreatureStageBase<MulticellularCreature>
+public class MulticellularStage : CreatureStageBase<MulticellularCreature, DummyWorldSimulation>
 {
     [Export]
     public NodePath? InteractableSystemPath;
@@ -32,7 +32,7 @@ public class MulticellularStage : CreatureStageBase<MulticellularCreature>
 
     [JsonProperty]
     [AssignOnlyChildItemsOnDeserialize]
-    private SpawnSystem dummySpawner = null!;
+    private ISpawnSystem dummySpawner = null!;
 
 #pragma warning disable CA2213
     private InteractableSystem interactableSystem = null!;
@@ -134,7 +134,7 @@ public class MulticellularStage : CreatureStageBase<MulticellularCreature>
 
         // We don't actually spawn anything currently, and anyway will want a different spawn system for late
         // multicellular
-        dummySpawner = new SpawnSystem(rootOfDynamicallySpawned);
+        dummySpawner = new DummySpawnSystem();
     }
 
     public override void _Process(float delta)
@@ -654,7 +654,9 @@ public class MulticellularStage : CreatureStageBase<MulticellularCreature>
 
             // TODO: remove
             // Spawn a chunk to give the player some navigation reference
-            var mesh = new ChunkConfiguration.ChunkScene
+            throw new NotImplementedException();
+
+            /*var mesh = new ChunkConfiguration.ChunkScene
             {
                 ScenePath = "res://assets/models/Iron5.tscn",
                 ConvexShapePath = "res://assets/models/Iron5.shape",
@@ -669,7 +671,7 @@ public class MulticellularStage : CreatureStageBase<MulticellularCreature>
                     ChunkScale = 1,
                     Meshes = new List<ChunkConfiguration.ChunkScene> { mesh },
                 }, new Vector3(3, 0, -15), rootOfDynamicallySpawned, SpawnHelpers.LoadChunkScene(),
-                random);
+                random);*/
         }
 
         // patchManager.CurrentGame = CurrentGame;
@@ -715,7 +717,6 @@ public class MulticellularStage : CreatureStageBase<MulticellularCreature>
 
         Player = SpawnHelpers.SpawnCreature(GameWorld.PlayerSpecies, new Vector3(0, 0, 0),
             rootOfDynamicallySpawned, SpawnHelpers.LoadMulticellularScene(), false, dummySpawner, CurrentGame!);
-        Player.AddToGroup(Constants.PLAYER_GROUP);
 
         Player.OnDeath = OnPlayerDied;
 

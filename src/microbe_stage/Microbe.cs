@@ -13,8 +13,8 @@ using Newtonsoft.Json;
 [JSONAlwaysDynamicType]
 [SceneLoadedClass("res://src/microbe_stage/Microbe.tscn", UsesEarlyResolve = false)]
 [DeserializedCallbackTarget]
-public partial class Microbe : SimulatedPhysicsEntity, ISpawned, IProcessable, IMicrobeAI, ISaveLoadedTracked, IEngulfable,
-    IInspectableEntity
+public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawned, IProcessable, IMicrobeAI,
+    ISaveLoadedTracked, IEngulfable /*, IInspectableEntity*/
 {
     /// <summary>
     ///   The point towards which the microbe will move to point to
@@ -240,6 +240,17 @@ public partial class Microbe : SimulatedPhysicsEntity, ISpawned, IProcessable, I
             return weight;
         }
     }
+
+    [JsonIgnore]
+    public bool DisallowDespawning => IsPlayerMicrobe;
+
+    [JsonProperty]
+    public Vector3 RelativePosition { get; set; }
+
+    [JsonProperty]
+    public Quat RelativeRotation { get; set; }
+
+    public bool AttachedToAnEntity => HostileEngulfer.IsAlive;
 
     /// <summary>
     ///   If true this shifts the purpose of this cell for visualizations-only

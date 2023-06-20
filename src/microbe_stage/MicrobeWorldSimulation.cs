@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 ///   Contains all the parts needed to simulate a microbial world. Separate from (but used by) the
 ///   <see cref="MicrobeStage"/> to also allow other parts of the code to easily run a microbe simulation
 /// </summary>
-public class MicrobeWorldSimulation : WorldSimulationWithExternalPhysics
+public class MicrobeWorldSimulation : WorldSimulationWithExternalPhysics<SimulatedPhysicsEntity>
 {
     private Random aiRandom = new();
 
@@ -62,6 +62,9 @@ public class MicrobeWorldSimulation : WorldSimulationWithExternalPhysics
 
     protected override void OnProcessFixedLogic(float delta)
     {
+        fluidSystem.Process(delta);
+        fluidSystem.PhysicsProcess(delta);
+
         processSystem.Process(delta);
 
         microbeSystem.Process(delta);

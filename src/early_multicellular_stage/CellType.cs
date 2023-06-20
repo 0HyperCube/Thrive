@@ -111,8 +111,9 @@ public class CellType : ICellProperties, IPhotographable, ICloneable
 
     public float CalculatePhotographDistance(Spatial instancedScene)
     {
-        return PhotoStudio.CameraDistanceFromRadiusOfObject(((Microbe)instancedScene).Radius *
-            Constants.PHOTO_STUDIO_CELL_RADIUS_MULTIPLIER);
+        throw new NotImplementedException();
+        /*return PhotoStudio.CameraDistanceFromRadiusOfObject(((Microbe)instancedScene).Radius *
+            Constants.PHOTO_STUDIO_CELL_RADIUS_MULTIPLIER);*/
     }
 
     public object Clone()

@@ -84,14 +84,16 @@ public partial class Microbe
         cell.State = State;
 
         // Attach the created cell to the right spot in our colony
-        var ourTransform = GlobalTransform;
+        var ourTransform = new Transform(new Basis(Rotation), Position);
 
         var attachVector = ourTransform.origin + ourTransform.basis.Xform(Hex.AxialToCartesian(template.Position));
 
         // Ensure no tiny y component exists here
         attachVector.y = 0;
 
-        var newCellTransform = new Transform(
+        throw new NotImplementedException();
+
+        /*var newCellTransform = new Transform(
             MathUtils.CreateRotationForOrganelle(template.Orientation) * ourTransform.basis.Quat(),
             attachVector);
         cell.GlobalTransform = newCellTransform;
@@ -117,7 +119,7 @@ public partial class Microbe
             }
         }
 
-        Colony.AddToColony(cell, parent);
+        Colony.AddToColony(cell, parent);*/
 
         ++nextBodyPlanCellToGrowIndex;
         compoundsNeededForNextCell = null;
@@ -276,7 +278,9 @@ public partial class Microbe
 
         totalNeededForMulticellularGrowth = null;
 
-        // Delete the cells in our colony currently
+        throw new NotImplementedException();
+
+        /*// Delete the cells in our colony currently
         if (Colony != null)
         {
             GD.Print("Resetting growth in a multicellular colony");
@@ -288,16 +292,17 @@ public partial class Microbe
             {
                 microbe.DetachAndQueueFree();
             }
-        }
+        }*/
     }
 
     private Microbe CreateMulticellularColonyMemberCell(CellType cellType)
     {
-        var newCell = SpawnHelpers.SpawnMicrobe(Species, Translation,
+        throw new NotImplementedException();
+        /*var newCell = SpawnHelpers.SpawnMicrobe(Species, Translation,
             GetParent(), SpawnHelpers.LoadMicrobeScene(), true, cloudSystem!, spawnSystem!, CurrentGame, cellType);
 
         // Make it despawn like normal (if our colony is accidentally somehow disbanded)
-        spawnSystem!.AddEntityToTrack(newCell);
+        spawnSystem!.NotifyExternalEntitySpawned(newCell);
 
         // Remove the compounds from the created cell
         newCell.Compounds.ClearCompounds();
@@ -305,7 +310,7 @@ public partial class Microbe
         // TODO: different sound effect?
         PlaySoundEffect("res://assets/sounds/soundeffects/reproduction.ogg");
 
-        return newCell;
+        return newCell;*/
     }
 
     private void OnMulticellularColonyCellLost(Microbe cell)

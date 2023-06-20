@@ -225,7 +225,7 @@ public static class Constants
     /// <summary>
     ///   The maximum force that can be applied by currents in the fluid system
     /// </summary>
-    public const float MAX_FORCE_APPLIED_BY_CURRENTS = 0.0525f;
+    public const float MAX_FORCE_APPLIED_BY_CURRENTS = 5.25f;
 
     public const int TRANSLATION_VERY_INCOMPLETE_THRESHOLD = 30;
     public const int TRANSLATION_INCOMPLETE_THRESHOLD = 70;
@@ -957,23 +957,11 @@ public static class Constants
     public const float PROCEDURAL_CACHE_MEMBRANE_KEEP_TIME = 500;
 
     /// <summary>
-    ///   All Nodes tagged with this are handled by the spawn system for despawning
-    /// </summary>
-    public const string SPAWNED_GROUP = "spawned";
-
-    /// <summary>
-    ///   All Nodes tagged with this are handled by the timed life system for despawning
-    /// </summary>
-    public const string TIMED_GROUP = "timed";
-
-    /// <summary>
     ///   All Nodes tagged with this are handled by the ai system
     /// </summary>
     public const string AI_GROUP = "ai";
 
     public const string ENTITY_TAG_CREATURE = "creature";
-
-    public const string PLAYER_GROUP = "player";
 
     public const string PLAYER_REPRODUCED_GROUP = "player_offspring";
 

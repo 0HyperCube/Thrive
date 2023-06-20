@@ -52,10 +52,10 @@ public static class SpawnHelpers
         microbe.Position = location;
 
         // TODO: this will be needed if we switch to an ECS system
-        // if (aiControlled)
-        // {
-        //     // Add the AI control component
-        // }
+        if (aiControlled)
+        {
+            microbe.EntityGroups.Add(Constants.AI_GROUP);
+        }
 
         if (multicellularCellType != null)
         {
@@ -131,12 +131,15 @@ public static class SpawnHelpers
         throw new NotImplementedException();
     }
 
-    public static FloatingChunk SpawnChunk(ChunkConfiguration chunkType,
-        Vector3 location, Node worldNode, PackedScene chunkScene, Random random)
+    public static FloatingChunk SpawnChunk(IWorldSimulation simulation, ChunkConfiguration chunkType,
+        Vector3 location, Random random)
     {
-        var chunk = (FloatingChunk)chunkScene.Instance();
+        var chunk = new FloatingChunk
+        {
+            Position = location,
+        };
 
-        // Settings need to be applied before adding it to the scene
+        // Settings need to be applied before adding it to the world
         var selectedMesh = chunkType.Meshes.Random(random);
         chunk.GraphicsScene = selectedMesh.LoadedScene ??
             throw new Exception("Chunk scene has not been loaded even though it should be loaded here");
@@ -145,27 +148,24 @@ public static class SpawnHelpers
         if (chunk.GraphicsScene == null)
             throw new ArgumentException("couldn't find a graphics scene for a chunk");
 
+        // Chunk is spawned with random rotation (in the 2D plane if it's an Easter egg)
+        var rotationAxis = chunk.EasterEgg ? new Vector3(0, 1, 0) : new Vector3(0, 1, 1);
+        chunk.Rotation = new Quat(rotationAxis.Normalized(), 2 * Mathf.Pi * (float)random.NextDouble());
+
         // Pass on the chunk data
         chunk.Init(chunkType, selectedMesh.SceneModelPath, selectedMesh.SceneAnimationPath);
         chunk.UsesDespawnTimer = !chunkType.Dissolves;
 
-        worldNode.AddChild(chunk);
+        simulation.AddEntity(chunk);
 
-        // Chunk is spawned with random rotation (in the 2D plane if it's an Easter egg)
-        var rotationAxis = chunk.EasterEgg ? new Vector3(0, 1, 0) : new Vector3(0, 1, 1);
-        chunk.Transform = new Transform(new Quat(
-            rotationAxis.Normalized(), 2 * Mathf.Pi * (float)random.NextDouble()), location);
-
-        chunk.GetNode<Spatial>("NodeToScale").Scale = new Vector3(chunkType.ChunkScale, chunkType.ChunkScale,
-            chunkType.ChunkScale);
-
-        // TODO: reimplement detection for this needing the fluid effect on this
-        throw new NotImplementedException();
         return chunk;
     }
 
     public static PackedScene LoadChunkScene()
     {
+        // TODO: remove this method
+        throw new NotImplementedException();
+
         return GD.Load<PackedScene>("res://src/microbe_stage/FloatingChunk.tscn");
     }
 
@@ -188,33 +188,38 @@ public static class SpawnHelpers
     /// <summary>
     ///   Spawns an agent projectile
     /// </summary>
-    public static AgentProjectile SpawnAgent(AgentProperties properties, float amount,
-        float lifetime, Vector3 location, Vector3 direction,
-        Node worldRoot, PackedScene agentScene, IEntity emitter)
+    public static AgentProjectile SpawnAgent(IWorldSimulationWithPhysics simulation, AgentProperties properties,
+        float amount, float lifetime, Vector3 location, Vector3 direction, SimulatedPhysicsEntity emitter)
     {
         var normalizedDirection = direction.Normalized();
 
-        var agent = (AgentProjectile)agentScene.Instance();
-        agent.Properties = properties;
-        agent.Amount = amount;
-        agent.TimeToLiveRemaining = lifetime;
-        agent.Emitter = new EntityReference<IEntity>(emitter);
+        var agent = new AgentProjectile
+        {
+            Properties = properties,
+            Amount = amount,
+            TimeToLiveRemaining = lifetime,
+            VisualScale = amount / Constants.MAXIMUM_AGENT_EMISSION_AMOUNT,
+            Position = location + (direction * 1.5f),
+            Emitter = new EntityReference<SimulatedPhysicsEntity>(emitter),
+        };
 
-        worldRoot.AddChild(agent);
-        agent.Translation = location + (direction * 1.5f);
-        var scaleValue = amount / Constants.MAXIMUM_AGENT_EMISSION_AMOUNT;
-        agent.Scale = new Vector3(scaleValue, scaleValue, scaleValue);
+        simulation.AddEntity(agent);
 
-        agent.ApplyCentralImpulse(normalizedDirection *
-            Constants.AGENT_EMISSION_IMPULSE_STRENGTH);
+        var body = agent.Body;
 
-        agent.AddToGroup(Constants.TIMED_GROUP);
+        if (body != null)
+        {
+            simulation.PhysicalWorld.GiveImpulse(body, normalizedDirection *
+                Constants.AGENT_EMISSION_IMPULSE_STRENGTH);
+        }
+
         return agent;
     }
 
     public static PackedScene LoadAgentScene()
     {
-        return GD.Load<PackedScene>("res://src/microbe_stage/AgentProjectile.tscn");
+        // TODO: remove this method
+        throw new NotImplementedException();
     }
 
     public static MulticellularCreature SpawnCreature(Species species, Vector3 location,
@@ -557,12 +562,14 @@ public class ChunkSpawner : Spawner
 
     public override IEnumerable<ISpawned>? Spawn(Node worldNode, Vector3 location, ISpawnSystem spawnSystem)
     {
-        var chunk = SpawnHelpers.SpawnChunk(chunkType, location, worldNode, chunkScene,
-            random);
+        throw new NotImplementedException();
 
-        yield return chunk;
-
-        ModLoader.ModInterface.TriggerOnChunkSpawned(chunk, true);
+        // var chunk = SpawnHelpers.SpawnChunk(chunkType, location, worldNode, chunkScene,
+        //     random);
+        //
+        // yield return chunk;
+        //
+        // ModLoader.ModInterface.TriggerOnChunkSpawned(chunk, true);
     }
 
     public override string ToString()

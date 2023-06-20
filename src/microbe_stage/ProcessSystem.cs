@@ -5,21 +5,20 @@ using System.Threading.Tasks;
 using Godot;
 
 /// <summary>
-///   Runs processes in parallel on entities
+///   Runs biological processes on entities
 /// </summary>
 public class ProcessSystem
 {
     private static readonly Compound ATP = SimulationParameters.Instance.GetCompound("atp");
     private static readonly Compound Temperature = SimulationParameters.Instance.GetCompound("temperature");
-    private static readonly Compound Sunlight = SimulationParameters.Instance.GetCompound("sunlight");
     private readonly List<Task> tasks = new();
 
-    private readonly Node worldRoot;
+    private readonly IWorldSimulation worldSimulation;
     private BiomeConditions? biome;
 
-    public ProcessSystem(Node worldRoot)
+    public ProcessSystem(IWorldSimulation worldSimulation)
     {
-        this.worldRoot = worldRoot;
+        this.worldSimulation = worldSimulation;
     }
 
     /// <summary>
@@ -368,8 +367,8 @@ public class ProcessSystem
             return;
         }
 
-        var nodes = worldRoot.GetTree().GetNodesInGroup(Constants.PROCESS_GROUP);
-        var nodeCount = nodes.Count;
+        var entities = worldSimulation.Entities.OfType<IProcessable>().ToList();
+        var nodeCount = entities.Count;
 
         // Used to go from the calculated compound values to per second values for reporting statistics
         float inverseDelta = 1.0f / delta;
@@ -386,7 +385,7 @@ public class ProcessSystem
                 for (int a = start;
                      a < start + Constants.PROCESS_OBJECTS_PER_TASK && a < nodeCount; ++a)
                 {
-                    ProcessNode(nodes[a] as IProcessable, delta, inverseDelta);
+                    ProcessNode(entities[a], delta, inverseDelta);
                 }
             });
 

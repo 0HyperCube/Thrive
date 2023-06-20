@@ -259,14 +259,18 @@ public class PlacedOrganelle : Spatial, IPositionedOrganelle, ISaveLoadedTracked
 
         ParentMicrobe.OrganelleParent.RemoveChild(this);
 
-        // Remove physics
-        ParentMicrobe.Mass -= Definition.Mass;
+        // TODO: reimplement organelle physics
 
-        // Remove our sub collisions
-        foreach (var shape in shapes)
-        {
-            currentShapesParent!.RemoveShapeOwner(shape);
-        }
+        throw new NotImplementedException();
+
+        // // Remove physics
+        // ParentMicrobe.Mass -= Definition.Mass;
+        //
+        // // Remove our sub collisions
+        // foreach (var shape in shapes)
+        // {
+        //     currentShapesParent!.RemoveShapeOwner(shape);
+        // }
 
         currentShapesParent = null;
         shapes.Clear();
@@ -486,7 +490,7 @@ public class PlacedOrganelle : Spatial, IPositionedOrganelle, ISaveLoadedTracked
                 if (parent == null)
                     throw new Exception("Reached a null parent microbe without finding the colony leader");
 
-                rotation *= new Quat(parent.Transform.basis);
+                rotation *= parent.RelativeRotation;
                 parent = parent.ColonyParent;
             }
         }
@@ -513,11 +517,14 @@ public class PlacedOrganelle : Spatial, IPositionedOrganelle, ISaveLoadedTracked
         if (ParentMicrobe == null || currentShapesParent == null)
             throw new InvalidOperationException("This organelle needs to be placed in a microbe first");
 
+        // TODO: reimplement organelles sending shape data to microbes
+        throw new NotImplementedException();
+
         // TODO: we are in trouble if ever the hex count mismatches with the shapes. It's fine if this can never happen
         // but a more bulletproof way would be to add code to at least detect and try to recover if there is no
         // matching hex for a shape
         // https://github.com/Revolutionary-Games/Thrive/issues/2504
-        var hexes = Definition.GetRotatedHexes(Orientation).ToArray();
+        /*var hexes = Definition.GetRotatedHexes(Orientation).ToArray();
 
         for (int i = 0; i < shapes.Count; i++)
         {
@@ -538,7 +545,7 @@ public class PlacedOrganelle : Spatial, IPositionedOrganelle, ISaveLoadedTracked
             // Create a new owner id and apply the new position to it
             shapes[i] = currentShapesParent.CreateNewOwnerId(to, transform, ownerId);
             currentShapesParent.RemoveShapeOwner(ownerId);
-        }
+        }*/
 
         foreach (var component in Components)
         {
@@ -567,7 +574,9 @@ public class PlacedOrganelle : Spatial, IPositionedOrganelle, ISaveLoadedTracked
         }
 
         // Physics
-        ParentMicrobe!.Mass += Definition.Mass;
+        throw new NotImplementedException();
+
+        // ParentMicrobe!.Mass += Definition.Mass;
 
         // TODO: if organelles can grow while cells are in a colony this will be needed
         // Add the mass of the organelles to the colony master
@@ -626,7 +635,9 @@ public class PlacedOrganelle : Spatial, IPositionedOrganelle, ISaveLoadedTracked
     {
         currentShapesParent = to;
 
-        float hexSize = Constants.DEFAULT_HEX_SIZE;
+        throw new NotImplementedException();
+
+        /*float hexSize = Constants.DEFAULT_HEX_SIZE;
 
         // Scale the physics hex size down for bacteria
         if (ParentMicrobe!.CellTypeProperties.IsBacteria)
@@ -650,7 +661,7 @@ public class PlacedOrganelle : Spatial, IPositionedOrganelle, ISaveLoadedTracked
             var transform = new Transform(Quat.Identity, shapePosition);
             var ownerId = to.CreateShapeOwnerWithTransform(transform, shape);
             shapes.Add(ownerId);
-        }
+        }*/
     }
 
     private void RecalculateGrowthValue()

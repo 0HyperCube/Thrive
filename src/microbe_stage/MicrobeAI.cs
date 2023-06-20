@@ -160,7 +160,7 @@ public class MicrobeAI
     {
         // If nothing is engulfing me right now, see if there's something that might want to hunt me
         // TODO: https://github.com/Revolutionary-Games/Thrive/issues/2323
-        Vector3? predator = GetNearestPredatorItem(data.AllMicrobes)?.GlobalTransform.origin;
+        Vector3? predator = GetNearestPredatorItem(data.AllMicrobes)?.Position;
         if (predator.HasValue &&
             DistanceFromMe(predator.Value) < (1500.0 * SpeciesFear / Constants.MAX_SPECIES_FEAR))
         {
@@ -195,27 +195,27 @@ public class MicrobeAI
             case MicrobeSignalCommand.MoveToMe:
                 if (signaler != null)
                 {
-                    MoveToLocation(signaler.Translation);
+                    MoveToLocation(signaler.Position);
                     return;
                 }
 
                 break;
             case MicrobeSignalCommand.FollowMe:
-                if (signaler != null && DistanceFromMe(signaler.Translation) > Constants.AI_FOLLOW_DISTANCE_SQUARED)
+                if (signaler != null && DistanceFromMe(signaler.Position) > Constants.AI_FOLLOW_DISTANCE_SQUARED)
                 {
-                    MoveToLocation(signaler.Translation);
+                    MoveToLocation(signaler.Position);
                     return;
                 }
 
                 break;
             case MicrobeSignalCommand.FleeFromMe:
-                if (signaler != null && DistanceFromMe(signaler.Translation) < Constants.AI_FLEE_DISTANCE_SQUARED)
+                if (signaler != null && DistanceFromMe(signaler.Position) < Constants.AI_FLEE_DISTANCE_SQUARED)
                 {
                     microbe.State = MicrobeState.Normal;
                     SetMoveSpeed(Constants.AI_BASE_MOVEMENT);
 
                     // Direction is calculated to be the opposite from where we should flee
-                    targetPosition = microbe.Translation + (microbe.Translation - signaler.Translation);
+                    targetPosition = microbe.Position + (microbe.Position - signaler.Position);
                     microbe.LookAtPoint = targetPosition;
                     SetMoveSpeed(Constants.AI_BASE_MOVEMENT);
                     return;
@@ -231,10 +231,10 @@ public class MicrobeAI
             if (player != null)
             {
                 // Only move if we aren't sessile
-                if (DistanceFromMe(player.GlobalTransform.origin) > Math.Pow(Constants.SPAWN_SECTOR_SIZE, 2) * 0.75f &&
+                if (DistanceFromMe(player.Position) > Math.Pow(Constants.SPAWN_SECTOR_SIZE, 2) * 0.75f &&
                     !IsSessile)
                 {
-                    MoveToLocation(player.GlobalTransform.origin);
+                    MoveToLocation(player.Position);
                     return;
                 }
 
@@ -249,7 +249,7 @@ public class MicrobeAI
             var targetChunk = GetNearestChunkItem(data.AllChunks, data.AllMicrobes, random);
             if (targetChunk != null && targetChunk.PhagocytosisStep == PhagocytosisPhase.None)
             {
-                PursueAndConsumeChunks(targetChunk.Translation, random);
+                PursueAndConsumeChunks(targetChunk.Position, random);
                 return;
             }
         }
@@ -258,10 +258,10 @@ public class MicrobeAI
         var possiblePrey = GetNearestPreyItem(data.AllMicrobes);
         if (possiblePrey != null && possiblePrey.PhagocytosisStep == PhagocytosisPhase.None)
         {
-            var prey = possiblePrey.GlobalTransform.origin;
+            var prey = possiblePrey.Position;
 
             bool engulfPrey = microbe.CanEngulfObject(possiblePrey) == Microbe.EngulfCheckResult.Ok &&
-                DistanceFromMe(possiblePrey.GlobalTransform.origin) < 10.0f * microbe.EngulfSize;
+                DistanceFromMe(possiblePrey.Position) < 10.0f * microbe.EngulfSize;
 
             EngagePrey(prey, random, engulfPrey);
             return;
@@ -300,15 +300,15 @@ public class MicrobeAI
                 continue;
 
             if (microbe.EngulfSize > chunk.EngulfSize * Constants.ENGULF_SIZE_RATIO_REQ
-                && (chunk.Translation - microbe.Translation).LengthSquared()
+                && (chunk.Position - microbe.Position).LengthSquared()
                 <= (20000.0 * SpeciesFocus / Constants.MAX_SPECIES_FOCUS) + 1500.0
                 && chunk.PhagocytosisStep == PhagocytosisPhase.None)
             {
                 if (chunk.Compounds.Compounds.Any(x => microbe.Compounds.IsUseful(x.Key) && x.Key.Digestible))
                 {
                     if (chosenChunk == null ||
-                        (chosenChunk.Translation - microbe.Translation).LengthSquared() >
-                        (chunk.Translation - microbe.Translation).LengthSquared())
+                        (chosenChunk.Position - microbe.Position).LengthSquared() >
+                        (chunk.Position - microbe.Position).LengthSquared())
                     {
                         chosenChunk = chunk;
                     }
@@ -320,12 +320,12 @@ public class MicrobeAI
         if (chosenChunk != null)
         {
             var rivals = 0;
-            var distanceToChunk = (microbe.Translation - chosenChunk.Translation).LengthSquared();
+            var distanceToChunk = (microbe.Position - chosenChunk.Position).LengthSquared();
             foreach (var rival in allMicrobes)
             {
                 if (rival != microbe)
                 {
-                    var rivalDistance = (rival.GlobalTransform.origin - chosenChunk.Translation).LengthSquared();
+                    var rivalDistance = (rival.Position - chosenChunk.Position).LengthSquared();
                     if (rivalDistance < 500.0f &&
                         rivalDistance < distanceToChunk)
                     {
@@ -373,7 +373,7 @@ public class MicrobeAI
         var focused = focusedPrey.Value;
         if (focused != null)
         {
-            var distanceToFocusedPrey = DistanceFromMe(focused.GlobalTransform.origin);
+            var distanceToFocusedPrey = DistanceFromMe(focused.Position);
             if (!focused.Dead && focused.PhagocytosisStep == PhagocytosisPhase.None && distanceToFocusedPrey <
                 (3500.0f * SpeciesFocus / Constants.MAX_SPECIES_FOCUS))
             {
@@ -398,13 +398,13 @@ public class MicrobeAI
         {
             if (!otherMicrobe.Dead && otherMicrobe.PhagocytosisStep == PhagocytosisPhase.None)
             {
-                if (DistanceFromMe(otherMicrobe.GlobalTransform.origin) <
+                if (DistanceFromMe(otherMicrobe.Position) <
                     (2500.0f * SpeciesAggression / Constants.MAX_SPECIES_AGGRESSION)
                     && CanTryToEatMicrobe(otherMicrobe))
                 {
                     if (chosenPrey == null ||
-                        (chosenPrey.GlobalTransform.origin - microbe.Translation).LengthSquared() >
-                        (otherMicrobe.GlobalTransform.origin - microbe.Translation).LengthSquared())
+                        (chosenPrey.Position - microbe.Position).LengthSquared() >
+                        (otherMicrobe.Position - microbe.Position).LengthSquared())
                     {
                         chosenPrey = otherMicrobe;
                     }
@@ -416,7 +416,7 @@ public class MicrobeAI
 
         if (chosenPrey != null)
         {
-            pursuitThreshold = DistanceFromMe(chosenPrey.GlobalTransform.origin) * 3.0f;
+            pursuitThreshold = DistanceFromMe(chosenPrey.Position) * 3.0f;
         }
 
         return chosenPrey;
@@ -442,8 +442,8 @@ public class MicrobeAI
                 && !otherMicrobe.Dead && otherMicrobe.PhagocytosisStep == PhagocytosisPhase.None
                 && otherMicrobe.EngulfSize > microbe.EngulfSize * fleeThreshold)
             {
-                if (predator == null || DistanceFromMe(predator.GlobalTransform.origin) >
-                    DistanceFromMe(otherMicrobe.GlobalTransform.origin))
+                if (predator == null || DistanceFromMe(predator.Position) >
+                    DistanceFromMe(otherMicrobe.Position))
                 {
                     predator = otherMicrobe;
                 }
@@ -481,7 +481,7 @@ public class MicrobeAI
     {
         microbe.State = MicrobeState.Normal;
 
-        targetPosition = (2 * (microbe.Translation - predatorLocation)) + microbe.Translation;
+        targetPosition = (2 * (microbe.Position - predatorLocation)) + microbe.Position;
 
         microbe.LookAtPoint = targetPosition;
 
@@ -722,7 +722,7 @@ public class MicrobeAI
     {
         // Turn on engulf mode if close
         // Sometimes "close" is hard to discern since microbes can range from straight lines to circles
-        if ((microbe.Translation - targetPosition).LengthSquared() <= microbe.EngulfSize * 2.0f)
+        if ((microbe.Position - targetPosition).LengthSquared() <= microbe.EngulfSize * 2.0f)
         {
             microbe.State = MicrobeState.Engulf;
         }
@@ -735,7 +735,7 @@ public class MicrobeAI
     private void LaunchToxin(Vector3 target)
     {
         if (microbe.Hitpoints > 0 && microbe.AgentVacuoleCount > 0 &&
-            (microbe.Translation - target).LengthSquared() <= SpeciesFocus * 10.0f)
+            (microbe.Position - target).LengthSquared() <= SpeciesFocus * 10.0f)
         {
             if (CanShootToxin())
             {
@@ -763,7 +763,7 @@ public class MicrobeAI
         }
 
         var randDist = random.Next(SpeciesActivity, Constants.MAX_SPECIES_ACTIVITY);
-        targetPosition = microbe.Translation
+        targetPosition = microbe.Position
             + new Vector3(Mathf.Cos(previousAngle + turn) * randDist,
                 0,
                 Mathf.Sin(previousAngle + turn) * randDist);
@@ -791,7 +791,7 @@ public class MicrobeAI
         if (previous != null && previous.SignalCommand != MicrobeSignalCommand.None)
         {
             selectedMicrobe = previous;
-            closestSignalSquared = DistanceFromMe(previous.Translation);
+            closestSignalSquared = DistanceFromMe(previous.Position);
         }
 
         foreach (var speciesMicrobe in ownSpeciesMicrobes)
@@ -803,7 +803,7 @@ public class MicrobeAI
             if (speciesMicrobe == microbe)
                 continue;
 
-            var distance = DistanceFromMe(speciesMicrobe.Translation);
+            var distance = DistanceFromMe(speciesMicrobe.Position);
 
             if (closestSignalSquared == null || distance < closestSignalSquared.Value)
             {
@@ -845,7 +845,7 @@ public class MicrobeAI
 
     private float DistanceFromMe(Vector3 target)
     {
-        return (target - microbe.Translation).LengthSquared();
+        return (target - microbe.Position).LengthSquared();
     }
 
     private bool RollCheck(float ourStat, float dc, Random random)

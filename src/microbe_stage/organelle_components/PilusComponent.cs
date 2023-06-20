@@ -43,13 +43,15 @@ public class PilusComponent : ExternallyPositionedComponent
             var rotation = MathUtils.CreateRotationForPhysicsOrganelle(angle);
             var transform = new Transform(rotation, position);
 
-            // New ownerId
-            var ownerId = currentShapesParent.CreateNewOwnerId(newShapeParent, transform, addedChildShapes[0]);
-            newShapeParent.AddPilus(ownerId);
+            throw new NotImplementedException();
 
-            // Destroy the old shape owner
-            DestroyShape();
-            addedChildShapes.Add(ownerId);
+            // // New ownerId
+            // var ownerId = currentShapesParent.CreateNewOwnerId(newShapeParent, transform, addedChildShapes[0]);
+            // newShapeParent.AddPilus(ownerId);
+            //
+            // // Destroy the old shape owner
+            // DestroyShape();
+            // addedChildShapes.Add(ownerId);
         }
 
         currentShapesParent = newShapeParent;
@@ -103,7 +105,9 @@ public class PilusComponent : ExternallyPositionedComponent
         if (NeedsUpdateAnyway())
             CreateShape(parentMicrobe);
 
-        parentMicrobe.ShapeOwnerSetTransform(addedChildShapes[0], transform);
+        throw new NotImplementedException();
+
+        // parentMicrobe.ShapeOwnerSetTransform(addedChildShapes[0], transform);
     }
 
     private void CreateShape(Microbe parent)
@@ -116,18 +120,17 @@ public class PilusComponent : ExternallyPositionedComponent
             pilusSize *= 0.5f;
         }
 
-        // TODO: Godot doesn't have Cone shape.
-        // https://github.com/godotengine/godot-proposals/issues/610
-        // So this uses a cylinder for now
-        // Create the shape
+        // Turns out cones are really hated by physics engines, so we'll need to permanently make do with a cylinder
         var shape = new CylinderShape();
         shape.Radius = pilusSize / 10.0f;
         shape.Height = pilusSize;
 
-        var ownerId = parent.CreateShapeOwner(shape);
-        parent.ShapeOwnerAddShape(ownerId, shape);
-        parent.AddPilus(ownerId);
-        addedChildShapes.Add(ownerId);
+        throw new NotImplementedException();
+
+        // var ownerId = parent.CreateShapeOwner(shape);
+        // parent.ShapeOwnerAddShape(ownerId, shape);
+        // parent.AddPilus(ownerId);
+        // addedChildShapes.Add(ownerId);
     }
 
     private void DestroyShape()
@@ -137,7 +140,10 @@ public class PilusComponent : ExternallyPositionedComponent
             foreach (var shape in addedChildShapes)
             {
                 currentShapesParent!.RemovePilus(shape);
-                currentShapesParent.RemoveShapeOwner(shape);
+
+                throw new NotImplementedException();
+
+                // currentShapesParent.RemoveShapeOwner(shape);
             }
 
             addedChildShapes.Clear();

@@ -301,17 +301,19 @@ public partial class Microbe
         // Find the direction the microbe is facing
         // (actual rotation, not LookAtPoint, also takes colony membership into account)
         Vector3 direction;
+        Vector3 microbePosition = Position;
+
         if (Colony != null)
         {
-            direction = Colony.Master.GlobalTransform
-                .basis.Quat().Normalized().Xform(Vector3.Forward);
+            direction = Colony.Master.Rotation.Normalized().Xform(Vector3.Forward);
+            microbePosition = Colony.Master.Position;
         }
         else
         {
-            direction = GlobalTransform.basis.Quat().Normalized().Xform(Vector3.Forward);
+            direction = Rotation.Normalized().Xform(Vector3.Forward);
         }
 
-        var position = GlobalTransform.origin + (direction * ejectionDistance);
+        var position = microbePosition + (direction * ejectionDistance);
 
         var agent = SpawnHelpers.SpawnAgent(props, amountEmitted, Constants.EMITTED_AGENT_LIFETIME,
             position, direction, GetStageAsParent(),
@@ -393,10 +395,10 @@ public partial class Microbe
         if (ColonyParent != null)
             throw new ArgumentException("Cell that is a colony member (non-leader) can't divide");
 
-        var currentPosition = GlobalTransform.origin;
+        var currentPosition = Position;
 
         // Find the direction to the right from where the cell is facing
-        var direction = GlobalTransform.basis.Quat().Normalized().Xform(Vector3.Right);
+        var direction = Rotation.Normalized().Xform(Vector3.Right);
 
         // Start calculating separation distance
         var organellePositions = organelles!.Organelles.Select(o => Hex.AxialToCartesian(o.Position)).ToList();
@@ -406,7 +408,7 @@ public partial class Microbe
 
         if (Colony != null)
         {
-            var colonyMembers = Colony.ColonyMembers.Select(c => c.GlobalTransform.origin);
+            var colonyMembers = Colony.ColonyMembers.Select(c => c.Position);
 
             distanceRight += MathUtils.GetMaximumDistanceInDirection(direction, currentPosition, colonyMembers);
         }
@@ -417,19 +419,13 @@ public partial class Microbe
             width *= 0.5f;
 
         // Create the one daughter cell.
+        // Since the daughter spawns right next to the cell, it should face the same way to avoid colliding
+        // TODO: add the rotation to this call
         var copyEntity = SpawnHelpers.SpawnMicrobe(Species, currentPosition + direction * width,
             GetParent(), SpawnHelpers.LoadMicrobeScene(), true, cloudSystem!, spawnSystem!, CurrentGame);
 
-        // Since the daughter spawns right next to the cell, it should face the same way to avoid colliding
-        var daughterBasis = new Basis(Transform.basis.Quat())
-        {
-            Scale = copyEntity.Transform.basis.Scale,
-        };
-
-        copyEntity.Transform = new Transform(daughterBasis, copyEntity.Translation);
-
         // Make it despawn like normal
-        spawnSystem!.AddEntityToTrack(copyEntity);
+        spawnSystem!.NotifyExternalEntitySpawned(copyEntity);
 
         // Remove the compounds from the created cell
         copyEntity.Compounds.ClearCompounds();
@@ -684,11 +680,11 @@ public partial class Microbe
         // max here buffs compound absorbing for the smallest cells
         var grabRadius = Mathf.Max(Radius, 3.0f);
 
-        cloudSystem!.AbsorbCompounds(GlobalTransform.origin, grabRadius, Compounds,
+        cloudSystem!.AbsorbCompounds(Position, grabRadius, Compounds,
             TotalAbsorbedCompounds, delta, Membrane.Type.ResourceAbsorptionFactor);
 
         // Cells with jets aren't affected by mucilage
-        slowedBySlime = SlimeJets.Count < 1 && cloudSystem.AmountAvailable(mucilage, GlobalTransform.origin, 1.0f) >
+        slowedBySlime = SlimeJets.Count < 1 && cloudSystem.AmountAvailable(mucilage, Position, 1.0f) >
             Constants.COMPOUND_DENSITY_CATEGORY_FAIR_AMOUNT;
 
         if (IsPlayerMicrobe && CheatManager.InfiniteCompounds)
@@ -1411,9 +1407,9 @@ public partial class Microbe
 
         distance += displacement;
 
-        var ejectionDirection = GlobalTransform.basis.Quat().Normalized().Xform(direction);
+        var ejectionDirection = Rotation.Normalized().Xform(direction);
 
-        var result = GlobalTransform.origin + (ejectionDirection * distance);
+        var result = Position + (ejectionDirection * distance);
 
         return result;
     }

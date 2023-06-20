@@ -1,26 +1,33 @@
-﻿using Godot;
-
-/// <summary>
+﻿/// <summary>
 ///   System that deletes nodes that are in the timed group after their lifespan expires.
 /// </summary>
 public class TimedLifeSystem
 {
-    private readonly Node worldRoot;
+    private readonly IEntityContainer world;
 
-    public TimedLifeSystem(Node worldRoot)
+    public TimedLifeSystem(IEntityContainer world)
     {
-        this.worldRoot = worldRoot;
+        this.world = world;
     }
 
     public void Process(float delta)
     {
-        foreach (var entity in worldRoot.GetChildrenToProcess<Node>(Constants.TIMED_GROUP))
+        foreach (var entity in world.Entities)
         {
-            var timed = entity as ITimedLife;
+            if (entity is not ITimedLife timed)
+                continue;
 
-            if (timed == null)
+            // Fading timing is now also handled by this system
+            if (timed.FadeTimeRemaining != null)
             {
-                GD.PrintErr("A node has been put in the timed group but it isn't derived from ITimedLife");
+                timed.FadeTimeRemaining -= delta;
+
+                if (timed.FadeTimeRemaining <= 0)
+                {
+                    // Fade time ended
+                    world.DestroyEntity(entity);
+                }
+
                 continue;
             }
 
@@ -37,41 +44,26 @@ public class TimedLifeSystem
                     // Consider it already dead to not have it be saved
                     timed.AliveMarker.Alive = false;
                 }
+                else
+                {
+                    // Entity doesn't want to fade
+                    world.DestroyEntity(entity);
+                }
             }
         }
-        
-        // TODO: implement fading
-        public override void _Process(float delta)
-        {
-            if (FadeTimeRemaining == null)
-                return;
-
-            FadeTimeRemaining -= delta;
-            if (FadeTimeRemaining <= 0)
-                this.DestroyDetachAndQueueFree();
-        }
     }
-    
 
     /// <summary>
     ///   Despawns all timed entities
     /// </summary>
     public void DespawnAll()
     {
-        foreach (var entity in worldRoot.GetChildrenToProcess<Node>(Constants.TIMED_GROUP))
+        foreach (var entity in world.Entities)
         {
-            if (entity.IsQueuedForDeletion())
+            if (entity is not ITimedLife)
                 continue;
 
-            var asProperEntity = entity as IEntity;
-
-            if (asProperEntity == null)
-            {
-                entity.DetachAndQueueFree();
-                continue;
-            }
-
-            asProperEntity.DestroyDetachAndQueueFree();
+            world.DestroyEntity(entity);
         }
     }
 }
