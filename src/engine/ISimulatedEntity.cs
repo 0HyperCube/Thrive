@@ -36,4 +36,16 @@ public interface ISimulatedEntity : IEntityBase
     public void OnAddedToSimulation(IWorldSimulation simulation);
 
     // TODO: remove from world callback (or use the OnDestroyed?) and maybe a separate detach callback
+
+    /// <summary>
+    ///   Normal fixed rate processing for this entity. Usually limited to 60 FPS but can be less due to lag
+    /// </summary>
+    /// <param name="delta">Time since last call</param>
+    public void Process(float delta);
+
+    /// <summary>
+    ///   Per frame processing. Should only be used for things that need very high animation fidelity
+    /// </summary>
+    /// <param name="delta">Time since last frame</param>
+    public void ProcessFrame(float delta);
 }

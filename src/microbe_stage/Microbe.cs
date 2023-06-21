@@ -13,8 +13,8 @@ using Newtonsoft.Json;
 [JSONAlwaysDynamicType]
 [SceneLoadedClass("res://src/microbe_stage/Microbe.tscn", UsesEarlyResolve = false)]
 [DeserializedCallbackTarget]
-public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawned, IProcessable, IMicrobeAI,
-    ISaveLoadedTracked, IEngulfable /*, IInspectableEntity*/
+public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISimulatedEntityWithDirectVisuals, ISpawned,
+    IProcessable, IMicrobeAI, ISaveLoadedTracked, IEngulfable /*, IInspectableEntity*/
 {
     /// <summary>
     ///   The point towards which the microbe will move to point to
@@ -260,7 +260,7 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
     public bool IsForPreviewOnly { get; set; }
 
     [JsonIgnore]
-    public Spatial EntityNode => this;
+    public Spatial VisualNode { get; private set; } = null!;
 
     [JsonIgnore]
     public GeometryInstance EntityGraphics => Membrane;
@@ -347,21 +347,27 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
         }
     }
 
-    public override void _Ready()
+    public override void OnAddedToSimulation(IWorldSimulation simulation)
     {
+        base.OnAddedToSimulation(simulation);
+
         if (cloudSystem == null && !IsForPreviewOnly)
             throw new InvalidOperationException("Microbe not initialized");
 
         if (onReadyCalled)
             return;
 
-        Membrane = GetNode<Membrane>("Membrane");
-        OrganelleParent = GetNode<Spatial>("OrganelleParent");
+        VisualNode = SpawnHelpers.LoadMicrobeVisualsScene().Instance<Spatial>();
+
+        Membrane = VisualNode.GetNode<Membrane>("Membrane");
+        OrganelleParent = VisualNode.GetNode<Spatial>("OrganelleParent");
 
         if (IsForPreviewOnly)
         {
             // Disable our physics to not cause issues with multiple preview cells bumping into each other
-            Mode = ModeEnum.Kinematic;
+            throw new NotImplementedException();
+
+            // Mode = ModeEnum.Kinematic;
             return;
         }
 
@@ -370,11 +376,10 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
         mucilage = SimulationParameters.Instance.GetCompound("mucilage");
         lipase = SimulationParameters.Instance.GetEnzyme("lipase");
 
-        engulfAudio = GetNode<HybridAudioPlayer>("EngulfAudio");
-        bindingAudio = GetNode<HybridAudioPlayer>("BindingAudio");
-        movementAudio = GetNode<HybridAudioPlayer>("MovementAudio");
+        engulfAudio = VisualNode.GetNode<HybridAudioPlayer>("EngulfAudio");
+        bindingAudio = VisualNode.GetNode<HybridAudioPlayer>("BindingAudio");
+        movementAudio = VisualNode.GetNode<HybridAudioPlayer>("MovementAudio");
 
-        cellBurstEffectScene = GD.Load<PackedScene>("res://src/microbe_stage/particles/CellBurstEffect.tscn");
         endosomeScene = GD.Load<PackedScene>("res://src/microbe_stage/Endosome.tscn");
 
         engulfAudio.Positional = movementAudio.Positional = bindingAudio.Positional = !IsPlayerMicrobe;
@@ -390,7 +395,7 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             // Creates and activates the audio listener for the player microbe. Positional sound will be
             // received by it instead of the main camera.
             listener = new Listener();
-            AddChild(listener);
+            VisualNode.AddChild(listener);
             listener.MakeCurrent();
 
             // Setup tracking running processes
@@ -399,6 +404,7 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             GD.Print("Player Microbe spawned");
         }
 
+        // TODO: remove the following?
         // pseudopodTarget = GetNode<MeshInstance>("PseudopodTarget");
         // var pseudopodRange = GetNode<Area>("PseudopodRange");
         // pseudopodRangeSphereShape = (SphereShape)pseudopodRange.GetNode<CollisionShape>("SphereShape").Shape;
@@ -407,11 +413,11 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
         // pseudopodRange.Connect("body_exited", this, nameof(OnBodyExitedPseudopodRange));
 
         // Setup physics callback stuff
-        ContactsReported = Constants.DEFAULT_STORE_CONTACTS_COUNT;
-        Connect("body_shape_entered", this, nameof(OnContactBegin));
-        Connect("body_shape_exited", this, nameof(OnContactEnd));
 
-        Mass = Constants.MICROBE_BASE_MASS;
+        RegisterCollisionCallback(OnContactBegin);
+
+        // TODO: end collision callback?
+        // Connect("body_shape_exited", this, nameof(OnContactEnd));
 
         if (IsLoadedFromSave)
         {
@@ -427,7 +433,9 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             {
                 foreach (var child in ColonyChildren)
                 {
-                    AddChild(child);
+                    throw new NotImplementedException();
+
+                    // AddChild(child);
                 }
             }
 
@@ -443,10 +451,10 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             {
                 ReParentShapes(this, Vector3.Zero);
                 ReParentShapes(Colony.Master, GetOffsetRelativeToMaster());
-                Colony.Master.AddCollisionExceptionWith(this);
-                AddCollisionExceptionWith(Colony.Master);
-                Mode = ModeEnum.Static;
-                Colony.Master.Mass += Mass;
+
+                throw new NotImplementedException();
+
+                // Mode = ModeEnum.Static;
             }
 
             // And recompute storage
@@ -463,39 +471,45 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
                 if (engulfable == null)
                     continue;
 
-                // Some engulfables were already parented to the world, in their case they don't need to be reattached
-                // here since the world node already does that.
-                // TODO: find out why some engulfables in engulfedObject are not parented to the engulfer?
-                if (!engulfable.EntityNode.IsInsideTree())
-                    AddChild(engulfable.EntityNode);
+                // TODO: engulfables not yet added to the world need to be added to the world by us here
 
-                if (engulfed.Phagosome.Value != null)
-                {
-                    // Defer call to avoid a state where EntityGraphics is still null.
-                    // NOTE: My reasoning to why this can happen is due to some IEngulfables implementing
-                    // EntityGraphics in a way that it's initialized on _Ready and the problem occurs probably when
-                    // that IEngulfable is not yet inside the tree. - Kasterisk
-                    Invoke.Instance.Queue(() => engulfable.EntityGraphics.AddChild(engulfed.Phagosome.Value));
-                }
+                // Redo engulfable parenting
+                throw new NotImplementedException();
+
+                // engulfable.AttachedToAnEntity
+
+                // TODO: re-create the phagosome
+
+                throw new NotImplementedException();
+
+                // if (engulfed.Phagosome.Value != null)
+                // {
+                //     engulfable.EntityGraphics.AddChild(engulfed.Phagosome.Value);
+                // }
             }
         }
 
         ApplyRenderPriority();
 
         onReadyCalled = true;
-    }
-
-    public override void _EnterTree()
-    {
-        base._EnterTree();
 
         if (IsPlayerMicrobe)
             CheatManager.OnPlayerDuplicationCheatUsed += OnPlayerDuplicationCheat;
     }
 
-    public override void _ExitTree()
+    public override void OnDestroyed()
     {
-        base._ExitTree();
+        base.OnDestroyed();
+
+        if (destroyed)
+            return;
+
+        destroyed = true;
+
+        // TODO: find out a way to cleanly despawn colonies without having to run the reproduction progress lost logic
+        Colony?.RemoveFromColony(this);
+
+        VisualNode.QueueFree();
 
         if (IsPlayerMicrobe)
             CheatManager.OnPlayerDuplicationCheatUsed -= OnPlayerDuplicationCheat;
@@ -514,13 +528,12 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
 
         if (!isPlayer)
             ai = new MicrobeAI(this);
-
-        // Needed for immediately applying the species
-        _Ready();
     }
 
-    public override void _Process(float delta)
+    public override void Process(float delta)
     {
+        base.Process(delta);
+
         if (usesExternalProcess)
         {
             GD.PrintErr("_Process was called for microbe that uses external processing");
@@ -531,9 +544,11 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
         ProcessSync(delta);
     }
 
-    public override void _PhysicsProcess(float delta)
+    public void PhysicsProcess(float delta)
     {
-        linearAcceleration = (LinearVelocity - lastLinearVelocity) / delta;
+        throw new NotImplementedException();
+
+        // linearAcceleration = (LinearVelocity - lastLinearVelocity) / delta;
 
         // Movement
         if (ColonyParent == null && !IsForPreviewOnly)
@@ -545,18 +560,19 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             Colony?.Master.AddMovementForce(queuedMovementForce);
         }
 
-        lastLinearVelocity = LinearVelocity;
-        lastLinearAcceleration = linearAcceleration;
-    }
+        throw new NotImplementedException();
 
-    public override void _IntegrateForces(PhysicsDirectBodyState physicsState)
-    {
+        // lastLinearVelocity = LinearVelocity;
+        lastLinearAcceleration = linearAcceleration;
+
+        // TODO: force
         if (ColonyParent != null)
             return;
 
         // TODO: should movement also be applied here?
 
-        physicsState.Transform = GetNewPhysicsRotation(physicsState.Transform);
+        throw new NotImplementedException();
+        /*physicsState.Transform = GetNewPhysicsRotation(physicsState.Transform);
 
         // Reset total sum from previous collisions
         collisionForce = 0.0f;
@@ -568,7 +584,7 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             // for example is luckily available only in Bullet which makes things a bit easier. Would need
             // proper handling for this in the future.
             collisionForce += physicsState.GetContactImpulse(i);
-        }
+        }*/
     }
 
     /// <summary>
@@ -620,13 +636,14 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
         if (Colony == null)
             return this;
 
-        var touchedOwnerId = ShapeFindOwner(bodyShape);
-
-        // Not found
-        if (touchedOwnerId == uint.MaxValue)
-            return null;
-
-        return GetColonyMemberWithShapeOwner(touchedOwnerId, Colony);
+        throw new NotImplementedException();
+        // var touchedOwnerId = ShapeFindOwner(bodyShape);
+        //
+        // // Not found
+        // if (touchedOwnerId == uint.MaxValue)
+        //     return null;
+        //
+        // return GetColonyMemberWithShapeOwner(touchedOwnerId, Colony);
     }
 
     /// <summary>
@@ -660,7 +677,7 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             player.MaxDistance = 100.0f;
             player.Bus = "SFX";
 
-            AddChild(player);
+            VisualNode.AddChild(player);
             otherAudioPlayers.Add(player);
         }
 
@@ -686,7 +703,7 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             player = new AudioStreamPlayer();
             player.Bus = "SFX";
 
-            AddChild(player);
+            VisualNode.AddChild(player);
             nonPositionalAudioPlayers.Add(player);
         }
 
@@ -701,7 +718,6 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             return;
 
         usesExternalProcess = true;
-        SetProcess(false);
     }
 
     /// <summary>
@@ -787,7 +803,7 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             // Listener is directional and since it is a child of the microbe it will have the same forward
             // vector as the parent. Since we want sound to come from the side of the screen relative to the
             // camera rather than the microbe we need to force the listener to face up every frame.
-            Transform transform = GlobalTransform;
+            Transform transform = VisualNode.GlobalTransform;
             transform.basis = new Basis(new Vector3(0.0f, 0.0f, -1.0f));
             listener.GlobalTransform = transform;
         }
@@ -934,7 +950,7 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
         }
 
         var detections = new List<(Compound Compound, Color Colour, Vector3 Target)>();
-        var position = GlobalTranslation;
+        var position = Position;
 
         foreach (var (compound, range, minAmount, colour) in collectedUniqueCompoundDetections)
         {
@@ -974,10 +990,9 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             if (entity.Compounds.Compounds.Count <= 0 || entity.PhagocytosisStep != PhagocytosisPhase.None)
                 continue;
 
-            var spatial = entity.EntityNode;
-
             // Skip entities that are out of range
-            if ((spatial.Translation - Translation).LengthSquared() > searchRadiusSquared)
+            var distance = (entity.Position - Position).LengthSquared();
+            if (distance > searchRadiusSquared)
                 continue;
 
             // Skip non-engulfable entities
@@ -988,11 +1003,9 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             if (!entity.Compounds.Compounds.Any(x => Compounds.IsUseful(x.Key)))
                 continue;
 
-            var distance = (spatial.Translation - Translation).LengthSquared();
-
             if (nearestPoint == null || distance < nearestDistanceSquared)
             {
-                nearestPoint = spatial.Translation;
+                nearestPoint = entity.Position;
                 nearestDistanceSquared = distance;
             }
         }
@@ -1022,16 +1035,16 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
     ///   </para>
     /// </remarks>
     /// <returns>Returns relative translation and rotation</returns>
-    private (Vector3 Translation, Vector3 Rotation) GetNewRelativeTransform()
+    private (Vector3 Translation, Quat Rotation) GetNewRelativeTransform()
     {
         if (ColonyParent == null)
             throw new InvalidOperationException("This microbe doesn't have colony parent set");
 
         // Gets the global rotation of the parent
-        var globalParentRotation = ColonyParent.GlobalTransform.basis.GetEuler();
+        var globalParentRotation = ColonyParent.Rotation;
 
         // A vector from the parent to me
-        var vectorFromParent = GlobalTransform.origin - ColonyParent.GlobalTransform.origin;
+        var vectorFromParent = Position - ColonyParent.Position;
 
         // A vector from me to the parent
         var vectorToParent = -vectorFromParent;
@@ -1061,7 +1074,9 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
         // Rotated because the rotational scope is different.
         var newTranslation = correctedVectorFromParent.Rotated(Vector3.Down, globalParentRotation.y);
 
-        return (newTranslation, Rotation - globalParentRotation);
+        // TODO: check the following math is still correct
+        throw new NotImplementedException();
+        return (newTranslation, Rotation * globalParentRotation.Inverse());
     }
 
     private void FinishSpeciesSetup()
@@ -1111,23 +1126,6 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             material.RenderPriority = RenderPriority;
     }
 
-    private Node GetStageAsParent()
-    {
-        if (HostileEngulfer.Value != null)
-            return HostileEngulfer.Value.GetStageAsParent();
-
-        if (Colony == null)
-            return GetParent();
-
-        // If the colony leader is engulfed, the colony children, when the colony is disbanded, need to access the
-        // stage through the engulfer. Because at that point the colony leader is already re-parented to the engulfer,
-        // so its parent is no longer the stage here.
-        if (Colony.Master.HostileEngulfer.Value != null)
-            return Colony.Master.HostileEngulfer.Value.GetStageAsParent();
-
-        return Colony.Master.GetParent();
-    }
-
     private Vector3 DoBaseMovementForce(float delta)
     {
         var cost = (Constants.BASE_MOVEMENT_ATP_COST * HexCount) * delta;
@@ -1158,9 +1156,13 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
             force /= Constants.MUCILAGE_IMPEDE_FACTOR;
 
         if (IsPlayerMicrobe && CheatManager.Speed > 1)
-            force *= Mass * CheatManager.Speed;
+        {
+            // TODO: get our mass somehow
+            throw new NotImplementedException();
+            // force *= Mass * CheatManager.Speed;
+        }
 
-        return Transform.basis.Xform(MovementDirection * force) * appliedFactor *
+        return Rotation.Xform(MovementDirection * force) * appliedFactor *
             (CellTypeProperties.MembraneType.MovementFactor -
                 (CellTypeProperties.MembraneRigidity * Constants.MEMBRANE_RIGIDITY_BASE_MOBILITY_MODIFIER));
     }
@@ -1170,9 +1172,12 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
         if (movement.x == 0.0f && movement.z == 0.0f)
             return;
 
+        throw new NotImplementedException();
+
         // Scale movement by delta time (not by framerate). We aren't Fallout 4
         // TODO: it seems that at low framerate (below 20 or so) cells get a speed boost for some reason
-        ApplyCentralImpulse(movement * delta);
+        // TODO: check if the above is still true with Jolt
+        // ApplyCentralImpulse(movement * delta);
     }
 
     /// <summary>
@@ -1205,7 +1210,7 @@ public partial class Microbe : SimulatedPhysicsEntity, IAttachableEntity, ISpawn
                     if (colonyMember == this)
                         continue;
 
-                    var distance = colonyMember.Transform.origin.LengthSquared();
+                    var distance = colonyMember.RelativePosition.LengthSquared();
 
                     if (distance < MathUtils.EPSILON)
                         continue;

@@ -168,6 +168,11 @@ public class PhysicalWorld : IDisposable
         throw new NotImplementedException();
     }
 
+    public void BodyRemoveCollisionIgnoreWith(PhysicsBody body, PhysicsBody otherBody)
+    {
+        throw new NotImplementedException();
+    }
+
     public void BodyClearCollisionsIgnores(PhysicsBody body)
     {
         throw new NotImplementedException();

@@ -131,6 +131,11 @@ public static class SpawnHelpers
         throw new NotImplementedException();
     }
 
+    public static PackedScene LoadMicrobeVisualsScene()
+    {
+        return GD.Load<PackedScene>("res://src/microbe_stage/Microbe.tscn");
+    }
+
     public static FloatingChunk SpawnChunk(IWorldSimulation simulation, ChunkConfiguration chunkType,
         Vector3 location, Random random)
     {

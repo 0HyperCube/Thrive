@@ -25,4 +25,10 @@ public abstract class SimulatedEntity : ISimulatedEntity
     {
         AliveMarker.Alive = false;
     }
+
+    public abstract void Process(float delta);
+
+    public virtual void ProcessFrame(float delta)
+    {
+    }
 }

@@ -37,6 +37,10 @@ public class CellBurstEffect : SimulatedEntity, ISimulatedEntityWithDirectVisual
         VisualNode = particles;
     }
 
+    public override void Process(float delta)
+    {
+    }
+
     public void OnTimeOver()
     {
     }

@@ -315,11 +315,13 @@ public partial class Microbe
 
         var position = microbePosition + (direction * ejectionDistance);
 
-        var agent = SpawnHelpers.SpawnAgent(props, amountEmitted, Constants.EMITTED_AGENT_LIFETIME,
-            position, direction, GetStageAsParent(),
-            SpawnHelpers.LoadAgentScene(), this);
+        throw new NotImplementedException();
 
-        ModLoader.ModInterface.TriggerOnToxinEmitted(agent);
+        // var agent = SpawnHelpers.SpawnAgent(props, amountEmitted, Constants.EMITTED_AGENT_LIFETIME,
+        //     position, direction, GetStageAsParent(),
+        //     SpawnHelpers.LoadAgentScene(), this);
+
+        // ModLoader.ModInterface.TriggerOnToxinEmitted(agent);
 
         if (amountEmitted < Constants.MAXIMUM_AGENT_EMISSION_AMOUNT / 2)
         {
@@ -421,7 +423,9 @@ public partial class Microbe
         // Create the one daughter cell.
         // Since the daughter spawns right next to the cell, it should face the same way to avoid colliding
         // TODO: add the rotation to this call
-        var copyEntity = SpawnHelpers.SpawnMicrobe(Species, currentPosition + direction * width,
+        throw new NotImplementedException();
+
+        /*var copyEntity = SpawnHelpers.SpawnMicrobe(Species, currentPosition + direction * width,
             GetParent(), SpawnHelpers.LoadMicrobeScene(), true, cloudSystem!, spawnSystem!, CurrentGame);
 
         // Make it despawn like normal
@@ -484,7 +488,7 @@ public partial class Microbe
         // Play the split sound
         PlaySoundEffect("res://assets/sounds/soundeffects/reproduction.ogg");
 
-        return copyEntity;
+        return copyEntity;*/
     }
 
     /// <summary>
@@ -1614,7 +1618,9 @@ public partial class Microbe
                     {
                         engulfed.HostileEngulfer.Value = hostile;
                         hostile.engulfedObjects.Add(other);
-                        engulfed.EntityNode.ReParentWithTransform(hostile);
+                        throw new NotImplementedException();
+
+                        // engulfed.EntityNode.ReParentWithTransform(hostile);
                     }
                 }
             }

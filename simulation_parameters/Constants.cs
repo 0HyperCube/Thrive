@@ -319,11 +319,6 @@ public static class Constants
     public const float COMPOUND_RELEASE_FRACTION = 0.9f;
 
     /// <summary>
-    ///   Base mass all microbes have on top of their organelle masses
-    /// </summary>
-    public const float MICROBE_BASE_MASS = 0.7f;
-
-    /// <summary>
     ///   Cooldown between agent emissions, in seconds.
     /// </summary>
     public const float AGENT_EMISSION_COOLDOWN = 2.0f;

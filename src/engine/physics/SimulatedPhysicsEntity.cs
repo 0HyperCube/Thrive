@@ -42,6 +42,10 @@ public class SimulatedPhysicsEntity : SimulatedEntity, IPhysicsEntity
         throw new NotImplementedException();
     }
 
+    public override void Process(float delta)
+    {
+    }
+
     public void RegisterCollisionCallback(OnCollidedWith onCollided)
     {
         throw new NotImplementedException();
@@ -93,6 +97,21 @@ public class SimulatedPhysicsEntity : SimulatedEntity, IPhysicsEntity
         catch (Exception e)
         {
             GD.PrintErr("Cannot ignore collisions with another body: ", e);
+        }
+    }
+
+    public void RestoreCollisionsWith(PhysicsBody otherBody)
+    {
+        if (Body == null || !CheckWeHaveWorldReference())
+            return;
+
+        try
+        {
+            BodyCreatedInWorld!.BodyRemoveCollisionIgnoreWith(Body, otherBody);
+        }
+        catch (Exception e)
+        {
+            GD.PrintErr("Cannot remove collision ignore with another body: ", e);
         }
     }
 
