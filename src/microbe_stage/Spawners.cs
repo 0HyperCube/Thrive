@@ -51,7 +51,8 @@ public static class SpawnHelpers
 
         microbe.Position = location;
 
-        // TODO: this will be needed if we switch to an ECS system
+        // TODO: this will be needed to be changed we switch to an ECS system (or could have an off/on flag in the
+        // ai component then)
         if (aiControlled)
         {
             microbe.EntityGroups.Add(Constants.AI_GROUP);

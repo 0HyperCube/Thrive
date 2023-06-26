@@ -121,6 +121,9 @@
     <Compile Include="src\engine\CheatManager.cs" />
     <Compile Include="src\engine\ChildObjectCache.cs" />
     <Compile Include="src\engine\ChromaticFilter.cs" />
+    <Compile Include="src\engine\common_components\SpatialInstance.cs" />
+    <Compile Include="src\engine\common_components\WorldPosition.cs" />
+    <Compile Include="src\engine\common_systems\SpatialPositionSystem.cs" />
     <Compile Include="src\engine\DebugDrawer.cs" />
     <Compile Include="src\engine\DebugOverlays.Inspector.cs" />
     <Compile Include="src\engine\DebugOverlays.SceneTreeDumper.cs" />
@@ -800,6 +803,9 @@
   <ItemGroup>
     <PackageReference Include="AngleSharp">
       <Version>1.0.4</Version>
+    </PackageReference>
+    <PackageReference Include="DefaultEcs">
+      <Version>0.17.2</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.3</Version>
