@@ -318,6 +318,12 @@ public static class Constants
 
     public const float COMPOUND_RELEASE_FRACTION = 0.9f;
 
+    // TODO: delete after the conversion to custom physics
+    /// <summary>
+    ///   Base mass all microbes have on top of their organelle masses
+    /// </summary>
+    public const float MICROBE_BASE_MASS = 0.7f;
+
     /// <summary>
     ///   Cooldown between agent emissions, in seconds.
     /// </summary>
@@ -951,10 +957,46 @@ public static class Constants
     public const float PROCEDURAL_CACHE_CLEAN_INTERVAL = 9.3f;
     public const float PROCEDURAL_CACHE_MEMBRANE_KEEP_TIME = 500;
 
+    // TODO: delete once old microbe code is gone
+    /// <summary>
+    ///   All Nodes tagged with this are handled by the timed life system for despawning
+    /// </summary>
+    public const string TIMED_GROUP = "timed";
+
+    /// <summary>
+    ///   All Nodes tagged with this are handled by the process system. Can't be just "process" as that conflicts with
+    ///   godot idle_process and process, at least I think it does.
+    /// </summary>
+    public const string PROCESS_GROUP = "run_processes";
+
     /// <summary>
     ///   All Nodes tagged with this are handled by the ai system
     /// </summary>
     public const string AI_GROUP = "ai";
+
+    /// <summary>
+    ///   Microbes tagged with this are handled by the <see cref="MicrobeSystem"/> to be processed.
+    /// </summary>
+    /// <remarks>
+    ///   <para>
+    ///     NOTE: This is not related to <see cref="PROCESS_GROUP"/> which is in the context of in-game compounds
+    ///     processes, this is related to the engine's <see cref="Node._Process(float)"/> on the nodes.
+    ///   </para>
+    /// </remarks>
+    public const string RUNNABLE_MICROBE_GROUP = "microbe_runnable";
+
+    /// <summary>
+    ///   All Nodes tagged with this are considered Microbes that the AI can react to
+    /// </summary>
+    /// <remarks>
+    ///   <para>
+    ///     TODO: quite a few of these AI_TAG starting constants need to be renamed as these are generally used to
+    ///     find relevant entities for things that aren't the AI system
+    ///   </para>
+    /// </remarks>
+    public const string AI_TAG_MICROBE = "microbe";
+
+    // TODO: delete up to here after microbe code is gone
 
     public const string ENTITY_TAG_CREATURE = "creature";
 

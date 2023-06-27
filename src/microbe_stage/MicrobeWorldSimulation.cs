@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 ///   Contains all the parts needed to simulate a microbial world. Separate from (but used by) the
 ///   <see cref="MicrobeStage"/> to also allow other parts of the code to easily run a microbe simulation
 /// </summary>
-public class MicrobeWorldSimulation : WorldSimulationWithExternalPhysics<SimulatedPhysicsEntity>
+public class MicrobeWorldSimulation : WorldSimulationWithPhysics
 {
     private Random aiRandom = new();
 

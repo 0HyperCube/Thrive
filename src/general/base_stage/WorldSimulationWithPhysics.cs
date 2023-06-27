@@ -4,10 +4,7 @@ using Godot;
 /// <summary>
 ///   World simulation that uses the external physics engine in the native code module
 /// </summary>
-/// <typeparam name="TEntity">Type of entity handled by this simulation</typeparam> 
-public abstract class WorldSimulationWithExternalPhysics<TEntity> : WorldSimulation<TEntity>,
-    IWorldSimulationWithPhysics
-    where TEntity : class, ISimulatedEntity
+public abstract class WorldSimulationWithPhysics : WorldSimulation, IWorldSimulationWithPhysics
 {
     protected readonly PhysicalWorld physics;
 
@@ -16,12 +13,12 @@ public abstract class WorldSimulationWithExternalPhysics<TEntity> : WorldSimulat
     /// </summary>
     protected readonly List<PhysicsBody> createdBodies = new();
 
-    protected WorldSimulationWithExternalPhysics()
+    protected WorldSimulationWithPhysics()
     {
         physics = PhysicalWorld.Create();
     }
 
-    ~WorldSimulationWithExternalPhysics()
+    ~WorldSimulationWithPhysics()
     {
         Dispose(false);
     }

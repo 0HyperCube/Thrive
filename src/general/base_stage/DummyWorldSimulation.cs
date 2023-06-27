@@ -1,44 +1,37 @@
 ﻿using System;
-using System.Collections.Generic;
+using DefaultEcs;
 
 /// <summary>
 ///   For use in the prototypes not yet converted to using world simulations
 /// </summary>
 public class DummyWorldSimulation : IWorldSimulation
 {
-    public IReadOnlyCollection<IEntityBase> Entities { get; } = new List<IEntityBase>();
-
-    public void AddEntity(IEntityBase entity)
+    public Entity CreateEmptyEntity()
     {
         throw new NotSupportedException("Dummy simulation doesn't support adding entities");
     }
 
-    public bool DestroyEntity(IEntityBase entity)
+    public bool DestroyEntity(Entity entity)
     {
         return false;
     }
 
-    public void DestroyAllEntities(IEntityBase? skip = null)
+    public void DestroyAllEntities(Entity? skip = null)
     {
         throw new System.NotImplementedException();
     }
 
+    public bool IsEntityInWorld(Entity entity)
+    {
+        return false;
+    }
+
+    public bool IsQueuedForDeletion(Entity entity)
+    {
+        return false;
+    }
+
     public void Dispose()
     {
-    }
-
-    public bool IsEntityInWorld(IEntityBase entity)
-    {
-        return false;
-    }
-
-    public bool IsQueuedForDeletion(IEntityBase entity)
-    {
-        return false;
-    }
-
-    public IEnumerable<IEntityBase> EntitiesWithGroup(string group)
-    {
-        yield break;
     }
 }

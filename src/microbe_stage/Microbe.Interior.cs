@@ -301,27 +301,23 @@ public partial class Microbe
         // Find the direction the microbe is facing
         // (actual rotation, not LookAtPoint, also takes colony membership into account)
         Vector3 direction;
-        Vector3 microbePosition = Position;
-
         if (Colony != null)
         {
-            direction = Colony.Master.Rotation.Normalized().Xform(Vector3.Forward);
-            microbePosition = Colony.Master.Position;
+            direction = Colony.Master.GlobalTransform
+                .basis.Quat().Normalized().Xform(Vector3.Forward);
         }
         else
         {
-            direction = Rotation.Normalized().Xform(Vector3.Forward);
+            direction = GlobalTransform.basis.Quat().Normalized().Xform(Vector3.Forward);
         }
 
-        var position = microbePosition + (direction * ejectionDistance);
+        var position = GlobalTransform.origin + (direction * ejectionDistance);
 
-        throw new NotImplementedException();
+        var agent = SpawnHelpers.SpawnAgent(props, amountEmitted, Constants.EMITTED_AGENT_LIFETIME,
+            position, direction, GetStageAsParent(),
+            SpawnHelpers.LoadAgentScene(), this);
 
-        // var agent = SpawnHelpers.SpawnAgent(props, amountEmitted, Constants.EMITTED_AGENT_LIFETIME,
-        //     position, direction, GetStageAsParent(),
-        //     SpawnHelpers.LoadAgentScene(), this);
-
-        // ModLoader.ModInterface.TriggerOnToxinEmitted(agent);
+        ModLoader.ModInterface.TriggerOnToxinEmitted(agent);
 
         if (amountEmitted < Constants.MAXIMUM_AGENT_EMISSION_AMOUNT / 2)
         {
@@ -397,10 +393,10 @@ public partial class Microbe
         if (ColonyParent != null)
             throw new ArgumentException("Cell that is a colony member (non-leader) can't divide");
 
-        var currentPosition = Position;
+        var currentPosition = GlobalTransform.origin;
 
         // Find the direction to the right from where the cell is facing
-        var direction = Rotation.Normalized().Xform(Vector3.Right);
+        var direction = GlobalTransform.basis.Quat().Normalized().Xform(Vector3.Right);
 
         // Start calculating separation distance
         var organellePositions = organelles!.Organelles.Select(o => Hex.AxialToCartesian(o.Position)).ToList();
@@ -410,7 +406,7 @@ public partial class Microbe
 
         if (Colony != null)
         {
-            var colonyMembers = Colony.ColonyMembers.Select(c => c.Position);
+            var colonyMembers = Colony.ColonyMembers.Select(c => c.GlobalTransform.origin);
 
             distanceRight += MathUtils.GetMaximumDistanceInDirection(direction, currentPosition, colonyMembers);
         }
@@ -421,12 +417,16 @@ public partial class Microbe
             width *= 0.5f;
 
         // Create the one daughter cell.
-        // Since the daughter spawns right next to the cell, it should face the same way to avoid colliding
-        // TODO: add the rotation to this call
-        throw new NotImplementedException();
-
-        /*var copyEntity = SpawnHelpers.SpawnMicrobe(Species, currentPosition + direction * width,
+        var copyEntity = SpawnHelpers.SpawnMicrobe(Species, currentPosition + direction * width,
             GetParent(), SpawnHelpers.LoadMicrobeScene(), true, cloudSystem!, spawnSystem!, CurrentGame);
+
+        // Since the daughter spawns right next to the cell, it should face the same way to avoid colliding
+        var daughterBasis = new Basis(Transform.basis.Quat())
+        {
+            Scale = copyEntity.Transform.basis.Scale,
+        };
+
+        copyEntity.Transform = new Transform(daughterBasis, copyEntity.Translation);
 
         // Make it despawn like normal
         spawnSystem!.NotifyExternalEntitySpawned(copyEntity);
@@ -488,7 +488,7 @@ public partial class Microbe
         // Play the split sound
         PlaySoundEffect("res://assets/sounds/soundeffects/reproduction.ogg");
 
-        return copyEntity;*/
+        return copyEntity;
     }
 
     /// <summary>
@@ -684,11 +684,11 @@ public partial class Microbe
         // max here buffs compound absorbing for the smallest cells
         var grabRadius = Mathf.Max(Radius, 3.0f);
 
-        cloudSystem!.AbsorbCompounds(Position, grabRadius, Compounds,
+        cloudSystem!.AbsorbCompounds(GlobalTransform.origin, grabRadius, Compounds,
             TotalAbsorbedCompounds, delta, Membrane.Type.ResourceAbsorptionFactor);
 
         // Cells with jets aren't affected by mucilage
-        slowedBySlime = SlimeJets.Count < 1 && cloudSystem.AmountAvailable(mucilage, Position, 1.0f) >
+        slowedBySlime = SlimeJets.Count < 1 && cloudSystem.AmountAvailable(mucilage, GlobalTransform.origin, 1.0f) >
             Constants.COMPOUND_DENSITY_CATEGORY_FAIR_AMOUNT;
 
         if (IsPlayerMicrobe && CheatManager.InfiniteCompounds)
@@ -1411,9 +1411,9 @@ public partial class Microbe
 
         distance += displacement;
 
-        var ejectionDirection = Rotation.Normalized().Xform(direction);
+        var ejectionDirection = GlobalTransform.basis.Quat().Normalized().Xform(direction);
 
-        var result = Position + (ejectionDirection * distance);
+        var result = GlobalTransform.origin + (ejectionDirection * distance);
 
         return result;
     }
@@ -1618,9 +1618,7 @@ public partial class Microbe
                     {
                         engulfed.HostileEngulfer.Value = hostile;
                         hostile.engulfedObjects.Add(other);
-                        throw new NotImplementedException();
-
-                        // engulfed.EntityNode.ReParentWithTransform(hostile);
+                        engulfed.EntityNode.ReParentWithTransform(hostile);
                     }
                 }
             }

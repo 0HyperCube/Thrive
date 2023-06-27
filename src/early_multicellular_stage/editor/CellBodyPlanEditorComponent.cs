@@ -249,9 +249,6 @@ public partial class CellBodyPlanEditorComponent :
             cellDataDirty = false;
         }
 
-        throw new NotImplementedException();
-
-        /*
         foreach (var microbe in thisFrameScaleApplies)
         {
             // This check is here for simplicity's sake as model display nodes can be destroyed on subsequent frames
@@ -264,7 +261,7 @@ public partial class CellBodyPlanEditorComponent :
                 Constants.MULTICELLULAR_EDITOR_PREVIEW_MICROBE_SCALE_MULTIPLIER);
         }
 
-        thisFrameScaleApplies.Clear();*/
+        thisFrameScaleApplies.Clear();
 
         var tempList = thisFrameScaleApplies;
         thisFrameScaleApplies = nextFrameScaleApplies;
@@ -1013,9 +1010,6 @@ public partial class CellBodyPlanEditorComponent :
 
         bool wasExisting = false;
 
-        throw new NotImplementedException();
-
-        /*
         if (modelHolder.InstancedNode is Microbe existingMicrobe)
         {
             microbe = existingMicrobe;
@@ -1040,7 +1034,7 @@ public partial class CellBodyPlanEditorComponent :
         }
 
         // Attach to scene to initialize the microbe before the operations that need that
-        modelHolder.LoadFromAlreadyLoadedNode(microbe);*/
+        modelHolder.LoadFromAlreadyLoadedNode(microbe);
 
         // TODO: don't reload the species if the species data would be exactly the same as before to save on
         // performance. This probably causes the bit of weird turning / flicker with placing more cells

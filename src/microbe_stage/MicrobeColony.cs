@@ -176,11 +176,8 @@ public class MicrobeColony
 
         microbe.ColonyParent = null;
         microbe.ColonyChildren = null;
-
-        throw new NotImplementedException();
-
-        // if (microbe != Master)
-        //     Master.Mass -= microbe.Mass;
+        if (microbe != Master)
+            Master.Mass -= microbe.Mass;
 
         membersDirty = true;
     }
@@ -191,9 +188,7 @@ public class MicrobeColony
             throw new ArgumentException("Microbe or master null or microbe already is in a colony");
 
         ColonyMembers.Add(microbe);
-
-        throw new NotImplementedException();
-        // Master.Mass += microbe.Mass;
+        Master.Mass += microbe.Mass;
 
         microbe.ColonyParent = master;
         master.ColonyChildren!.Add(microbe);

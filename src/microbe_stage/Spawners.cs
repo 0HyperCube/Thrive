@@ -39,11 +39,47 @@ public static class Spawners
 /// </summary>
 public static class SpawnHelpers
 {
+    // TODO: remove this old variant
+    public static Microbe SpawnMicrobe(Species species, Vector3 location,
+        Node worldRoot, PackedScene microbeScene, bool aiControlled,
+        CompoundCloudSystem cloudSystem, ISpawnSystem spawnSystem, GameProperties currentGame,
+        CellType? multicellularCellType = null)
+    {
+        var microbe = (Microbe)microbeScene.Instance();
+
+        // The second parameter is (isPlayer), and we assume that if the
+        // cell is not AI controlled it is the player's cell
+        microbe.Init(cloudSystem, spawnSystem, currentGame, !aiControlled);
+
+        worldRoot.AddChild(microbe);
+        microbe.Translation = location;
+
+        microbe.AddToGroup(Constants.AI_TAG_MICROBE);
+        microbe.AddToGroup(Constants.PROCESS_GROUP);
+        microbe.AddToGroup(Constants.RUNNABLE_MICROBE_GROUP);
+
+        if (aiControlled)
+            microbe.AddToGroup(Constants.AI_GROUP);
+
+        if (multicellularCellType != null)
+        {
+            microbe.ApplyMulticellularNonFirstCellSpecies((EarlyMulticellularSpecies)species, multicellularCellType);
+        }
+        else
+        {
+            microbe.ApplySpecies(species);
+        }
+
+        microbe.SetInitialCompounds();
+        return microbe;
+    }
+
     public static Microbe SpawnMicrobe(MicrobeWorldSimulation simulation, Species species, Vector3 location,
         bool aiControlled, ISpawnSystem spawnSystem, GameProperties currentGame,
         CellType? multicellularCellType = null)
     {
-        var microbe = new Microbe();
+        throw new NotImplementedException();
+        /*var microbe = new Microbe();
 
         // The second parameter is (isPlayer), and we assume that if the
         // cell is not AI controlled it is the player's cell
@@ -69,9 +105,9 @@ public static class SpawnHelpers
 
         microbe.SetInitialCompounds();
 
-        simulation.AddEntity(microbe);
+        simulation.CreateEmptyEntity(microbe);
 
-        return microbe;
+        return microbe;*/
     }
 
     /// <summary>
@@ -102,50 +138,39 @@ public static class SpawnHelpers
         }
     }
 
+    // TODO: this is likely a huge cause of lag. Would be nice to be able
+    // to spawn these so that only one per tick is spawned.
     public static IEnumerable<Microbe> SpawnBacteriaColony(Species species, Vector3 location,
         Node worldRoot, PackedScene microbeScene, CompoundCloudSystem cloudSystem, ISpawnSystem spawnSystem,
         GameProperties currentGame, Random random)
     {
-        // TODO: update this to take in a MicrobeWorldSimulation simulation
-        throw new NotImplementedException();
+        var curSpawn = new Vector3(random.Next(1, 8), 0, random.Next(1, 8));
 
-        /*
-                var curSpawn = new Vector3(random.Next(1, 8), 0, random.Next(1, 8));
+        var clumpSize = random.Next(Constants.MIN_BACTERIAL_COLONY_SIZE,
+            Constants.MAX_BACTERIAL_COLONY_SIZE + 1);
+        for (int i = 0; i < clumpSize; i++)
+        {
+            // Dont spawn them on top of each other because it
+            // causes them to bounce around and lag
+            yield return SpawnMicrobe(species, location + curSpawn, worldRoot, microbeScene, true,
+                cloudSystem, spawnSystem, currentGame);
 
-                var clumpSize = random.Next(Constants.MIN_BACTERIAL_COLONY_SIZE,
-                    Constants.MAX_BACTERIAL_COLONY_SIZE + 1);
-                for (int i = 0; i < clumpSize; i++)
-                {
-                    // Dont spawn them on top of each other because it
-                    // causes them to bounce around and lag
-                    yield return SpawnMicrobe(species, location + curSpawn, worldRoot, microbeScene, true,
-                        cloudSystem, spawnSystem, currentGame);
-
-                    curSpawn += new Vector3(random.Next(-7, 8), 0, random.Next(-7, 8));
-                }
-        */
+            curSpawn += new Vector3(random.Next(-7, 8), 0, random.Next(-7, 8));
+        }
     }
 
     public static PackedScene LoadMicrobeScene()
     {
-        // TODO: remove this method
-        throw new NotImplementedException();
-    }
-
-    public static PackedScene LoadMicrobeVisualsScene()
-    {
         return GD.Load<PackedScene>("res://src/microbe_stage/Microbe.tscn");
     }
 
-    public static FloatingChunk SpawnChunk(IWorldSimulation simulation, ChunkConfiguration chunkType,
-        Vector3 location, Random random)
+    public static FloatingChunk SpawnChunk(ChunkConfiguration chunkType,
+        Vector3 location, Node worldNode, PackedScene chunkScene, Random random)
     {
-        var chunk = new FloatingChunk
-        {
-            Position = location,
-        };
+        throw new NotImplementedException();
+        /*var chunk = (FloatingChunk)chunkScene.Instance();
 
-        // Settings need to be applied before adding it to the world
+        // Settings need to be applied before adding it to the scene
         var selectedMesh = chunkType.Meshes.Random(random);
         chunk.GraphicsScene = selectedMesh.LoadedScene ??
             throw new Exception("Chunk scene has not been loaded even though it should be loaded here");
@@ -154,24 +179,27 @@ public static class SpawnHelpers
         if (chunk.GraphicsScene == null)
             throw new ArgumentException("couldn't find a graphics scene for a chunk");
 
-        // Chunk is spawned with random rotation (in the 2D plane if it's an Easter egg)
-        var rotationAxis = chunk.EasterEgg ? new Vector3(0, 1, 0) : new Vector3(0, 1, 1);
-        chunk.Rotation = new Quat(rotationAxis.Normalized(), 2 * Mathf.Pi * (float)random.NextDouble());
-
         // Pass on the chunk data
         chunk.Init(chunkType, selectedMesh.SceneModelPath, selectedMesh.SceneAnimationPath);
         chunk.UsesDespawnTimer = !chunkType.Dissolves;
 
-        simulation.AddEntity(chunk);
+        worldNode.AddChild(chunk);
 
-        return chunk;
+        // Chunk is spawned with random rotation (in the 2D plane if it's an Easter egg)
+        var rotationAxis = chunk.EasterEgg ? new Vector3(0, 1, 0) : new Vector3(0, 1, 1);
+        chunk.Transform = new Transform(new Quat(
+            rotationAxis.Normalized(), 2 * Mathf.Pi * (float)random.NextDouble()), location);
+
+        chunk.GetNode<Spatial>("NodeToScale").Scale = new Vector3(chunkType.ChunkScale, chunkType.ChunkScale,
+            chunkType.ChunkScale);
+
+        chunk.AddToGroup(Constants.FLUID_EFFECT_GROUP);
+        chunk.AddToGroup(Constants.AI_TAG_CHUNK);
+        return chunk;*/
     }
 
     public static PackedScene LoadChunkScene()
     {
-        // TODO: remove this method
-        throw new NotImplementedException();
-
         return GD.Load<PackedScene>("res://src/microbe_stage/FloatingChunk.tscn");
     }
 
@@ -194,38 +222,35 @@ public static class SpawnHelpers
     /// <summary>
     ///   Spawns an agent projectile
     /// </summary>
-    public static AgentProjectile SpawnAgent(IWorldSimulationWithPhysics simulation, AgentProperties properties,
-        float amount, float lifetime, Vector3 location, Vector3 direction, SimulatedPhysicsEntity emitter)
+    public static AgentProjectile SpawnAgent(AgentProperties properties, float amount,
+        float lifetime, Vector3 location, Vector3 direction,
+        Node worldRoot, PackedScene agentScene, IEntity emitter)
     {
         var normalizedDirection = direction.Normalized();
 
-        var agent = new AgentProjectile
-        {
-            Properties = properties,
-            Amount = amount,
-            TimeToLiveRemaining = lifetime,
-            VisualScale = amount / Constants.MAXIMUM_AGENT_EMISSION_AMOUNT,
-            Position = location + (direction * 1.5f),
-            Emitter = new EntityReference<SimulatedPhysicsEntity>(emitter),
-        };
+        throw new NotImplementedException();
 
-        simulation.AddEntity(agent);
+        /*var agent = (AgentProjectile)agentScene.Instance();
+        agent.Properties = properties;
+        agent.Amount = amount;
+        agent.TimeToLiveRemaining = lifetime;
+        agent.Emitter = new EntityReference<IEntity>(emitter);
 
-        var body = agent.Body;
+        worldRoot.AddChild(agent);
+        agent.Translation = location + (direction * 1.5f);
+        var scaleValue = amount / Constants.MAXIMUM_AGENT_EMISSION_AMOUNT;
+        agent.Scale = new Vector3(scaleValue, scaleValue, scaleValue);
 
-        if (body != null)
-        {
-            simulation.PhysicalWorld.GiveImpulse(body, normalizedDirection *
-                Constants.AGENT_EMISSION_IMPULSE_STRENGTH);
-        }
+        agent.ApplyCentralImpulse(normalizedDirection *
+            Constants.AGENT_EMISSION_IMPULSE_STRENGTH);
 
-        return agent;
+        agent.AddToGroup(Constants.TIMED_GROUP);
+        return agent;*/
     }
 
     public static PackedScene LoadAgentScene()
     {
-        // TODO: remove this method
-        throw new NotImplementedException();
+        return GD.Load<PackedScene>("res://src/microbe_stage/AgentProjectile.tscn");
     }
 
     public static MulticellularCreature SpawnCreature(Species species, Vector3 location,
@@ -242,6 +267,7 @@ public static class SpawnHelpers
         creature.Translation = location;
 
         creature.AddToGroup(Constants.ENTITY_TAG_CREATURE);
+        creature.AddToGroup(Constants.PROCESS_GROUP);
         creature.AddToGroup(Constants.PROGRESS_ENTITY_GROUP);
 
         if (aiControlled)
@@ -481,10 +507,7 @@ public class MicrobeSpawner : Spawner
         if (Species.Obsolete)
             GD.PrintErr("Obsolete species microbe has spawned");
 
-        // TODO: change the constructor to take in the microbe simulation instead of the clouds
-        throw new NotImplementedException();
-
-        /*// The true here is that this is AI controlled
+        // The true here is that this is AI controlled
         var first = SpawnHelpers.SpawnMicrobe(Species, location, worldNode, microbeScene, true, cloudSystem,
             spawnSystem, currentGame);
 
@@ -507,7 +530,7 @@ public class MicrobeSpawner : Spawner
 
                 ModLoader.ModInterface.TriggerOnMicrobeSpawned(colonyMember);
             }
-        }*/
+        }
     }
 
     public override string ToString()
@@ -568,14 +591,12 @@ public class ChunkSpawner : Spawner
 
     public override IEnumerable<ISpawned>? Spawn(Node worldNode, Vector3 location, ISpawnSystem spawnSystem)
     {
-        throw new NotImplementedException();
+        var chunk = SpawnHelpers.SpawnChunk(chunkType, location, worldNode, chunkScene,
+            random);
 
-        // var chunk = SpawnHelpers.SpawnChunk(chunkType, location, worldNode, chunkScene,
-        //     random);
-        //
-        // yield return chunk;
-        //
-        // ModLoader.ModInterface.TriggerOnChunkSpawned(chunk, true);
+        yield return chunk;
+
+        ModLoader.ModInterface.TriggerOnChunkSpawned(chunk, true);
     }
 
     public override string ToString()

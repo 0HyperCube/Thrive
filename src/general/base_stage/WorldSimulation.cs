@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DefaultEcs;
 using Godot;
 using Newtonsoft.Json;
 
@@ -9,15 +10,10 @@ using Newtonsoft.Json;
 ///   types implementing this interface are in charge of running the gameplay simulation side of things. For example
 ///   microbe moving around, processing compounds, colliding, rendering etc.
 /// </summary>
-/// <typeparam name="TEntity">Type of entity handled by this simulation</typeparam>
-public abstract class WorldSimulation<TEntity> : IWorldSimulation, IDisposable
-    where TEntity : class, ISimulatedEntity
+public abstract class WorldSimulation : IDisposable
 {
-    // TODO: did these protected property loading work?
-    [JsonProperty]
-    protected readonly List<TEntity> entities = new();
-
-    protected readonly List<TEntity> queuedForDelete = new();
+    // TODO: did these protected property loading work? Loading / saving for the entities
+    protected readonly List<Entity> queuedForDelete = new();
 
     [JsonProperty]
     protected float minimumTimeBetweenLogicUpdates = 1 / 60.0f;
@@ -30,9 +26,6 @@ public abstract class WorldSimulation<TEntity> : IWorldSimulation, IDisposable
     /// </summary>
     [JsonProperty]
     public float EntityCount { get; protected set; }
-
-    [JsonIgnore]
-    public IReadOnlyCollection<IEntityBase> Entities => entities;
 
     /// <summary>
     ///   When set to false disables AI running
@@ -82,78 +75,59 @@ public abstract class WorldSimulation<TEntity> : IWorldSimulation, IDisposable
         accumulatedLogicTime = 0;
     }
 
-    public void AddEntity(IEntityBase entity)
+    public Entity CreateEmptyEntity()
     {
-        if (entity.AliveMarker.Alive != true)
-            throw new InvalidOperationException("Cannot add a non-alive entity");
-
-        if (entity is not TEntity castedEntity)
-            throw new ArgumentException("Wrong type of entity passed");
-
-        entities.Add(castedEntity);
-        castedEntity.OnAddedToSimulation(this);
+        throw new NotImplementedException();
     }
 
-    public bool DestroyEntity(IEntityBase entity)
+    public bool DestroyEntity(Entity entity)
     {
-        if (entity is not TEntity castedEntity)
-            throw new ArgumentException("Wrong type of entity passed");
-
-        if (!entities.Remove(castedEntity))
+        if (queuedForDelete.Contains(entity))
         {
-            if (queuedForDelete.Contains(castedEntity))
-            {
-                // Already queued for delete
-                return true;
-            }
-
-            GD.PrintErr("Tried to remove non-existent entity");
-            return false;
+            // Already queued for delete
+            return true;
         }
 
-        queuedForDelete.Add(castedEntity);
+        queuedForDelete.Add(entity);
         return true;
     }
 
-    public void DestroyAllEntities(IEntityBase? skip = null)
+    public void DestroyAllEntities(Entity? skip = null)
     {
         ProcessDestroyQueue();
 
-        foreach (var entity in entities)
-        {
-            if (entity == skip)
-                continue;
+        throw new NotImplementedException();
 
-            entity.OnDestroyed();
-        }
-
-        entities.RemoveAll(e => e != skip);
+        // foreach (var entity in entities)
+        // {
+        //     if (entity == skip)
+        //         continue;
+        //
+        //     entity.OnDestroyed();
+        // }
+        //
+        // entities.RemoveAll(e => e != skip);
         queuedForDelete.Clear();
     }
 
-    public bool IsQueuedForDeletion(IEntityBase entity)
+    /// <summary>
+    ///   Returns true when the given entity is queued for destruction
+    /// </summary>
+    public bool IsQueuedForDeletion(Entity entity)
     {
-        if (entity is not TEntity castedEntity)
-            throw new ArgumentException("Wrong type of entity passed");
-
-        return queuedForDelete.Contains(castedEntity);
+        return queuedForDelete.Contains(entity);
     }
 
-    public bool IsEntityInWorld(IEntityBase entity)
+    /// <summary>
+    ///   Checks that the entity is in this world and is not being deleted
+    /// </summary>
+    /// <param name="entity">The entity to check</param>
+    /// <returns>True when the entity is in this world and is not queued for deletion</returns>
+    public bool IsEntityInWorld(Entity entity)
     {
-        if (entity is not TEntity castedEntity)
-            throw new ArgumentException("Wrong type of entity passed");
+        throw new NotImplementedException();
 
-        return entities.Contains(castedEntity) && !queuedForDelete.Contains(castedEntity);
-    }
-
-    public IEnumerable<IEntityBase> EntitiesWithGroup(string group)
-    {
-        foreach (var entity in entities)
-        {
-            if (entity.EntityGroups.Contains(group))
-                yield return entity;
-        }
+        return /*entities.Contains(castedEntity) &&*/ !queuedForDelete.Contains(entity);
     }
 
     /// <summary>
@@ -219,7 +193,7 @@ public abstract class WorldSimulation<TEntity> : IWorldSimulation, IDisposable
     {
         foreach (var entity in queuedForDelete)
         {
-            entity.OnDestroyed();
+            throw new NotImplementedException();
         }
 
         queuedForDelete.Clear();

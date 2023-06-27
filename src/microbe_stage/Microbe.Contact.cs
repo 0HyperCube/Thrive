@@ -14,6 +14,8 @@ public partial class Microbe
 {
 #pragma warning disable CA2213
     private PackedScene endosomeScene = null!;
+
+    private PackedScene cellBurstEffectScene = null!;
 #pragma warning restore CA2213
 
     // private SphereShape pseudopodRangeSphereShape = null!;
@@ -37,7 +39,7 @@ public partial class Microbe
     /// <summary>
     ///   Tracks entities this is touching, for beginning engulfing and cell binding.
     /// </summary>
-    private HashSet<ISimulatedEntity> touchedEntities = new();
+    private HashSet<IEntity> touchedEntities = new();
 
     /// <summary>
     ///   Tracks entities this is trying to engulf.
@@ -87,6 +89,11 @@ public partial class Microbe
 
     [JsonProperty]
     private bool deathParticlesSpawned;
+
+    /// <summary>
+    ///   Used to log just once when the touched microbe disposed issue happens to reduce log spam
+    /// </summary>
+    private bool loggedTouchedDisposeIssue;
 
     [JsonProperty]
     private MicrobeState state;
@@ -151,6 +158,9 @@ public partial class Microbe
 
     [JsonProperty]
     public EntityReference<Microbe> HostileEngulfer { get; private set; } = new();
+
+    [JsonIgnore]
+    public AliveMarker AliveMarker { get; } = new();
 
     /// <summary>
     ///   The current state of the microbe. Shared across the colony
@@ -373,8 +383,7 @@ public partial class Microbe
 
         Hitpoints -= amount;
 
-        // TODO: reimplement
-        // ModLoader.ModInterface.TriggerOnDamageReceived(this, amount, IsPlayerMicrobe);
+        ModLoader.ModInterface.TriggerOnDamageReceived(this, amount, IsPlayerMicrobe);
 
         // Flash the microbe red
         Flash(1.0f, new Color(1, 0, 0, 0.5f), 1);
@@ -418,12 +427,33 @@ public partial class Microbe
 
         // Can't engulf already destroyed microbes. We don't use entity references so we need to manually check if
         // something is destroyed or not here (especially now that the Invoke the engulf start callback)
-        if (targetAsMicrobe != null && (targetAsMicrobe.destroyed || targetAsMicrobe.AliveMarker.Alive != true))
+        if (targetAsMicrobe != null && targetAsMicrobe.destroyed)
             return EngulfCheckResult.TargetDead;
 
         // Can't engulf dead microbes (unlikely to happen but this is fail-safe)
         if (targetAsMicrobe != null && targetAsMicrobe.Dead)
             return EngulfCheckResult.TargetDead;
+
+        // Log error if trying to engulf something that is disposed, we got a crash log trace with an error with that
+        // TODO: find out why disposed microbes can be attempted to be engulfed
+        try
+        {
+            if (targetAsMicrobe != null)
+            {
+                // Access a Godot property to throw disposed exception
+                _ = targetAsMicrobe.GlobalTransform;
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            if (!loggedTouchedDisposeIssue)
+            {
+                GD.PrintErr("Touched microbe has been disposed before engulfing could start");
+                loggedTouchedDisposeIssue = true;
+            }
+
+            return EngulfCheckResult.TargetDead;
+        }
 
         // The following checks are in a specific order to make sure the fail reporting logic gives sensible results
 
@@ -516,15 +546,11 @@ public partial class Microbe
 
             foreach (var chunk in droppedChunks)
             {
-                var direction = hostile.Position.DirectionTo(chunk.Position);
-
-                // TODO: teleport
                 throw new NotImplementedException();
-
+                // var direction = hostile.Transform.origin.DirectionTo(chunk.Transform.origin);
                 // chunk.Translation += direction *
                 //     Constants.EJECTED_PARTIALLY_DIGESTED_CELL_CORPSE_CHUNKS_SPAWN_OFFSET;
                 //
-                // // TODO: somehow estimate the volume to get a mass / query the mass here from somewhere?
                 // var impulse = direction * chunk.Mass * Constants.ENGULF_EJECTION_FORCE;
                 //
                 // // Apply outwards ejection force
@@ -546,10 +572,7 @@ public partial class Microbe
             if (engulfed.Object.Value != null)
             {
                 engulfedObjects.Remove(engulfed);
-
-                throw new NotImplementedException();
-
-                // engulfed.Object.Value.DestroyDetachAndQueueFree();
+                engulfed.Object.Value.DestroyDetachAndQueueFree();
             }
 
             engulfed.Phagosome.Value?.DestroyDetachAndQueueFree();
@@ -572,7 +595,8 @@ public partial class Microbe
     /// <returns>The offset</returns>
     public Vector3 GetOffsetRelativeToMaster()
     {
-        return (Position - Colony!.Master.Position).Rotated(Vector3.Down, Colony.Master.Rotation.y);
+        return (GlobalTransform.origin - Colony!.Master.GlobalTransform.origin).Rotated(Vector3.Down,
+            Colony.Master.Rotation.y);
     }
 
     /// <summary>
@@ -629,6 +653,19 @@ public partial class Microbe
         return OnKilled();
     }
 
+    public void OnDestroyed()
+    {
+        if (destroyed)
+            return;
+
+        destroyed = true;
+
+        // TODO: find out a way to cleanly despawn colonies without having to run the reproduction progress lost logic
+        Colony?.RemoveFromColony(this);
+
+        AliveMarker.Alive = false;
+    }
+
     /// <summary>
     ///   Removes this cell and child cells from the colony.
     /// </summary>
@@ -679,9 +716,7 @@ public partial class Microbe
 
             ai?.ResetAI();
 
-            throw new NotImplementedException();
-
-            // Mode = ModeEnum.Rigid;
+            Mode = ModeEnum.Rigid;
 
             return;
         }
@@ -691,6 +726,11 @@ public partial class Microbe
             // Lost a member of the multicellular organism
             OnMulticellularColonyCellLost(microbe);
         }
+
+        if (HostileEngulfer != microbe)
+            microbe.RemoveCollisionExceptionWith(this);
+        if (microbe.HostileEngulfer != this)
+            RemoveCollisionExceptionWith(microbe);
     }
 
     internal void ReParentShapes(Microbe to, Vector3 offset)
@@ -718,15 +758,16 @@ public partial class Microbe
 
             if (Colony.Master != this)
             {
-                throw new NotImplementedException();
-
-                // Mode = ModeEnum.Static;
+                Mode = ModeEnum.Static;
             }
 
             ReParentShapes(Colony.Master, GetOffsetRelativeToMaster());
         }
-
-        // Colony members have their physics bodies disabled now instead of adding collision exceptions
+        else
+        {
+            AddCollisionExceptionWith(microbe);
+            microbe.AddCollisionExceptionWith(this);
+        }
     }
 
     internal void SuccessfulScavenge()
@@ -755,7 +796,7 @@ public partial class Microbe
         // Reset some stuff
         State = MicrobeState.Normal;
         MovementDirection = new Vector3(0, 0, 0);
-        SetVelocityToZero();
+        LinearVelocity = new Vector3(0, 0, 0);
         allOrganellesDivided = false;
 
         // Releasing all the agents.
@@ -777,14 +818,12 @@ public partial class Microbe
                 var direction = new Vector3(random.Next(0.0f, 1.0f) * 2 - 1,
                     0, random.Next(0.0f, 1.0f) * 2 - 1);
 
-                throw new NotImplementedException();
+                var agent = SpawnHelpers.SpawnAgent(props, Constants.MAXIMUM_AGENT_EMISSION_AMOUNT,
+                    Constants.EMITTED_AGENT_LIFETIME,
+                    Translation, direction, GetStageAsParent(),
+                    agentScene, this);
 
-                // var agent = SpawnHelpers.SpawnAgent(props, Constants.MAXIMUM_AGENT_EMISSION_AMOUNT,
-                //     Constants.EMITTED_AGENT_LIFETIME,
-                //     Position, direction, GetStageAsParent(),
-                //     agentScene, this);
-                //
-                // ModLoader.ModInterface.TriggerOnToxinEmitted(agent);
+                ModLoader.ModInterface.TriggerOnToxinEmitted(agent);
 
                 amount -= Constants.MAXIMUM_AGENT_EMISSION_AMOUNT;
                 ++createdAgents;
@@ -909,16 +948,14 @@ public partial class Microbe
             chunkType.Meshes.Add(sceneToUse);
 
             // Finally spawn a chunk with the settings
-            throw new NotImplementedException();
+            var chunk = SpawnHelpers.SpawnChunk(chunkType, Translation + positionAdded, GetStageAsParent(),
+                chunkScene, random);
+            droppedCorpseChunks.Add(chunk);
 
-            // var chunk = SpawnHelpers.SpawnChunk(chunkType, Position + positionAdded, GetStageAsParent(),
-            //     chunkScene, random);
-            // droppedCorpseChunks.Add(chunk);
-            //
-            // // Add to the spawn system to make these chunks limit possible number of entities
-            // spawnSystem!.NotifyExternalEntitySpawned(chunk);
-            //
-            // ModLoader.ModInterface.TriggerOnChunkSpawned(chunk, false);
+            // Add to the spawn system to make these chunks limit possible number of entities
+            spawnSystem!.NotifyExternalEntitySpawned(chunk);
+
+            ModLoader.ModInterface.TriggerOnChunkSpawned(chunk, false);
         }
 
         // Subtract population
@@ -946,7 +983,8 @@ public partial class Microbe
         }
 
         // Disable collisions
-        DisableAllCollisions();
+        CollisionLayer = 0;
+        CollisionMask = 0;
 
         return droppedCorpseChunks;
     }
@@ -985,12 +1023,8 @@ public partial class Microbe
 
         var newTransform = GetNewRelativeTransform();
 
-        RelativePosition = newTransform.Translation;
-        RelativeRotation = newTransform.Rotation;
-
-        // TODO: ensure the relative positioning works after this
-        if (!AttachedToAnEntity)
-            throw new NotImplementedException();
+        Rotation = newTransform.Rotation;
+        Translation = newTransform.Translation;
 
         ChangeNodeParent(ColonyParent);
     }
@@ -1208,8 +1242,6 @@ public partial class Microbe
             if (engulfable == null)
                 continue;
 
-            throw new NotImplementedException();
-
             var body = engulfable as RigidBody;
             if (body == null)
             {
@@ -1218,9 +1250,7 @@ public partial class Microbe
                 continue;
             }
 
-            throw new NotImplementedException();
-
-            // body.Mode = ModeEnum.Static;
+            body.Mode = ModeEnum.Static;
 
             if (engulfable.PhagocytosisStep == PhagocytosisPhase.Digested)
             {
@@ -1239,9 +1269,7 @@ public partial class Microbe
                         CompleteIngestion(engulfedObject);
                         break;
                     case PhagocytosisPhase.Digested:
-                        throw new NotImplementedException();
-
-                        // engulfable.DestroyAndQueueFree();
+                        engulfable.DestroyAndQueueFree();
                         engulfedObjects.Remove(engulfedObject);
                         break;
                     case PhagocytosisPhase.Exocytosis:
@@ -1297,14 +1325,13 @@ public partial class Microbe
         {
             deathParticlesSpawned = true;
 
-            var cellBurstEffectParticles = new CellBurstEffect
-            {
-                Position = Position,
-                Radius = Radius,
-            };
-
             throw new NotImplementedException();
 
+            // var cellBurstEffectParticles = (CellBurstEffect)cellBurstEffectScene.Instance();
+            // cellBurstEffectParticles.Translation = Translation;
+            // cellBurstEffectParticles.Radius = Radius;
+            // cellBurstEffectParticles.AddToGroup(Constants.TIMED_GROUP);
+            //
             // GetParent().AddChild(cellBurstEffectParticles);
 
             // This loop is placed here (which isn't related to the particles but for convenience)
@@ -1325,9 +1352,7 @@ public partial class Microbe
 
         if (Membrane.DissolveEffectValue >= 1)
         {
-            throw new NotImplementedException();
-
-            // this.DestroyDetachAndQueueFree();
+            this.DestroyDetachAndQueueFree();
         }
     }
 
@@ -1338,9 +1363,7 @@ public partial class Microbe
         var savedColony = Colony;
         Colony = null;
 
-        throw new NotImplementedException();
-
-        // this.ReParent(parent);
+        this.ReParent(parent);
 
         // And restore the colony after completing the re-parenting of this node
         Colony = savedColony;
@@ -1348,34 +1371,35 @@ public partial class Microbe
 
     private void RevertNodeParent()
     {
-        // TODO: this whole reparenting thing is probably entirely unnecessary now
-        throw new NotImplementedException();
-
         if (Colony == null)
         {
             throw new InvalidOperationException(
                 $"{nameof(RevertNodeParent)} can only be called on microbes in a colony");
         }
 
+        var pos = GlobalTransform;
+
         if (Colony.Master != this)
         {
-            throw new NotImplementedException();
-
-            // var newParent = GetStageAsParent();
+            var newParent = GetStageAsParent();
 
             // See the comment in ChangeNodeParent
             var savedColony = Colony;
             Colony = null;
 
+            this.ReParent(newParent);
+
             Colony = savedColony;
         }
+
+        GlobalTransform = pos;
     }
 
-    private void OnContactBegin(PhysicsBody physicsBody, int collidedSubShapeDataOurs, int bodyShape)
+    private void OnContactBegin(int bodyID, Node body, int bodyShape, int localShape)
     {
-        throw new NotImplementedException();
+        _ = bodyID;
 
-        /*var thisOwnerId = ShapeFindOwner(localShape);
+        var thisOwnerId = ShapeFindOwner(localShape);
         var thisMicrobe = GetMicrobeFromShape(localShape);
 
         // localShape is invalid. This can happen during re-parenting
@@ -1446,14 +1470,15 @@ public partial class Microbe
             {
                 thisMicrobe.CheckStartEngulfingOnCandidate(engulfable);
             }
-        }*/
+        }
     }
 
     private void OnContactEnd(int bodyID, Node body, int bodyShape, int localShape)
     {
-        throw new NotImplementedException();
+        _ = bodyID;
+        _ = bodyShape;
 
-        /*if (body is IEngulfable engulfable)
+        if (body is IEngulfable engulfable)
         {
             // GetMicrobeFromShape returns null when it was provided an invalid shape id.
             // This can happen when re-parenting is in progress.
@@ -1465,7 +1490,7 @@ public partial class Microbe
 
             if (engulfable.PhagocytosisStep == PhagocytosisPhase.None)
                 hitMicrobe.attemptingToEngulf.Remove(engulfable);
-        }*/
+        }
     }
 
     /*
@@ -1498,9 +1523,7 @@ public partial class Microbe
         if (target.PhagocytosisStep != PhagocytosisPhase.None)
             return;
 
-        throw new NotImplementedException();
-
-        /*var body = target as RigidBody;
+        var body = target as RigidBody;
         if (body == null)
         {
             // Engulfable must be of rigidbody type to be ingested
@@ -1575,12 +1598,13 @@ public partial class Microbe
 
         foreach (string group in engulfedObject.OriginalGroups)
         {
-             target.EntityGroups.Remove(group);
+            if (group != Constants.RUNNABLE_MICROBE_GROUP)
+                target.EntityNode.RemoveFromGroup(group);
         }
 
         StartBulkTransport(engulfedObject, animationSpeed);
 
-        target.OnAttemptedToBeEngulfed();*/
+        target.OnAttemptedToBeEngulfed();
     }
 
     /// <summary>
@@ -1595,8 +1619,6 @@ public partial class Microbe
         }
 
         attemptingToEngulf.Remove(target);
-
-        throw new NotImplementedException();
 
         var body = target as RigidBody;
         if (body == null)
@@ -1637,7 +1659,7 @@ public partial class Microbe
         // The rest of the operation is done in CompleteEjection
     }
 
-    private bool CanBindToMicrobe(ISimulatedEntity other)
+    private bool CanBindToMicrobe(IEntity other)
     {
         if (other is Microbe microbe)
         {
@@ -1681,9 +1703,34 @@ public partial class Microbe
 
         touchedEntities.Remove(other);
 
-        other.touchedEntities.Remove(this);
+        try
+        {
+            other.touchedEntities.Remove(this);
 
-        other.MovementDirection = Vector3.Zero;
+            other.MovementDirection = Vector3.Zero;
+
+            // This should ensure that Godot side will not throw disposed exception in an unexpected place causing
+            // binding problems
+            _ = other.GlobalTransform;
+        }
+        catch (ObjectDisposedException)
+        {
+            GD.PrintErr("Touched eligible microbe has been disposed before binding could start");
+            return;
+        }
+
+        // This is probably unnecessary, but I'd like to make sure we have proper logging if this condition is ever
+        // reached -hhyyrylainen
+        try
+        {
+            _ = GlobalTransform;
+        }
+        catch (ObjectDisposedException e)
+        {
+            GD.PrintErr("Microbe that should be bound to is disposed. This should never happen. Please report this. ",
+                e);
+            return;
+        }
 
         // Create a colony if there isn't one yet
         if (Colony == null)
@@ -1856,12 +1903,11 @@ public partial class Microbe
 
         foreach (string group in engulfed.OriginalGroups)
         {
-            engulfable.EntityGroups.Add(group);
+            if (group != Constants.RUNNABLE_MICROBE_GROUP)
+                engulfable.EntityNode.AddToGroup(group);
         }
 
-        throw new NotImplementedException();
-
-        /*// Reset render priority
+        // Reset render priority
         engulfable.RenderPriority = engulfed.OriginalRenderPriority;
 
         engulfed.Phagosome.Value?.DestroyDetachAndQueueFree();
@@ -1882,7 +1928,7 @@ public partial class Microbe
             Constants.ENGULF_EJECTION_FORCE;
 
         // Apply outwards ejection force
-        body.ApplyCentralImpulse(impulse + LinearVelocity);*/
+        body.ApplyCentralImpulse(impulse + LinearVelocity);
 
         // We have our own engulfer and it wants to claim this object we've just expelled
         HostileEngulfer.Value?.IngestEngulfable(engulfable);
@@ -1912,7 +1958,7 @@ public partial class Microbe
             if (AdditionalEngulfableCompounds != null)
                 InitialTotalEngulfableCompounds += AdditionalEngulfableCompounds.Sum(c => c.Value);
 
-            OriginalGroups = @object.EntityGroups.ToList();
+            OriginalGroups = @object.EntityNode.GetGroups();
         }
 
         [JsonConstructor]
@@ -1942,7 +1988,7 @@ public partial class Microbe
         public float? InitialTotalEngulfableCompounds { get; private set; }
 
         [JsonProperty]
-        public List<string> OriginalGroups { get; private set; } = new();
+        public Array OriginalGroups { get; private set; } = new();
 
         public bool Interpolate { get; set; }
         public float LerpDuration { get; set; }

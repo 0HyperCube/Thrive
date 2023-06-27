@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 /// </summary>
 /// <typeparam name="T">The entity type</typeparam>
 public class EntityReference<T>
-    where T : class, IEntityBase
+    where T : class, IEntity
 {
     // TODO: should this be somehow set to null when we detect that the alive marker is no longer alive
     // Currently set to clear on fetch

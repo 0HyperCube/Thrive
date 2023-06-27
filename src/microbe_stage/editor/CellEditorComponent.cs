@@ -411,10 +411,8 @@ public partial class CellEditorComponent :
 
             UpdateCellVisualization();
 
-            throw new NotImplementedException();
-
-            // if (previewMicrobe != null)
-            //     previewMicrobe.Visible = value;
+            if (previewMicrobe != null)
+                previewMicrobe.Visible = value;
 
             placedHexes.ForEach(entry => entry.Visible = !MicrobePreviewMode);
             placedModels.ForEach(entry => entry.Visible = !MicrobePreviewMode);
@@ -840,11 +838,9 @@ public partial class CellEditorComponent :
     {
         base.SetEditorWorldTabSpecificObjectVisibility(shown && !MicrobePreviewMode);
 
-        throw new NotImplementedException();
-
         if (previewMicrobe != null)
         {
-            // previewMicrobe.Visible = shown && MicrobePreviewMode;
+            previewMicrobe.Visible = shown && MicrobePreviewMode;
         }
     }
 
@@ -1290,9 +1286,7 @@ public partial class CellEditorComponent :
 
     private void SetupPreviewMicrobe()
     {
-        throw new NotImplementedException();
-
-        /*if (previewMicrobe != null)
+        if (previewMicrobe != null)
         {
             GD.Print("Preview microbe already setup");
             previewMicrobe.Visible = MicrobePreviewMode;
@@ -1308,7 +1302,7 @@ public partial class CellEditorComponent :
         previewMicrobe.ApplySpecies(previewMicrobeSpecies);
 
         // Set its initial visibility
-        previewMicrobe.Visible = MicrobePreviewMode;*/
+        previewMicrobe.Visible = MicrobePreviewMode;
     }
 
     private bool HasOrganelle(OrganelleDefinition organelleDefinition)

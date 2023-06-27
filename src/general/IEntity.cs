@@ -3,9 +3,9 @@ using Newtonsoft.Json;
 
 /// <summary>
 ///   All Godot-based game entities implement this interface to provide support for needed operations regarding them.
-///   For the other type of entity see <see cref="ISimulatedEntity"/>.
+///   For other simulated entities see <see cref="IWorldSimulation"/>.
 /// </summary>
-public interface IEntity : IEntityBase
+public interface IEntity : IAliveTracked
 {
     /// <summary>
     ///   The Node that this entity is in the game world as

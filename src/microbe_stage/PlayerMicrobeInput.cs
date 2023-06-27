@@ -75,7 +75,7 @@ public class PlayerMicrobeInput : NodeWithInput
             if (inputMethod == ActiveInputMethod.Controller)
             {
                 // TODO: look direction for controller input  https://github.com/Revolutionary-Games/Thrive/issues/4034
-                player.LookAtPoint = player.Position + new Vector3(0, 0, -10);
+                player.LookAtPoint = player.GlobalTranslation + new Vector3(0, 0, -10);
             }
             else
             {
@@ -86,7 +86,7 @@ public class PlayerMicrobeInput : NodeWithInput
             if (screenRelative)
             {
                 // Rotate the opposite of the player orientation to get back to screen
-                movement = player.Rotation.Normalized().Inverse().Xform(movement);
+                movement = player.GlobalTransform.basis.Quat().Inverse().Xform(movement);
             }
 
             if (autoMove)
@@ -101,7 +101,7 @@ public class PlayerMicrobeInput : NodeWithInput
 
             stage.TutorialState.SendEvent(TutorialEventType.MicrobePlayerMovement,
                 new MicrobeMovementEventArgs(screenRelative, player.MovementDirection,
-                    player.LookAtPoint - player.Position), this);
+                    player.LookAtPoint - player.GlobalTranslation), this);
         }
     }
 
@@ -179,9 +179,7 @@ public class PlayerMicrobeInput : NodeWithInput
         if (stage.Player?.State != MicrobeState.Unbinding)
             return false;
 
-        throw new NotImplementedException();
-
-        /*var inspectables = stage.HoverInfo.InspectableEntities.ToList();
+        var inspectables = stage.HoverInfo.InspectableEntities.ToList();
         if (inspectables.Count == 0)
             return false;
 
@@ -200,7 +198,7 @@ public class PlayerMicrobeInput : NodeWithInput
         RemoveCellFromColony(actualMicrobe);
 
         stage.HUD.HintText = string.Empty;
-        return true;*/
+        return true;
     }
 
     [RunOnKeyDown("g_pack_commands")]

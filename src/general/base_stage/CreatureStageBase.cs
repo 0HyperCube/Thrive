@@ -177,7 +177,8 @@ public abstract class CreatureStageBase<TPlayer, TSimulation> : StageBase, ICrea
 
         var debugOverlay = DebugOverlays.Instance;
 
-        if (debugOverlay.PerformanceMetricsVisible)
+        throw new NotImplementedException();
+        /*if (debugOverlay.PerformanceMetricsVisible)
         {
             float totalEntityWeight = 0;
             int totalEntityCount = 0;
@@ -190,7 +191,7 @@ public abstract class CreatureStageBase<TPlayer, TSimulation> : StageBase, ICrea
 
             var childCount = rootOfDynamicallySpawned.GetChildCount();
             debugOverlay.ReportEntities(totalEntityWeight, childCount - totalEntityCount);
-        }
+        }*/
     }
 
     public override void _Notification(int what)

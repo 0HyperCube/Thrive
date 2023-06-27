@@ -141,7 +141,7 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
         base._Process(delta);
 
         if (Player != null)
-            worldSimulation.PlayerPosition = Player.Position;
+            worldSimulation.PlayerPosition = Player.GlobalTranslation;
 
         worldSimulation.ProcessFrameLogic(delta);
         worldSimulation.ProcessLogic(delta);
@@ -154,14 +154,14 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
 
         if (Player != null)
         {
-            DebugOverlays.Instance.ReportPositionCoordinates(Player.Position);
+            DebugOverlays.Instance.ReportPositionCoordinates(Player.GlobalTranslation);
             DebugOverlays.Instance.ReportLookingAtCoordinates(Camera.CursorWorldPos);
 
-            spawner.Process(delta, Player.Position);
-            Clouds.ReportPlayerPosition(Player.Position);
+            spawner.Process(delta, Player.GlobalTranslation);
+            Clouds.ReportPlayerPosition(Player.GlobalTranslation);
 
             TutorialState.SendEvent(TutorialEventType.MicrobePlayerOrientation,
-                new RotationEventArgs(Player.Rotation, Player.Rotation.GetEuler() * MathUtils.RADIANS_TO_DEGREES),
+                new RotationEventArgs(Player.Transform.basis.Quat(), Player.Rotation * MathUtils.RADIANS_TO_DEGREES),
                 this);
 
             TutorialState.SendEvent(TutorialEventType.MicrobePlayerCompounds,
@@ -185,7 +185,7 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
                 if (TutorialState.WantsNearbyCompoundInfo())
                 {
                     TutorialState.SendEvent(TutorialEventType.MicrobeCompoundsNearPlayer,
-                        new EntityPositionEventArgs(Clouds.FindCompoundNearPoint(Player.Position,
+                        new EntityPositionEventArgs(Clouds.FindCompoundNearPoint(Player.GlobalTranslation,
                             glucose)),
                         this);
                 }
@@ -194,11 +194,13 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
                 {
                     // Filter to spawned engulfables that can be despawned (this likely just filters out the player
                     // themselves
-                    var engulfables = worldSimulation.Entities.OfType<ISpawned>().Where(s => !s.DisallowDespawning)
-                        .OfType<IEngulfable>().ToList();
+                    throw new NotImplementedException();
 
-                    TutorialState.SendEvent(TutorialEventType.MicrobeChunksNearPlayer,
-                        new EntityPositionEventArgs(Player.FindNearestEngulfable(engulfables)), this);
+                    // var engulfables = worldSimulation.Entities.OfType<ISpawned>().Where(s => !s.DisallowDespawning)
+                    //     .OfType<IEngulfable>().ToList();
+
+                    // TutorialState.SendEvent(TutorialEventType.MicrobeChunksNearPlayer,
+                    //     new EntityPositionEventArgs(Player.FindNearestEngulfable(engulfables)), this);
                 }
 
                 guidancePosition = TutorialState.GetPlayerGuidancePosition();
@@ -207,7 +209,7 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
             if (guidancePosition != null)
             {
                 guidanceLine.Visible = true;
-                guidanceLine.LineStart = Player.Position;
+                guidanceLine.LineStart = Player.GlobalTranslation;
                 guidanceLine.LineEnd = guidancePosition.Value;
             }
             else
@@ -463,7 +465,7 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
         // Add a cloud of glucose if difficulty settings call for it
         if (GameWorld.WorldSettings.FreeGlucoseCloud)
         {
-            Clouds.AddCloud(glucose, 200000.0f, Player!.Position + new Vector3(0.0f, 0.0f, -25.0f));
+            Clouds.AddCloud(glucose, 200000.0f, Player!.Translation + new Vector3(0.0f, 0.0f, -25.0f));
         }
 
         // Check win conditions
@@ -480,13 +482,13 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
         // Reset all the duplicates organelles of the player
         Player.ResetOrganelleLayout();
 
-        var playerPosition = Player.Position;
+        var playerPosition = Player.GlobalTransform.origin;
 
         // Spawn another cell from the player species
         // This needs to be done after updating the player so that multicellular organisms are accurately separated
         var daughter = Player.Divide();
 
-        daughter.EntityGroups.Add(Constants.PLAYER_REPRODUCED_GROUP);
+        daughter.AddToGroup(Constants.PLAYER_REPRODUCED_GROUP);
 
         // If multicellular, we want that other cell colony to be fully grown to show budding in action
         if (Player.IsMulticellular)
@@ -496,17 +498,14 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
             if (daughter.Colony != null)
             {
                 // Add more extra offset between the player and the divided cell
-                var daughterPosition = daughter.Position;
+                var daughterPosition = daughter.GlobalTransform.origin;
                 var direction = (playerPosition - daughterPosition).Normalized();
 
-                var colonyMembers = daughter.Colony.ColonyMembers.Select(c => c.Position);
+                var colonyMembers = daughter.Colony.ColonyMembers.Select(c => c.GlobalTransform.origin);
 
                 float distance = MathUtils.GetMaximumDistanceInDirection(direction, daughterPosition, colonyMembers);
 
-                // TODO: teleport physics
-                throw new NotImplementedException();
-
-                // daughter.Translation += -direction * distance;
+                daughter.Translation += -direction * distance;
             }
         }
 
@@ -765,7 +764,7 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
         if (Player == null)
             throw new InvalidOperationException("Could not get player species microbes: no Player object");
 
-        var microbes = worldSimulation.Entities.OfType<Microbe>();
+        var microbes = rootOfDynamicallySpawned.GetTree().GetNodesInGroup(Constants.AI_TAG_MICROBE).Cast<Microbe>();
 
         return microbes.Where(m => m.Species == Player.Species);
     }
@@ -788,6 +787,7 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
         var randomSpecies = species.Random(random);
 
         throw new NotImplementedException();
+
         // var copyEntity = SpawnHelpers.SpawnMicrobe(randomSpecies, Player.Position + Vector3.Forward * 20,
         //     rootOfDynamicallySpawned, SpawnHelpers.LoadMicrobeScene(), true, Clouds, spawner,
         //     CurrentGame!);
@@ -867,7 +867,7 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
             GD.PrintErr("Chemoreception data reported for non-player cell");
 
         int currentLineIndex = 0;
-        var position = microbe.Position;
+        var position = microbe.GlobalTransform.origin;
 
         foreach (var tuple in microbe.GetDetectedCompounds(Clouds))
         {
@@ -900,7 +900,7 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
             return;
         }
 
-        var position = Player!.Position;
+        var position = Player!.GlobalTransform.origin;
 
         foreach (var chemoreceptionLine in chemoreceptionLines)
         {
