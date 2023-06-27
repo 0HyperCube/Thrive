@@ -166,8 +166,6 @@ public static class Constants
     public const float CILIA_PULLING_FORCE_FALLOFF_FACTOR = 0.1f;
     public const float CILIA_CURRENT_GENERATION_ANIMATION_SPEED = 5.0f;
 
-    public const int PROCESS_OBJECTS_PER_TASK = 15;
-
     public const int MICROBE_SPAWN_RADIUS = 350;
     public const int CLOUD_SPAWN_RADIUS = 350;
 

@@ -16,7 +16,7 @@
         {
         }
 
-        protected override void Update(float elapsedTime, in Entity entity)
+        protected override void Update(float delta, in Entity entity)
         {
             ref var position = ref entity.Get<WorldPosition>();
             ref var spatial = ref entity.Get<SpatialInstance>();
