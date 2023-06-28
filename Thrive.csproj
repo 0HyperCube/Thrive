@@ -158,7 +158,7 @@
     <Compile Include="src\engine\LastPlayedVersion.cs" />
     <Compile Include="src\engine\MissingExportVariableValueException.cs" />
     <Compile Include="src\engine\physics\PhysicalWorld.cs" />
-    <Compile Include="src\engine\physics\PhysicsBody.cs" />
+    <Compile Include="src\engine\physics\NativePhysicsBody.cs" />
     <Compile Include="src\engine\physics\PhysicsShape.cs" />
     <Compile Include="src\engine\PostShutdownActions.cs" />
     <Compile Include="src\engine\RaycastResult.cs" />
