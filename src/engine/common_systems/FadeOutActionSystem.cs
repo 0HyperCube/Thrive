@@ -48,8 +48,11 @@
 
                 timedLife.FadeTimeRemaining = actions.FadeTime;
 
-                if (actions.DisableCollisions || actions.RemoveVelocity)
-                    PerformPhysicsOperations(entity, actions.RemoveVelocity, actions.DisableCollisions);
+                if (actions.DisableCollisions || actions.RemoveVelocity || actions.RemoveAngularVelocity)
+                {
+                    PerformPhysicsOperations(entity, actions.RemoveVelocity, actions.RemoveAngularVelocity,
+                        actions.DisableCollisions);
+                }
 
                 if (actions.DisableParticles)
                     DisableParticleEmission(entity);
@@ -64,14 +67,15 @@
             }
         }
 
-        private void PerformPhysicsOperations(Entity entity, bool removeVelocity, bool disableCollisions)
+        private void PerformPhysicsOperations(Entity entity, bool removeVelocity, bool removeAngularVelocity,
+            bool disableCollisions)
         {
             try
             {
                 ref var physicsControl = ref entity.Get<ManualPhysicsControl>();
 
                 physicsControl.RemoveVelocity = removeVelocity;
-                physicsControl.RemoveAngularVelocity = removeVelocity;
+                physicsControl.RemoveAngularVelocity = removeAngularVelocity;
 
                 if (disableCollisions)
                     physicsControl.DisableCollisions = disableCollisions;

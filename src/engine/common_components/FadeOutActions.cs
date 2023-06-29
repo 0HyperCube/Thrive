@@ -9,6 +9,7 @@
 
         public bool DisableCollisions;
         public bool RemoveVelocity;
+        public bool RemoveAngularVelocity;
 
         /// <summary>
         ///   Disables a particles emitter if there is one on the entity spatial root

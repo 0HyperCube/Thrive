@@ -10,9 +10,6 @@
         public Vector3 ImpulseToGive;
         public Vector3 AngularImpulseToGive;
 
-        public Vector3? SetVelocity;
-        public Vector3? SetAngularVelocity;
-
         public bool? DisableCollisions;
 
         public bool RemoveVelocity;

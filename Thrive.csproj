@@ -128,6 +128,7 @@
     <Compile Include="src\engine\common_components\FadeOutActions.cs" />
     <Compile Include="src\engine\common_components\ManualphysicsControl.cs" />
     <Compile Include="src\engine\common_components\Physics.cs" />
+    <Compile Include="src\engine\common_components\PhysicsShapeHolder.cs" />
     <Compile Include="src\engine\common_components\PredefinedVisuals.cs" />
     <Compile Include="src\engine\common_components\ReadableName.cs" />
     <Compile Include="src\engine\common_components\SpatialInstance.cs" />
@@ -136,7 +137,11 @@
     <Compile Include="src\engine\common_components\ToxinDamageSource.cs" />
     <Compile Include="src\engine\common_components\WorldPosition.cs" />
     <Compile Include="src\engine\common_systems\FadeOutActionSystem.cs" />
+    <Compile Include="src\engine\common_systems\PhysicsBodyControlSystem.cs" />
+    <Compile Include="src\engine\common_systems\PhysicsBodyCreationSystem.cs" />
+    <Compile Include="src\engine\common_systems\PhysicsBodyDisablingSystem.cs" />
     <Compile Include="src\engine\common_systems\PhysicsCollisionManagementSystem.cs" />
+    <Compile Include="src\engine\common_systems\PhysicsUpdateAndPositionSystem.cs" />
     <Compile Include="src\engine\common_systems\PredefinedVisualLoaderSystem.cs" />
     <Compile Include="src\engine\common_systems\SpatialAttachSystem.cs" />
     <Compile Include="src\engine\common_systems\SpatialPositionSystem.cs" />

@@ -108,7 +108,14 @@ public static class SpawnHelpers
             ToxinProperties = properties,
         });
 
-        entity.Set<Physics>();
+        entity.Set(new Physics
+        {
+            LockToYAxis = true,
+        });
+        entity.Set(new PhysicsShapeHolder
+        {
+            Shape = PhysicsShape.CreateSphere(Constants.TOXIN_PROJECTILE_PHYSICS_SIZE),
+        });
         entity.Set(new CollisionManagement
         {
             IgnoredCollisionsWith = new List<Entity> { emitter },

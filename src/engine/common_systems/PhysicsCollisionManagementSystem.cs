@@ -14,11 +14,17 @@
     [With(typeof(CollisionManagement))]
     public sealed class PhysicsCollisionManagementSystem : AEntitySetSystem<float>
     {
+        private readonly PhysicalWorld physicalWorld;
+
+        /// <summary>
+        ///   Used for temporary storage during an update
+        /// </summary>
         private readonly List<NativePhysicsBody> resolvedBodyReferences = new();
 
-        public PhysicsCollisionManagementSystem(World world, IParallelRunner runner)
+        public PhysicsCollisionManagementSystem(PhysicalWorld physicalWorld, World world, IParallelRunner runner)
             : base(world, runner)
         {
+            this.physicalWorld = physicalWorld;
         }
 
         protected override void Update(float delta, in Entity entity)
@@ -38,11 +44,6 @@
             }
 
             collisionManagement.StateApplied = true;
-
-            if (!physics.CheckHasWorldReference())
-                return;
-
-            var physicalWorld = physics.BodyCreatedInWorld!;
 
             // All collision disable
             if (collisionManagement.AllCollisionsDisabled != collisionManagement.CurrentCollisionState)

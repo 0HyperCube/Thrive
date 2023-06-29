@@ -327,6 +327,8 @@ public static class Constants
     /// </summary>
     public const float MICROBE_BASE_MASS = 0.7f;
 
+    public const float PHYSICS_ALLOWED_Y_AXIS_DRIFT = 0.1f;
+
     /// <summary>
     ///   Cooldown between agent emissions, in seconds.
     /// </summary>
