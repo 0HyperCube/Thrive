@@ -579,7 +579,7 @@ public class FloatingChunk : SimulatedPhysicsEntity, ISimulatedEntityWithDirectV
         chunkMesh.MaterialOverride.RenderPriority = RenderPriority;
     }
 
-    private void OnContactBegin(PhysicsBody physicsBody, int collidedSubShapeDataOurs, int bodyShape)
+    private void OnContactBegin(NativePhysicsBody physicsBody, int collidedSubShapeDataOurs, int bodyShape)
     {
         throw new NotImplementedException();
 
@@ -649,9 +649,4 @@ public class FloatingChunk : SimulatedPhysicsEntity, ISimulatedEntityWithDirectV
 
         return false;
     }
-
-    // TODO: do something with these
-    public Vector3 RelativePosition { get; set; }
-    public Quat RelativeRotation { get; set; }
-    public bool AttachedToAnEntity { get; set; }
 }

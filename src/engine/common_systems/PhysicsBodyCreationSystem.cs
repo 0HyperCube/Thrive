@@ -23,9 +23,7 @@
         private readonly List<NativePhysicsBody> createdBodies = new();
 
         public PhysicsBodyCreationSystem(IWorldSimulationWithPhysics worldSimulationWithPhysics,
-            OnBodyDeleted? deleteCallback, World world,
-            IParallelRunner runner)
-            : base(world, runner)
+            OnBodyDeleted? deleteCallback, World world, IParallelRunner runner) : base(world, runner)
         {
             this.worldSimulationWithPhysics = worldSimulationWithPhysics;
             this.deleteCallback = deleteCallback;

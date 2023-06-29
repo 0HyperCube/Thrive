@@ -16,8 +16,8 @@
     {
         private readonly PhysicalWorld physicalWorld;
 
-        public PhysicsBodyControlSystem(PhysicalWorld physicalWorld, World world, IParallelRunner runner)
-            : base(world, runner)
+        public PhysicsBodyControlSystem(PhysicalWorld physicalWorld, World world, IParallelRunner runner) :
+            base(world, runner)
         {
             this.physicalWorld = physicalWorld;
         }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Components;
 using Godot;
 
 /// <summary>
@@ -35,6 +36,9 @@ public class PhysicalWorld : IDisposable
     {
         Dispose(false);
     }
+
+    public delegate bool OnCollisionFilterCallback(IntPtr body1, int subShapeData1, IntPtr body2, int subShapeData2,
+        float penetration);
 
     public float LatestPhysicsDuration => NativeMethods.PhysicalWorldGetPhysicsLatestTime(AccessWorldInternal());
 
@@ -238,6 +242,26 @@ public class PhysicalWorld : IDisposable
 
         var ignored = ignoredBodies.ToArray();
 
+        throw new NotImplementedException();
+    }
+
+    public List<PhysicsCollision> BodyStartEntityCollisionRecording(NativePhysicsBody body)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void BodyStopCollisionRecording(NativePhysicsBody body)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void BodyAddCollisionFilter(NativePhysicsBody body, OnCollisionFilterCallback filterCallback)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void BodyDisableCollisionFilter(NativePhysicsBody body)
+    {
         throw new NotImplementedException();
     }
 

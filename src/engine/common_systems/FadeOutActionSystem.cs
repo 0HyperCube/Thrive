@@ -12,8 +12,7 @@
     [With(typeof(TimedLife))]
     public sealed class FadeOutActionSystem : AEntitySetSystem<float>
     {
-        public FadeOutActionSystem(World world, IParallelRunner runner)
-            : base(world, runner)
+        public FadeOutActionSystem(World world, IParallelRunner runner) : base(world, runner)
         {
         }
 

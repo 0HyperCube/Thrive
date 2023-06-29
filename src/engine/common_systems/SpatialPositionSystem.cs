@@ -11,8 +11,7 @@
     [With(typeof(SpatialInstance))]
     public sealed class SpatialPositionSystem : AEntitySetSystem<float>
     {
-        public SpatialPositionSystem(World world, IParallelRunner runner)
-            : base(world, runner)
+        public SpatialPositionSystem(World world, IParallelRunner runner) : base(world, runner)
         {
         }
 

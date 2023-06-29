@@ -26,8 +26,7 @@
         private SimulationParameters simulationParameters = null!;
 #pragma warning restore CA2213
 
-        public PredefinedVisualLoaderSystem(World world, IParallelRunner runner)
-            : base(world, runner)
+        public PredefinedVisualLoaderSystem(World world, IParallelRunner runner) : base(world, runner)
         {
             // TODO: will we be able to at some point load Godot scenes in parallel without issues?
             // Also a proper resource manager would basically remove the need for that

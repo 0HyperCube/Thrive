@@ -21,8 +21,8 @@
         /// </summary>
         private readonly List<NativePhysicsBody> resolvedBodyReferences = new();
 
-        public PhysicsCollisionManagementSystem(PhysicalWorld physicalWorld, World world, IParallelRunner runner)
-            : base(world, runner)
+        public PhysicsCollisionManagementSystem(PhysicalWorld physicalWorld, World world, IParallelRunner runner) :
+            base(world, runner)
         {
             this.physicalWorld = physicalWorld;
         }
@@ -94,7 +94,48 @@
                 GD.PrintErr("Failed to apply body collision ignores: ", e);
             }
 
-            // TODO: physics contact callbacks / collision storing
+            if (collisionManagement.RecordActiveCollisions > 0)
+            {
+                if (collisionManagement.ActiveCollisions == null)
+                {
+                    // Start recording collisions
+                    collisionManagement.ActiveCollisions = physicalWorld.BodyStartEntityCollisionRecording(physicsBody);
+                }
+            }
+            else if (collisionManagement.ActiveCollisions != null)
+            {
+                // Stop recording collisions
+                collisionManagement.ActiveCollisions = null;
+
+                physicalWorld.BodyStopCollisionRecording(physicsBody);
+            }
+
+            bool wantedFilterState = collisionManagement.CollisionFilter != null;
+
+            if (wantedFilterState != collisionManagement.CollisionFilterCallbackRegistered)
+            {
+                if (wantedFilterState)
+                {
+                    var filter = collisionManagement.CollisionFilter!;
+
+                    // Register the filter callback where we need to convert the data between the world and the entity
+                    // system
+                    physicalWorld.BodyAddCollisionFilter(physicsBody, (body1, data1, body2, data2, penetration) =>
+                    {
+                        // We need to get the entity IDs from the bodies
+
+                        var collisionInfo = new PhysicsCollision(body1, data1, body2, data2, penetration);
+                        return filter.Invoke(ref collisionInfo);
+                    });
+
+                    collisionManagement.CollisionFilterCallbackRegistered = true;
+                }
+                else
+                {
+                    physicalWorld.BodyDisableCollisionFilter(physicsBody);
+                    collisionManagement.CollisionFilterCallbackRegistered = false;
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

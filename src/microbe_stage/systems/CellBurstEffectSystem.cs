@@ -12,8 +12,7 @@
     [With(typeof(SpatialInstance))]
     public sealed class CellBurstEffectSystem : AEntitySetSystem<float>
     {
-        public CellBurstEffectSystem(World world, IParallelRunner runner)
-            : base(world, runner)
+        public CellBurstEffectSystem(World world, IParallelRunner runner) : base(world, runner)
         {
         }
 

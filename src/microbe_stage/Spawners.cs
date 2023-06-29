@@ -110,6 +110,7 @@ public static class SpawnHelpers
 
         entity.Set(new Physics
         {
+            Velocity = normalizedDirection * Constants.AGENT_EMISSION_VELOCITY,
             LockToYAxis = true,
         });
         entity.Set(new PhysicsShapeHolder
@@ -120,39 +121,8 @@ public static class SpawnHelpers
         {
             IgnoredCollisionsWith = new List<Entity> { emitter },
 
-            // TODO: collision callback
-
-            // TODO: somehow disable collisions with microbes this can't damage
+            // Callbacks are initialized by ToxinCollisionSystem
         });
-        entity.Set(new ManualPhysicsControl
-        {
-            ImpulseToGive = normalizedDirection * Constants.AGENT_EMISSION_IMPULSE_STRENGTH,
-        });
-
-        throw new NotImplementedException();
-        /*_ = bodyID;
-        _ = localShape;
-
-        if (body is not Microbe microbe)
-            return;
-
-        if (microbe.Species == Properties!.Species)
-            return;
-
-        // If more stuff needs to be damaged we could make an IAgentDamageable interface.
-        var target = microbe.GetMicrobeFromShape(bodyShape);
-
-        if (target == null)
-            return;
-
-        Invoke.Instance.Perform(
-            () => target.Damage(Constants.OXYTOXY_DAMAGE * Amount, Properties.AgentType));
-
-        if (FadeTimeRemaining == null)
-        {
-            // We should probably get some *POP* effect here.
-            BeginDestroy();
-        }*/
 
         entity.Set(new ReadableName
         {

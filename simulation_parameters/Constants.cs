@@ -270,9 +270,9 @@ public static class Constants
     public const float CONTACT_IMPULSE_TO_BUMP_SOUND = 8;
 
     /// <summary>
-    ///   Controls with how much force agents are fired
+    ///   Controls with how much speed agents are fired
     /// </summary>
-    public const float AGENT_EMISSION_IMPULSE_STRENGTH = 20.0f;
+    public const float AGENT_EMISSION_VELOCITY = 10.0f;
 
     public const float OXYTOXY_DAMAGE = 15.0f;
 
