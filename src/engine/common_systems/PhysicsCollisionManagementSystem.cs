@@ -123,9 +123,12 @@
                     physicalWorld.BodyAddCollisionFilter(physicsBody, (body1, data1, body2, data2, penetration) =>
                     {
                         // We need to get the entity IDs from the bodies
+                        // TODO: determine if it is better for us to query stuff here or if it is better to add extra
+                        // data to the body objects the native code side of things can already return to us
+                        throw new NotImplementedException();
 
-                        var collisionInfo = new PhysicsCollision(body1, data1, body2, data2, penetration);
-                        return filter.Invoke(ref collisionInfo);
+                        // var collisionInfo = new PhysicsCollision(body1, data1, body2, data2, penetration);
+                        // return filter.Invoke(ref collisionInfo);
                     });
 
                     collisionManagement.CollisionFilterCallbackRegistered = true;
