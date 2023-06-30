@@ -125,9 +125,11 @@
     <Compile Include="src\engine\ChromaticFilter.cs" />
     <Compile Include="src\engine\common_components\AttachedToEntity.cs" />
     <Compile Include="src\engine\common_components\CollisionManagement.cs" />
+    <Compile Include="src\engine\common_components\DamageOnTouch.cs" />
     <Compile Include="src\engine\common_components\FadeOutActions.cs" />
     <Compile Include="src\engine\common_components\Health.cs" />
     <Compile Include="src\engine\common_components\ManualphysicsControl.cs" />
+    <Compile Include="src\engine\common_components\PathLoadedSceneVisuals.cs" />
     <Compile Include="src\engine\common_components\Physics.cs" />
     <Compile Include="src\engine\common_components\PhysicsShapeHolder.cs" />
     <Compile Include="src\engine\common_components\PredefinedVisuals.cs" />
@@ -137,6 +139,7 @@
     <Compile Include="src\engine\common_components\TimedLife.cs" />
     <Compile Include="src\engine\common_components\WorldPosition.cs" />
     <Compile Include="src\engine\common_systems\FadeOutActionSystem.cs" />
+    <Compile Include="src\engine\common_systems\PathBasedSceneLoader.cs" />
     <Compile Include="src\engine\common_systems\PhysicsBodyControlSystem.cs" />
     <Compile Include="src\engine\common_systems\PhysicsBodyCreationSystem.cs" />
     <Compile Include="src\engine\common_systems\PhysicsBodyDisablingSystem.cs" />
@@ -406,6 +409,9 @@
     <Compile Include="src\microbe_stage\components\BioProcesses.cs" />
     <Compile Include="src\microbe_stage\components\CellBurstEffect.cs" />
     <Compile Include="src\microbe_stage\components\CompoundStorage.cs" />
+    <Compile Include="src\microbe_stage\components\CompoundVenter.cs" />
+    <Compile Include="src\microbe_stage\components\CurrentAffected.cs" />
+    <Compile Include="src\microbe_stage\components\Engulfable.cs" />
     <Compile Include="src\microbe_stage\components\MicrobeColony.cs" />
     <Compile Include="src\microbe_stage\components\SpeciesMember.cs" />
     <Compile Include="src\microbe_stage\components\ToxinDamageSource.cs" />

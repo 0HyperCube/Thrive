@@ -963,6 +963,7 @@ public static class Constants
 
     public const float PROCEDURAL_CACHE_CLEAN_INTERVAL = 9.3f;
     public const float PROCEDURAL_CACHE_MEMBRANE_KEEP_TIME = 500;
+    public const float PROCEDURAL_CACHE_LOADED_SHAPE_KEEP_TIME = 1000;
 
     // TODO: delete once old microbe code is gone
     /// <summary>

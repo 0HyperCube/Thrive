@@ -10,33 +10,6 @@ using Newtonsoft.Json;
 public class FloatingChunk : SimulatedPhysicsEntity, ISimulatedEntityWithDirectVisuals, ISpawned,
     IEngulfable /*, IInspectableEntity*/
 {
-#pragma warning disable CA2213 // a shared resource from the chunk definition
-    [JsonProperty]
-    public PackedScene GraphicsScene = null!;
-#pragma warning restore CA2213
-
-    /// <summary>
-    ///   If this is null, a sphere shape is used as a default for collision detections.
-    /// </summary>
-    [Export]
-    [JsonProperty]
-    public ConvexPolygonShape? ConvexPhysicsMesh;
-
-    /// <summary>
-    ///   The node path to the mesh of this chunk
-    /// </summary>
-    public string? ModelNodePath;
-
-    /// <summary>
-    ///   The node path to the animation of this chunk
-    /// </summary>
-    public string? AnimationPath;
-
-    /// <summary>
-    ///   Used to check if a microbe wants to engulf this
-    /// </summary>
-    private HashSet<Microbe> touchingMicrobes = new();
-
 #pragma warning disable CA2213
     private MeshInstance? chunkMesh;
     private Particles? particles;
@@ -101,40 +74,9 @@ public class FloatingChunk : SimulatedPhysicsEntity, ISimulatedEntityWithDirectV
     }
 
     /// <summary>
-    ///   Determines how big this chunk is for engulfing calculations. Set to &lt;= 0 to disable
-    /// </summary>
-    [JsonIgnore]
-    public float EngulfSize
-    {
-        get => engulfSize * (1 - DigestedAmount);
-        set => engulfSize = value;
-    }
-
-    /// <summary>
-    ///   Compounds this chunk contains, and vents
-    /// </summary>
-    /// <remarks>
-    ///   <para>
-    ///     Capacity is set to 0 so that no compounds can be added the normal way to the chunk.
-    ///   </para>
-    /// </remarks>
-    [JsonProperty]
-    public CompoundBag Compounds { get; private set; } = new(0.0f);
-
-    /// <summary>
-    ///   How much of each compound is vented per second
-    /// </summary>
-    public float VentPerSecond { get; set; } = 5.0f;
-
-    /// <summary>
     ///   If true this chunk is destroyed when all compounds are vented
     /// </summary>
     public bool Dissolves { get; set; }
-
-    /// <summary>
-    ///   If > 0 applies damage to a cell on touch
-    /// </summary>
-    public float Damages { get; set; }
 
     /// <summary>
     ///   When true, the chunk will despawn when the despawn timer finishes
@@ -148,33 +90,6 @@ public class FloatingChunk : SimulatedPhysicsEntity, ISimulatedEntityWithDirectV
     public float DespawnTimer { get; private set; }
 
     /// <summary>
-    ///   If true this gets deleted when a cell touches this
-    /// </summary>
-    public bool DeleteOnTouch { get; set; }
-
-    public float Radius { get; set; }
-
-    public float ChunkScale { get; set; }
-
-    /// <summary>
-    ///   The name of the kind of damage type this chunk inflicts. Default is "chunk".
-    /// </summary>
-    public string DamageType { get; set; } = "chunk";
-
-    public string ChunkName { get; set; } = string.Empty;
-
-    public bool EasterEgg { get; set; }
-
-    [JsonProperty]
-    public PhagocytosisPhase PhagocytosisStep { get; set; }
-
-    [JsonProperty]
-    public EntityReference<Microbe> HostileEngulfer { get; private set; } = new();
-
-    [JsonProperty]
-    public Enzyme? RequisiteEnzymeToDigest { get; private set; }
-
-    /// <summary>
     ///   This is both the digestion and dissolve effect progress value for now.
     /// </summary>
     [JsonIgnore]
@@ -186,112 +101,6 @@ public class FloatingChunk : SimulatedPhysicsEntity, ISimulatedEntityWithDirectV
             dissolveEffectValue = Mathf.Clamp(value, 0.0f, 1.0f);
             UpdateDissolveEffect();
         }
-    }
-
-    [JsonIgnore]
-    public string ReadableName => TranslationServer.Translate(ChunkName);
-
-    public override void OnAddedToSimulation(IWorldSimulation simulation)
-    {
-        base.OnAddedToSimulation(simulation);
-
-        InitGraphics();
-
-        if (chunkMesh == null && particles == null)
-            throw new InvalidOperationException("Can't make a chunk without graphics scene");
-
-        InitPhysics();
-    }
-
-    /// <summary>
-    ///   Grabs data from the type to initialize this
-    /// </summary>
-    /// <remarks>
-    ///   <para>
-    ///     Doesn't initialize the graphics scene which needs to be set separately
-    ///   </para>
-    /// </remarks>
-    public void Init(ChunkConfiguration chunkType, string? modelPath, string? animationPath)
-    {
-        // Grab data
-        ChunkName = chunkType.Name;
-        VentPerSecond = chunkType.VentAmount;
-        Dissolves = chunkType.Dissolves;
-        EngulfSize = chunkType.Size;
-        Damages = chunkType.Damages;
-        DeleteOnTouch = chunkType.DeleteOnTouch;
-        DamageType = string.IsNullOrEmpty(chunkType.DamageType) ? "chunk" : chunkType.DamageType;
-        EasterEgg = chunkType.EasterEgg;
-
-        // TODO: proper density values from the JSON
-        Density = chunkType.Mass * 1000;
-
-        // These are stored for saves to work
-        Radius = chunkType.Radius;
-        ChunkScale = chunkType.ChunkScale;
-
-        ModelNodePath = modelPath;
-        AnimationPath = animationPath;
-
-        // Copy compounds to vent
-        if (chunkType.Compounds?.Count > 0)
-        {
-            foreach (var entry in chunkType.Compounds)
-            {
-                Compounds.Compounds.Add(entry.Key, entry.Value.Amount);
-            }
-        }
-
-        if (!string.IsNullOrEmpty(chunkType.DissolverEnzyme))
-            RequisiteEnzymeToDigest = SimulationParameters.Instance.GetEnzyme(chunkType.DissolverEnzyme);
-    }
-
-    /// <summary>
-    ///   Reverses the action of Init back to a ChunkConfiguration
-    /// </summary>
-    /// <returns>The reversed chunk configuration</returns>
-    public ChunkConfiguration CreateChunkConfigurationFromThis()
-    {
-        var config = default(ChunkConfiguration);
-
-        config.Name = ChunkName;
-        config.VentAmount = VentPerSecond;
-        config.Dissolves = Dissolves;
-        config.Size = EngulfSize;
-        config.Damages = Damages;
-        config.DeleteOnTouch = DeleteOnTouch;
-        config.Mass = Density / 1000;
-        config.DamageType = DamageType;
-
-        config.Radius = Radius;
-        config.ChunkScale = ChunkScale;
-
-        // Read graphics data set by the spawn function
-        config.Meshes = new List<ChunkConfiguration.ChunkScene>();
-
-        var item = new ChunkConfiguration.ChunkScene
-        {
-            LoadedScene = GraphicsScene, ScenePath = GraphicsScene.ResourcePath, SceneModelPath = ModelNodePath,
-            LoadedConvexShape = ConvexPhysicsMesh, ConvexShapePath = ConvexPhysicsMesh?.ResourcePath,
-            SceneAnimationPath = AnimationPath,
-        };
-
-        config.Meshes.Add(item);
-
-        if (Compounds.Compounds.Count > 0)
-        {
-            config.Compounds = new Dictionary<Compound, ChunkConfiguration.ChunkCompound>();
-
-            foreach (var entry in Compounds)
-            {
-                config.Compounds.Add(entry.Key, new ChunkConfiguration.ChunkCompound { Amount = entry.Value });
-            }
-        }
-
-        if (RequisiteEnzymeToDigest != null)
-            config.DissolverEnzyme = RequisiteEnzymeToDigest.InternalName;
-
-        return config;
     }
 
     /// <summary>
