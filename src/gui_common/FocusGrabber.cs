@@ -51,7 +51,7 @@ public class FocusGrabber : Control
 
     public override void _Ready()
     {
-        if (string.IsNullOrWhiteSpace(NodeToGiveFocusTo))
+        if (NodeToGiveFocusTo == null)
             throw new ArgumentException("Focus grabber must have the node to focus set");
     }
 
