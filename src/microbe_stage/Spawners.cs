@@ -132,7 +132,7 @@ public static class SpawnHelpers
     ///   Spawn a floating chunk (cell parts floating around, rocks, hazards)
     /// </summary>
     public static EntityRecord SpawnChunk(IWorldSimulation worldSimulation, ChunkConfiguration chunkType,
-        Vector3 location, Random random)
+        Vector3 location, Random random, bool microbeDrop)
     {
         // Resolve the final chunk settings as the chunk configuration is a group of potential things
         var selectedMesh = chunkType.Meshes.Random(random);
@@ -246,6 +246,13 @@ public static class SpawnHelpers
         }
 
         entity.Set<CurrentAffected>();
+        entity.Set<ManualPhysicsControl>();
+
+        // Despawn chunks when there are too many
+        entity.Set(new CountLimited
+        {
+            Group = microbeDrop ? LimitGroup.Chunk : LimitGroup.ChunkSpawned,
+        });
 
         entity.Set(new ReadableName
         {

@@ -83,8 +83,6 @@ public class Biome : IRegistryType
     /// </summary>
     public void Resolve(SimulationParameters parameters)
     {
-        Conditions.Resolve(parameters);
-
         LoadedIcon = GD.Load<Texture>(Icon);
     }
 

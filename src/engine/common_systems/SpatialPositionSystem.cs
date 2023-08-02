@@ -23,12 +23,10 @@
             if (spatial.GraphicalInstance == null)
                 return;
 
-            if (spatial.VisualScale != null)
+            if (spatial.ApplyVisualScale)
             {
-                var scale = spatial.VisualScale.Value;
-
                 spatial.GraphicalInstance.Transform =
-                    new Transform(new Basis(position.Rotation).Scaled(scale), position.Position);
+                    new Transform(new Basis(position.Rotation).Scaled(spatial.VisualScale), position.Position);
             }
             else
             {

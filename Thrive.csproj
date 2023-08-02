@@ -125,10 +125,12 @@
     <Compile Include="src\engine\ChromaticFilter.cs" />
     <Compile Include="src\engine\common_components\AttachedToEntity.cs" />
     <Compile Include="src\engine\common_components\CollisionManagement.cs" />
+    <Compile Include="src\engine\common_components\CountLimited.cs" />
     <Compile Include="src\engine\common_components\DamageOnTouch.cs" />
     <Compile Include="src\engine\common_components\FadeOutActions.cs" />
     <Compile Include="src\engine\common_components\Health.cs" />
-    <Compile Include="src\engine\common_components\ManualphysicsControl.cs" />
+    <Compile Include="src\engine\common_components\LimitGroup.cs" />
+    <Compile Include="src\engine\common_components\ManualPhysicsControl.cs" />
     <Compile Include="src\engine\common_components\PathLoadedSceneVisuals.cs" />
     <Compile Include="src\engine\common_components\Physics.cs" />
     <Compile Include="src\engine\common_components\PhysicsShapeHolder.cs" />
@@ -138,6 +140,7 @@
     <Compile Include="src\engine\common_components\Spawned.cs" />
     <Compile Include="src\engine\common_components\TimedLife.cs" />
     <Compile Include="src\engine\common_components\WorldPosition.cs" />
+    <Compile Include="src\engine\common_systems\CountLimitedDespawnSystem.cs" />
     <Compile Include="src\engine\common_systems\FadeOutActionSystem.cs" />
     <Compile Include="src\engine\common_systems\PathBasedSceneLoader.cs" />
     <Compile Include="src\engine\common_systems\PhysicsBodyControlSystem.cs" />
@@ -497,7 +500,6 @@
     <Compile Include="src\microbe_stage\editor\upgrades\LysosomeUpgradeGUI.cs" />
     <Compile Include="src\microbe_stage\Endosome.cs" />
     <Compile Include="src\microbe_stage\Enzyme.cs" />
-    <Compile Include="src\microbe_stage\FloatingChunkSystem.cs" />
     <Compile Include="src\microbe_stage\gui\DisplayDuration.cs" />
     <Compile Include="src\microbe_stage\gui\HUDMessages.cs" />
     <Compile Include="src\microbe_stage\gui\IHUDMessage.cs" />
@@ -591,13 +593,13 @@
     <Compile Include="src\microbe_stage\organelle_components\PilusComponent.cs" />
     <Compile Include="src\microbe_stage\StrictProcessDisplayInfoEquality.cs" />
     <Compile Include="src\microbe_stage\systems\CellBurstEffectSystem.cs" />
+    <Compile Include="src\microbe_stage\systems\FluidCurrentsSystem.cs" />
     <Compile Include="src\microbe_stage\systems\ProcessSystem.cs" />
     <Compile Include="src\microbe_stage\systems\ToxinCollisionSystem.cs" />
     <Compile Include="src\microbe_stage\TweakedProcess.cs" />
     <Compile Include="src\microbe_stage\CompoundBag.cs" />
     <Compile Include="src\microbe_stage\CompoundCloudSystem.cs" />
     <Compile Include="src\engine\TaskExecutor.cs" />
-    <Compile Include="src\microbe_stage\FluidSystem.cs" />
     <Compile Include="src\microbe_stage\Spawner.cs" />
     <Compile Include="src\microbe_stage\ISpawned.cs" />
     <Compile Include="src\microbe_stage\Spawners.cs" />
