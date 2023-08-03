@@ -79,9 +79,11 @@ public static class SpawnHelpers
         {
             VisualIdentifier = VisualResourceIdentifier.AgentProjectile,
         });
+
         entity.Set(new SpatialInstance
         {
-            VisualScale = Math.Abs(scale - 1) > MathUtils.EPSILON ? new Vector3(scale, scale, scale) : null,
+            VisualScale = new Vector3(scale, scale, scale),
+            ApplyVisualScale = Math.Abs(scale - 1) > MathUtils.EPSILON,
         });
 
         entity.Set(new TimedLife
@@ -207,6 +209,7 @@ public static class SpawnHelpers
                 DisableCollisions = true,
                 RemoveVelocity = true,
                 DisableParticles = true,
+                UsesMicrobialDissolveEffect = true,
             });
         }
 
@@ -653,7 +656,7 @@ public class MicrobeSpawner : Spawner
 
     public Species Species { get; }
 
-    public override IEnumerable<ISpawned>? Spawn(Node worldNode, Vector3 location, ISpawnSystem spawnSystem)
+    public override IEnumerable<Entity>? Spawn(Node worldNode, Vector3 location, ISpawnSystem spawnSystem)
     {
         // This should no longer happen, but let's keep this print here to keep track of the situation
         if (Species.Obsolete)
@@ -668,9 +671,14 @@ public class MicrobeSpawner : Spawner
             SpawnHelpers.GiveFullyGrownChanceForMulticellular(first, random);
         }
 
-        yield return first;
+        throw new NotImplementedException();
 
-        ModLoader.ModInterface.TriggerOnMicrobeSpawned(first);
+        // yield return first;
+
+        // TODO: redo
+        throw new NotImplementedException();
+
+        // ModLoader.ModInterface.TriggerOnMicrobeSpawned(first);
 
         // Just in case the is bacteria flag is not correct in a multicellular cell type, here's an extra safety check
         if (first.CellTypeProperties.IsBacteria && !first.IsMulticellular)
@@ -678,9 +686,11 @@ public class MicrobeSpawner : Spawner
             foreach (var colonyMember in SpawnHelpers.SpawnBacteriaColony(Species, location, worldNode,
                          microbeScene, cloudSystem, spawnSystem, currentGame, random))
             {
-                yield return colonyMember;
+                throw new NotImplementedException();
 
-                ModLoader.ModInterface.TriggerOnMicrobeSpawned(colonyMember);
+                // yield return colonyMember;
+
+                // ModLoader.ModInterface.TriggerOnMicrobeSpawned(colonyMember);
             }
         }
     }
@@ -710,7 +720,7 @@ public class CompoundCloudSpawner : Spawner
 
     public override bool SpawnsEntities => false;
 
-    public override IEnumerable<ISpawned>? Spawn(Node worldNode, Vector3 location, ISpawnSystem spawnSystem)
+    public override IEnumerable<Entity>? Spawn(Node worldNode, Vector3 location, ISpawnSystem spawnSystem)
     {
         SpawnHelpers.SpawnCloud(clouds, location, compound, amount, random);
 
@@ -739,7 +749,7 @@ public class ChunkSpawner : Spawner
 
     public override bool SpawnsEntities => true;
 
-    public override IEnumerable<ISpawned>? Spawn(Node worldNode, Vector3 location, ISpawnSystem spawnSystem)
+    public override IEnumerable<Entity>? Spawn(Node worldNode, Vector3 location, ISpawnSystem spawnSystem)
     {
         throw new NotImplementedException();
 

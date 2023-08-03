@@ -367,11 +367,6 @@ public static class Constants
     public const float COMPOUNDS_TO_VENT_PER_SECOND = 5.0f;
 
     /// <summary>
-    ///   Limits how often floating chunks are processed to save on some performance
-    /// </summary>
-    public const float FLOATING_CHUNK_PROCESS_INTERVAL = 0.05f;
-
-    /// <summary>
     ///   If more chunks exist at once than this, then some are forced to despawn immediately
     /// </summary>
     public const int FLOATING_CHUNK_MAX_COUNT = 50;
@@ -1007,8 +1002,6 @@ public static class Constants
     // TODO: delete up to here after microbe code is gone
 
     public const string ENTITY_TAG_CREATURE = "creature";
-
-    public const string PLAYER_REPRODUCED_GROUP = "player_offspring";
 
     public const string INTERACTABLE_GROUP = "interactable";
 

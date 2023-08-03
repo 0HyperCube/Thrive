@@ -19,9 +19,7 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
     private Compound glucose = null!;
     private Compound phosphate = null!;
 
-    [JsonProperty]
-    [AssignOnlyChildItemsOnDeserialize]
-    private SpawnSystem spawner = null!;
+
 
     [JsonProperty]
     [AssignOnlyChildItemsOnDeserialize]

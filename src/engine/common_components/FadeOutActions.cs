@@ -16,6 +16,8 @@
         /// </summary>
         public bool DisableParticles;
 
+        public bool UsesMicrobialDissolveEffect;
+
         /// <summary>
         ///   Internal variable for use by the managing system
         /// </summary>

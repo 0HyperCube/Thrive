@@ -3,12 +3,7 @@ using System.Collections.Generic;
 using Godot;
 using Newtonsoft.Json;
 
-/// <summary>
-///   Script for the floating chunks (cell parts, rocks, hazards)
-/// </summary>
-[JSONAlwaysDynamicType]
-public class FloatingChunk : SimulatedPhysicsEntity, ISimulatedEntityWithDirectVisuals, ISpawned,
-    IEngulfable /*, IInspectableEntity*/
+public class FloatingChunk
 {
 #pragma warning disable CA2213
     private MeshInstance? chunkMesh;
@@ -26,9 +21,6 @@ public class FloatingChunk : SimulatedPhysicsEntity, ISimulatedEntityWithDirectV
 
     [JsonProperty]
     private float dissolveEffectValue;
-
-    [JsonProperty]
-    private float elapsedSinceProcess;
 
     [JsonProperty]
     private int renderPriority;
@@ -130,14 +122,6 @@ public class FloatingChunk : SimulatedPhysicsEntity, ISimulatedEntityWithDirectV
             }
         }
 
-        elapsedSinceProcess += delta;
-
-        // Skip some of our more expensive operations if not enough time has passed
-        // This doesn't actually seem to have that much effect with reasonable chunk counts... but doesn't seem
-        // to hurt either, so for the future I think we should keep this -hhyyrylainen
-        if (elapsedSinceProcess < Constants.FLOATING_CHUNK_PROCESS_INTERVAL)
-            return false;
-
         VentCompounds(elapsedSinceProcess, compoundClouds);
 
         if (UsesDespawnTimer)
@@ -185,166 +169,6 @@ public class FloatingChunk : SimulatedPhysicsEntity, ISimulatedEntityWithDirectV
 
         elapsedSinceProcess = 0;
         return false;
-    }
-
-    public void PopImmediately(CompoundCloudSystem compoundClouds)
-    {
-        VentAllCompounds(compoundClouds);
-    }
-
-    public void VentAllCompounds(CompoundCloudSystem compoundClouds)
-    {
-        // Vent all remaining compounds immediately
-        if (Compounds.Compounds.Count > 0)
-        {
-            var pos = Position;
-
-            var keys = new List<Compound>(Compounds.Compounds.Keys);
-
-            foreach (var compound in keys)
-            {
-                var amount = Compounds.GetCompoundAmount(compound);
-                Compounds.TakeCompound(compound, amount);
-
-                if (amount < MathUtils.EPSILON)
-                    continue;
-
-                VentCompound(pos, compound, amount, compoundClouds);
-            }
-        }
-    }
-
-    public Dictionary<Compound, float>? CalculateAdditionalDigestibleCompounds()
-    {
-        return null;
-    }
-
-    public void OnAttemptedToBeEngulfed()
-    {
-    }
-
-    public void OnIngestedFromEngulfment()
-    {
-    }
-
-    public void OnExpelledFromEngulfment()
-    {
-        if (DigestedAmount > 0)
-        {
-            // Just dissolve this chunk entirely (assume that it has become unstable from digestion)
-            DespawnTimer = Constants.DESPAWNING_CHUNK_LIFETIME + 1;
-        }
-    }
-
-    public void OnMouseEnter(RaycastResult result)
-    {
-    }
-
-    public void OnMouseExit(RaycastResult result)
-    {
-    }
-
-    private void InitGraphics()
-    {
-        var graphicsNode = GraphicsScene.Instance();
-
-        VisualNode.AddChild(graphicsNode);
-
-        // Scale is now applied here as this doesn't conflict with the random rotation set by the spawner
-        VisualNode.Scale = new Vector3(ChunkScale, ChunkScale, ChunkScale);
-
-        if (!string.IsNullOrEmpty(ModelNodePath))
-        {
-            chunkMesh = graphicsNode.GetNode<MeshInstance>(ModelNodePath);
-            return;
-        }
-
-        if (graphicsNode.IsClass("MeshInstance"))
-        {
-            chunkMesh = (MeshInstance)graphicsNode;
-        }
-        else if (graphicsNode.IsClass("Particles"))
-        {
-            particles = (Particles)graphicsNode;
-        }
-        else
-        {
-            throw new Exception("Invalid class for chunk graphics scene node");
-        }
-    }
-
-    private void InitPhysics()
-    {
-        // Apply physics shape
-        throw new NotImplementedException();
-
-        /*if (ConvexPhysicsMesh == null)
-        {
-            var sphereShape = new SphereShape { Radius = Radius };
-            shape.Shape = sphereShape;
-        }
-        else
-        {
-            if (chunkMesh == null)
-                throw new InvalidOperationException("Can't use convex physics shape without mesh for chunk");
-
-            // TODO: scale?
-
-            shape.Shape = ConvexPhysicsMesh;
-            shape.Transform = chunkMesh.Transform;
-        }*/
-
-        // Needs physics callback when this is engulfable or damaging
-        if (Damages > 0 || DeleteOnTouch || EngulfSize > 0)
-        {
-            RegisterCollisionCallback(OnContactBegin);
-
-            // TODO: contact end callback / modify the begin callback to continuously trigger for active physics
-            // Connect("body_shape_exited", this, nameof(OnContactEnd));
-        }
-    }
-
-    /// <summary>
-    ///   Vents compounds if this is a chunk that contains compounds
-    /// </summary>
-    private void VentCompounds(float delta, CompoundCloudSystem compoundClouds)
-    {
-        if (Compounds.Compounds.Count <= 0)
-            return;
-
-        var pos = Position;
-
-        var keys = new List<Compound>(Compounds.Compounds.Keys);
-
-        // Loop through all the compounds in the storage bag and eject them
-        bool vented = false;
-        foreach (var compound in keys)
-        {
-            var amount = Compounds.GetCompoundAmount(compound);
-
-            if (amount <= 0)
-                continue;
-
-            var got = Compounds.TakeCompound(compound, VentPerSecond * delta);
-
-            if (got > MathUtils.EPSILON)
-            {
-                VentCompound(pos, compound, got, compoundClouds);
-                vented = true;
-            }
-        }
-
-        // If you did not vent anything this step and the venter component
-        // is flagged to dissolve you, dissolve you
-        if (!vented && Dissolves)
-        {
-            isDissolving = true;
-        }
-    }
-
-    private void VentCompound(Vector3 pos, Compound compound, float amount, CompoundCloudSystem compoundClouds)
-    {
-        compoundClouds.AddCloud(compound, amount * Constants.CHUNK_VENT_COMPOUND_MULTIPLIER, pos);
     }
 
     /// <summary>

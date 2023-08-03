@@ -27,6 +27,7 @@
 
         public PhagocytosisPhase PhagocytosisStep;
 
+        // TODO: implement this for when ejected
         /// <summary>
         ///   If this is partially digested when ejected from an engulfer, this is destroyed (with a dissolve animation
         ///   if detected to be possible)

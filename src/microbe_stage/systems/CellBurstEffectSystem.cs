@@ -7,6 +7,9 @@
     using Godot;
     using World = DefaultEcs.World;
 
+    /// <summary>
+    ///   Updates cell burst effects as time elapses
+    /// </summary>
     [With(typeof(CellBurstEffect))]
     [With(typeof(TimedLife))]
     [With(typeof(SpatialInstance))]
