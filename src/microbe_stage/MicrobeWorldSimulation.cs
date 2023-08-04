@@ -10,7 +10,8 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
 {
     private Random aiRandom = new();
 
-    // TODO: allow saving / loading some system state somehow
+    // TODO: allow saving / loading some system state somehow (hopefully without needing to add really hacky dummy
+    // constructors)
     private FluidSystem fluidSystem = null!;
     private MicrobeSystem microbeSystem = null!;
     private ProcessSystem processSystem = null!;

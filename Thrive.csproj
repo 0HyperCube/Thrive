@@ -539,7 +539,6 @@
     <Compile Include="src\microbe_stage\CompoundCloudPlane.cs" />
     <Compile Include="src\microbe_stage\MicrobeInspectInfo.cs" />
     <Compile Include="src\microbe_stage\MicrobeState.cs" />
-    <Compile Include="src\microbe_stage\MicrobeSystem.cs" />
     <Compile Include="src\microbe_stage\MicrobeWorldSimulation.cs" />
     <Compile Include="src\microbe_stage\organelle_components\AxonComponent.cs" />
     <Compile Include="src\microbe_stage\organelle_components\CiliaComponent.cs" />
