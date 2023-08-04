@@ -245,7 +245,8 @@ public class PhysicalWorld : IDisposable
         throw new NotImplementedException();
     }
 
-    public List<PhysicsCollision> BodyStartEntityCollisionRecording(NativePhysicsBody body)
+    public PhysicsCollision[] BodyStartEntityCollisionRecording(NativePhysicsBody body,
+        int maxRecordedCollisions)
     {
         throw new NotImplementedException();
     }

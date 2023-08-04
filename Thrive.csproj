@@ -127,6 +127,7 @@
     <Compile Include="src\engine\common_components\CollisionManagement.cs" />
     <Compile Include="src\engine\common_components\CountLimited.cs" />
     <Compile Include="src\engine\common_components\DamageOnTouch.cs" />
+    <Compile Include="src\engine\common_components\EntityMaterial.cs" />
     <Compile Include="src\engine\common_components\FadeOutActions.cs" />
     <Compile Include="src\engine\common_components\Health.cs" />
     <Compile Include="src\engine\common_components\LimitGroup.cs" />
@@ -136,12 +137,14 @@
     <Compile Include="src\engine\common_components\PhysicsShapeHolder.cs" />
     <Compile Include="src\engine\common_components\PredefinedVisuals.cs" />
     <Compile Include="src\engine\common_components\ReadableName.cs" />
+    <Compile Include="src\engine\common_components\RenderOrderOverride.cs" />
     <Compile Include="src\engine\common_components\SpatialInstance.cs" />
     <Compile Include="src\engine\common_components\Spawned.cs" />
     <Compile Include="src\engine\common_components\TimedLife.cs" />
     <Compile Include="src\engine\common_components\WorldPosition.cs" />
     <Compile Include="src\engine\common_systems\CountLimitedDespawnSystem.cs" />
     <Compile Include="src\engine\common_systems\DamageOnTouchSystem.cs" />
+    <Compile Include="src\engine\common_systems\EntityMaterialFetchSystem.cs" />
     <Compile Include="src\engine\common_systems\FadeOutActionSystem.cs" />
     <Compile Include="src\engine\common_systems\PathBasedSceneLoader.cs" />
     <Compile Include="src\engine\common_systems\PhysicsBodyControlSystem.cs" />
@@ -150,6 +153,7 @@
     <Compile Include="src\engine\common_systems\PhysicsCollisionManagementSystem.cs" />
     <Compile Include="src\engine\common_systems\PhysicsUpdateAndPositionSystem.cs" />
     <Compile Include="src\engine\common_systems\PredefinedVisualLoaderSystem.cs" />
+    <Compile Include="src\engine\common_systems\RenderOrderSystem.cs" />
     <Compile Include="src\engine\common_systems\SpatialAttachSystem.cs" />
     <Compile Include="src\engine\common_systems\SpatialPositionSystem.cs" />
     <Compile Include="src\engine\common_systems\TimedLifeSystem.cs" />
@@ -417,6 +421,7 @@
     <Compile Include="src\microbe_stage\components\CurrentAffected.cs" />
     <Compile Include="src\microbe_stage\components\Engulfable.cs" />
     <Compile Include="src\microbe_stage\components\MicrobeColony.cs" />
+    <Compile Include="src\microbe_stage\components\MicrobeShaderParameters.cs" />
     <Compile Include="src\microbe_stage\components\PlayerOffspring.cs" />
     <Compile Include="src\microbe_stage\components\SpeciesMember.cs" />
     <Compile Include="src\microbe_stage\components\ToxinDamageSource.cs" />
@@ -551,7 +556,6 @@
     <Compile Include="src\microbe_stage\editor\PatchMapDrawer.cs" />
     <Compile Include="src\microbe_stage\editor\PatchMapNode.cs" />
     <Compile Include="src\microbe_stage\BiomeCompoundProperties.cs" />
-    <Compile Include="src\microbe_stage\FloatingChunk.cs" />
     <Compile Include="src\microbe_stage\IProcessDisplayInfo.cs" />
     <Compile Include="src\microbe_stage\Membrane.cs" />
     <Compile Include="src\microbe_stage\Microbe.cs" />
@@ -596,6 +600,7 @@
     <Compile Include="src\microbe_stage\systems\AllCompoundsVentingSystem.cs" />
     <Compile Include="src\microbe_stage\systems\CellBurstEffectSystem.cs" />
     <Compile Include="src\microbe_stage\systems\FluidCurrentsSystem.cs" />
+    <Compile Include="src\microbe_stage\systems\MicrobeShaderSystem.cs" />
     <Compile Include="src\microbe_stage\systems\ProcessSystem.cs" />
     <Compile Include="src\microbe_stage\systems\SpawnSystem.cs" />
     <Compile Include="src\microbe_stage\systems\ToxinCollisionSystem.cs" />

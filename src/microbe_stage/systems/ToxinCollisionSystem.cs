@@ -44,17 +44,18 @@
             }
 
             var activeCollisions = collisions.ActiveCollisions;
-            if (activeCollisions == null || activeCollisions.Count < 1)
+            if (activeCollisions == null || activeCollisions.Length < 1)
                 return;
 
-            int count = activeCollisions.Count;
-
             // Check for active collisions that count as a hit and use up this projectile
-            for (int i = 0; i < count; ++i)
+            for (int i = 0; i < activeCollisions.Length; ++i)
             {
-                // TODO: with Godot 4 this could hopefully use AsSpan
+                ref var collision = ref activeCollisions[i];
 
-                if (!HandlePotentiallyDamagingCollision(activeCollisions[i]))
+                if (!collision.Active)
+                    continue;
+
+                if (!HandlePotentiallyDamagingCollision(ref collision))
                     continue;
 
                 // Applied a damaging hit, destroy this toxin
@@ -117,7 +118,7 @@
             return true;
         }
 
-        private static bool HandlePotentiallyDamagingCollision(in PhysicsCollision collision)
+        private static bool HandlePotentiallyDamagingCollision(ref PhysicsCollision collision)
         {
             // TODO: switch this to also take ref once we use .NET 5 or newer:
             // https://learn.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.collectionsmarshal.asspan

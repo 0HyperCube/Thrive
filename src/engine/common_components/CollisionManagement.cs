@@ -15,7 +15,7 @@
         ///   by the underlying physics body.
         /// </summary>
         [JsonIgnore]
-        public List<PhysicsCollision>? ActiveCollisions;
+        public PhysicsCollision[]? ActiveCollisions;
 
         public List<Entity>? IgnoredCollisionsWith;
 

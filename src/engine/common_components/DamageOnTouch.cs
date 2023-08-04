@@ -13,8 +13,9 @@
         public string DamageType;
 
         /// <summary>
-        ///   The amount of damage this causes. This is allowed to be 0 to implement entities that get destroyed on
-        ///   touch.
+        ///   The amount of damage this causes. This is allowed to be 0 to implement entities that just get destroyed
+        ///   on touch. When <see cref="DestroyOnTouch"/> is true this is the inflicted damage, otherwise this is the
+        ///   damage per second.
         /// </summary>
         public float DamageAmount;
 
@@ -33,5 +34,11 @@
         /// </summary>
         [JsonIgnore]
         public bool StartedDestroy;
+
+        /// <summary>
+        ///   Internal variable, don't modify
+        /// </summary>
+        [JsonIgnore]
+        public bool RegisteredWithCollisions;
     }
 }

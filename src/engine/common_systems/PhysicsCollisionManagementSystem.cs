@@ -96,10 +96,13 @@
 
             if (collisionManagement.RecordActiveCollisions > 0)
             {
-                if (collisionManagement.ActiveCollisions == null)
+                if (collisionManagement.ActiveCollisions == null || collisionManagement.ActiveCollisions.Length !=
+                    collisionManagement.RecordActiveCollisions)
                 {
                     // Start recording collisions
-                    collisionManagement.ActiveCollisions = physicalWorld.BodyStartEntityCollisionRecording(physicsBody);
+                    collisionManagement.ActiveCollisions =
+                        physicalWorld.BodyStartEntityCollisionRecording(physicsBody,
+                            collisionManagement.RecordActiveCollisions);
                 }
             }
             else if (collisionManagement.ActiveCollisions != null)

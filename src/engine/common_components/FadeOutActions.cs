@@ -19,6 +19,11 @@
         public bool UsesMicrobialDissolveEffect;
 
         /// <summary>
+        ///   If true then <see cref="CompoundStorage"/> is emptied on fade out
+        /// </summary>
+        public bool VentCompounds;
+
+        /// <summary>
         ///   Internal variable for use by the managing system
         /// </summary>
         public bool CallbackRegistered;

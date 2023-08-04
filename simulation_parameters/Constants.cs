@@ -332,6 +332,11 @@ public static class Constants
     public const float PHYSICS_ALLOWED_Y_AXIS_DRIFT = 0.1f;
 
     /// <summary>
+    ///   How many collisions each damage dealing entity can record at once
+    /// </summary>
+    public const int MAX_SIMULTANEOUS_DAMAGE_COLLISIONS = 5;
+
+    /// <summary>
     ///   Cooldown between agent emissions, in seconds.
     /// </summary>
     public const float AGENT_EMISSION_COOLDOWN = 2.0f;
@@ -547,7 +552,8 @@ public static class Constants
     public const float PARTIALLY_DIGESTED_THRESHOLD = 0.5f;
 
     /// <summary>
-    ///   The maximum digestion progress in which an engulfable is considered fully digested.
+    ///   The maximum digestion progress in which an engulfable is considered fully digested. Do not change this.
+    ///   It is assumed elsewhere that 1 means fully digested so this will break a bunch of stuff if you change this.
     /// </summary>
     public const float FULLY_DIGESTED_LIMIT = 1.0f;
 

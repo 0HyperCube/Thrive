@@ -210,6 +210,7 @@ public static class SpawnHelpers
                 RemoveVelocity = true,
                 DisableParticles = true,
                 UsesMicrobialDissolveEffect = true,
+                VentCompounds = true,
             });
         }
 
@@ -232,6 +233,16 @@ public static class SpawnHelpers
                 DamageAmount = chunkType.Damages,
                 DestroyOnTouch = chunkType.DeleteOnTouch,
                 DamageType = string.IsNullOrEmpty(chunkType.DamageType) ? "chunk" : chunkType.DamageType,
+            });
+        }
+        else if (chunkType.DeleteOnTouch)
+        {
+            // No damage but deletes on touch
+            entity.Set<CollisionManagement>();
+            entity.Set(new DamageOnTouch
+            {
+                DamageAmount = 0,
+                DestroyOnTouch = chunkType.DeleteOnTouch,
             });
         }
 
