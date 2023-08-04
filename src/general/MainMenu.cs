@@ -100,6 +100,9 @@ public class MainMenu : NodeWithInput
     [Export]
     public NodePath ThanksDialogPath = null!;
 
+    [Export]
+    public NodePath MenusPath = null!;
+
 #pragma warning disable CA2213
     private TextureRect background = null!;
     private Spatial? created3DBackground;
@@ -147,6 +150,8 @@ public class MainMenu : NodeWithInput
 
     private PermanentlyDismissibleDialog modsInstalledButNotEnabledWarning = null!;
     private PermanentlyDismissibleDialog thanksDialog = null!;
+
+    private CenterContainer menus = null!;
 #pragma warning restore CA2213
 
     private Array? menuArray;
@@ -186,6 +191,9 @@ public class MainMenu : NodeWithInput
         if (Settings.Instance.PlayIntroVideo && LaunchOptions.VideosEnabled && !IsReturningToMenu &&
             SafeModeStartupHandler.AreVideosAllowed())
         {
+            // Hide menu buttons to prevent them grabbing focus during intro video
+            GetCurrentMenu()?.Hide();
+
             SafeModeStartupHandler.ReportBeforeVideoPlaying();
             TransitionManager.Instance.AddSequence(
                 TransitionManager.Instance.CreateCutscene("res://assets/videos/intro.ogv"), OnIntroEnded);
@@ -276,6 +284,13 @@ public class MainMenu : NodeWithInput
         {
             GD.Print("Main window close signal detected");
             Invoke.Instance.Queue(QuitPressed);
+        }
+        else if (notification == NotificationTranslationChanged)
+        {
+            if (SteamHandler.Instance.IsLoaded)
+            {
+                UpdateSteamLoginText();
+            }
         }
     }
 
@@ -378,6 +393,7 @@ public class MainMenu : NodeWithInput
                 PatchNotesDisablerPath.Dispose();
                 FeedPositionerPath.Dispose();
                 ThanksDialogPath.Dispose();
+                MenusPath.Dispose();
             }
 
             menuArray?.Dispose();
@@ -438,6 +454,7 @@ public class MainMenu : NodeWithInput
         modsInstalledButNotEnabledWarning = GetNode<PermanentlyDismissibleDialog>(
             ModsInstalledButNotEnabledWarningPath);
         thanksDialog = GetNode<PermanentlyDismissibleDialog>(ThanksDialogPath);
+        menus = GetNode<CenterContainer>(MenusPath);
 
         // Set initial menu
         SwitchMenu();
@@ -521,6 +538,21 @@ public class MainMenu : NodeWithInput
         });
     }
 
+    /// <summary>
+    ///   Returns the container for the current menu.
+    /// </summary>
+    /// <returns>Null if we aren't in any available menu or the menu container if there is one.</returns>
+    /// <exception cref="System.InvalidOperationException">The main menu hasn't been initialized.</exception>
+    private Control? GetCurrentMenu()
+    {
+        if (menuArray == null)
+            throw new InvalidOperationException("Main menu has not been initialized");
+        if (menuArray.Count <= 0)
+            throw new InvalidOperationException("Main menu has no menus");
+
+        return CurrentMenuIndex == uint.MaxValue ? null : menus.GetChild<Control>((int)CurrentMenuIndex);
+    }
+
     private void OnMenuBackgroundTypeChanged(bool value)
     {
         RandomizeBackground();
@@ -567,8 +599,7 @@ public class MainMenu : NodeWithInput
         else
         {
             storeLoggedInDisplay.Visible = true;
-            storeLoggedInDisplay.Text = TranslationServer.Translate("STORE_LOGGED_IN_AS")
-                .FormatSafe(SteamHandler.Instance.DisplayName);
+            UpdateSteamLoginText();
 
             // This is maybe unnecessary but this wasn't too difficult to add so this hiding logic is here
             itchButton.Visible = false;
@@ -582,6 +613,12 @@ public class MainMenu : NodeWithInput
     private bool SteamFailed()
     {
         return SteamHandler.IsTaggedSteamRelease() && !SteamHandler.Instance.IsLoaded;
+    }
+
+    private void UpdateSteamLoginText()
+    {
+        storeLoggedInDisplay.Text = TranslationServer.Translate("STORE_LOGGED_IN_AS")
+            .FormatSafe(SteamHandler.Instance.DisplayName);
     }
 
     private void UpdateLauncherState()
@@ -651,6 +688,9 @@ public class MainMenu : NodeWithInput
         StartMusic();
 
         introVideoPassed = true;
+
+        // Display menu buttons that were hidden to prevent them grabbing focus during intro video
+        GetCurrentMenu()?.Show();
 
         // Load the menu background only here as the 3D ones are performance intensive so they aren't very nice to
         // consume power unnecessarily while showing the video
