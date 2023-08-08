@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using DefaultEcs;
 using Godot;
 using Newtonsoft.Json;
 using Array = Godot.Collections.Array;
@@ -383,7 +384,9 @@ public partial class Microbe
 
         Hitpoints -= amount;
 
-        ModLoader.ModInterface.TriggerOnDamageReceived(this, amount, IsPlayerMicrobe);
+        throw new NotImplementedException();
+
+        // ModLoader.ModInterface.TriggerOnDamageReceived(this, amount, IsPlayerMicrobe);
 
         // Flash the microbe red
         Flash(1.0f, new Color(1, 0, 0, 0.5f), 1);
@@ -547,6 +550,7 @@ public partial class Microbe
             foreach (var chunk in droppedChunks)
             {
                 throw new NotImplementedException();
+
                 // var direction = hostile.Transform.origin.DirectionTo(chunk.Transform.origin);
                 // chunk.Translation += direction *
                 //     Constants.EJECTED_PARTIALLY_DIGESTED_CELL_CORPSE_CHUNKS_SPAWN_OFFSET;
@@ -631,7 +635,7 @@ public partial class Microbe
     /// <returns>
     ///   The dropped corpse chunks. Null if this cell is already dead or is engulfed.
     /// </returns>
-    public IEnumerable<FloatingChunk>? Kill()
+    public IEnumerable<Entity>? Kill()
     {
         if (Dead)
             return null;
@@ -639,7 +643,9 @@ public partial class Microbe
         Dead = true;
 
         OnDeath?.Invoke(this);
-        ModLoader.ModInterface.TriggerOnMicrobeDied(this, IsPlayerMicrobe);
+
+        throw new NotImplementedException();
+        // ModLoader.ModInterface.TriggerOnMicrobeDied(this, IsPlayerMicrobe);
 
         // If being phagocytized don't continue further because the entity reference is still needed to
         // maintain related functions, also dropping corpse chunks won't make sense while inside a cell
@@ -714,7 +720,8 @@ public partial class Microbe
             if (PhagocytosisStep == PhagocytosisPhase.None)
                 RevertNodeParent();
 
-            ai?.ResetAI();
+            throw new NotImplementedException();
+            // ai?.ResetAI();
 
             Mode = ModeEnum.Rigid;
 
@@ -791,7 +798,7 @@ public partial class Microbe
     /// <returns>
     ///   The dropped corpse chunks.
     /// </returns>
-    private IEnumerable<FloatingChunk> OnKilled()
+    private IEnumerable<Entity> OnKilled()
     {
         // Reset some stuff
         State = MicrobeState.Normal;
@@ -811,19 +818,20 @@ public partial class Microbe
 
             var props = new AgentProperties(Species, oxytoxy);
 
-            var agentScene = SpawnHelpers.LoadAgentScene();
+            throw new NotImplementedException();
+            // var agentScene = SpawnHelpers.LoadAgentScene();
 
             while (amount > Constants.MAXIMUM_AGENT_EMISSION_AMOUNT)
             {
                 var direction = new Vector3(random.Next(0.0f, 1.0f) * 2 - 1,
                     0, random.Next(0.0f, 1.0f) * 2 - 1);
 
-                var agent = SpawnHelpers.SpawnAgent(props, Constants.MAXIMUM_AGENT_EMISSION_AMOUNT,
-                    Constants.EMITTED_AGENT_LIFETIME,
-                    Translation, direction, GetStageAsParent(),
-                    agentScene, this);
-
-                ModLoader.ModInterface.TriggerOnToxinEmitted(agent);
+                // var agent = SpawnHelpers.SpawnAgent(props, Constants.MAXIMUM_AGENT_EMISSION_AMOUNT,
+                //     Constants.EMITTED_AGENT_LIFETIME,
+                //     Translation, direction, GetStageAsParent(),
+                //     agentScene, this);
+                //
+                // ModLoader.ModInterface.TriggerOnToxinEmitted(agent);
 
                 amount -= Constants.MAXIMUM_AGENT_EMISSION_AMOUNT;
                 ++createdAgents;
@@ -866,9 +874,10 @@ public partial class Microbe
         // Queues either 1 corpse chunk or a factor of the hexes
         int chunksToSpawn = Math.Max(1, HexCount / Constants.CORPSE_CHUNK_DIVISOR);
 
-        var droppedCorpseChunks = new HashSet<FloatingChunk>(chunksToSpawn);
-
-        var chunkScene = SpawnHelpers.LoadChunkScene();
+        throw new NotImplementedException();
+        // var droppedCorpseChunks = new HashSet<FloatingChunk>(chunksToSpawn);
+        //
+        // var chunkScene = SpawnHelpers.LoadChunkScene();
 
         // An enumerator to step through all available organelles in a random order when making chunks
         using var organellesAvailableEnumerator = organelles.OrderBy(_ => random.Next()).GetEnumerator();
@@ -914,7 +923,8 @@ public partial class Microbe
 
             chunkType.Meshes = new List<ChunkConfiguration.ChunkScene>();
 
-            var sceneToUse = new ChunkConfiguration.ChunkScene
+            throw new NotImplementedException();
+            /*var sceneToUse = new ChunkConfiguration.ChunkScene
             {
                 LoadedScene = defaultChunkScene,
             };
@@ -955,7 +965,7 @@ public partial class Microbe
             // Add to the spawn system to make these chunks limit possible number of entities
             spawnSystem!.NotifyExternalEntitySpawned(chunk);
 
-            ModLoader.ModInterface.TriggerOnChunkSpawned(chunk, false);
+            ModLoader.ModInterface.TriggerOnChunkSpawned(chunk, false);*/
         }
 
         // Subtract population
@@ -986,7 +996,8 @@ public partial class Microbe
         CollisionLayer = 0;
         CollisionMask = 0;
 
-        return droppedCorpseChunks;
+        throw new NotImplementedException();
+        // return droppedCorpseChunks;
     }
 
     private Microbe? GetColonyMemberWithShapeOwner(uint ownerID, MicrobeColony colony)
