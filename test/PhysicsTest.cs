@@ -700,9 +700,8 @@ public class PhysicsTest : Node
             var shape = PhysicsShape.CreateMicrobeShape(testMicrobeOrganellePositions!, 1000, false,
                 CreateMicrobeAsSpheres);
 
-            var body = physicalWorld.CreateMovingBody(shape, location, Quat.Identity);
+            var body = physicalWorld.CreateMovingBodyWithAxisLock(shape, location, Quat.Identity, Vector3.Up, true);
 
-            physicalWorld.AddAxisLockConstraint(body, Vector3.Up, true);
             physicalWorld.SetDamping(body, MicrobeDamping);
 
             // Add an initial impulse

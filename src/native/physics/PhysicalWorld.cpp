@@ -191,18 +191,54 @@ Ref<PhysicsBody> PhysicalWorld::CreateMovingBody(const JPH::RefConst<JPH::Shape>
     }
 
     // TODO: multithreaded body adding?
-    auto body = CreateBody(*shape, JPH::EMotionType::Dynamic, Layers::MOVING, position, rotation);
+    return OnBodyCreated(CreateBody(*shape, JPH::EMotionType::Dynamic, Layers::MOVING, position, rotation), addToWorld);
+}
 
-    if (body == nullptr)
-        return nullptr;
-
-    if (addToWorld)
+Ref<PhysicsBody> PhysicalWorld::CreateMovingBodyWithAxisLock(const JPH::RefConst<JPH::Shape>& shape,
+    JPH::RVec3Arg position, JPH::Quat rotation, JPH::Vec3 lockedAxes, bool lockRotation, bool addToWorld /*= true*/)
+{
+    if (shape == nullptr)
     {
-        physicsSystem->GetBodyInterface().AddBody(body->GetId(), JPH::EActivation::Activate);
-        OnPostBodyAdded(*body);
+        LOG_ERROR("No shape given to body create");
+        return nullptr;
     }
 
-    return body;
+    JPH::EAllowedDOFs degreesOfFreedom = JPH::EAllowedDOFs::All;
+
+    if (lockedAxes.GetX() != 0)
+        degreesOfFreedom &= ~JPH::EAllowedDOFs::TranslationX;
+
+    if (lockedAxes.GetY() != 0)
+        degreesOfFreedom &= ~JPH::EAllowedDOFs::TranslationY;
+
+    if (lockedAxes.GetZ() != 0)
+        degreesOfFreedom &= ~JPH::EAllowedDOFs::TranslationZ;
+
+    if (lockRotation)
+    {
+        if (lockedAxes.GetX() != 0)
+        {
+            degreesOfFreedom &= ~JPH::EAllowedDOFs::RotationY;
+            degreesOfFreedom &= ~JPH::EAllowedDOFs::RotationZ;
+        }
+
+        if (lockedAxes.GetY() != 0)
+        {
+            degreesOfFreedom &= ~JPH::EAllowedDOFs::RotationX;
+            degreesOfFreedom &= ~JPH::EAllowedDOFs::RotationZ;
+        }
+
+        if (lockedAxes.GetZ() != 0)
+        {
+            degreesOfFreedom &= ~JPH::EAllowedDOFs::RotationX;
+            degreesOfFreedom &= ~JPH::EAllowedDOFs::RotationY;
+        }
+    }
+
+    // TODO: multithreaded body adding?
+    return OnBodyCreated(
+        CreateBody(*shape, JPH::EMotionType::Dynamic, Layers::MOVING, position, rotation, degreesOfFreedom),
+        addToWorld);
 }
 
 Ref<PhysicsBody> PhysicalWorld::CreateStaticBody(const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position,
@@ -734,7 +770,8 @@ void PhysicalWorld::PerformPhysicsStepOperations(float delta)
 }
 
 Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotionType motionType, JPH::ObjectLayer layer,
-    JPH::RVec3Arg position, JPH::Quat rotation /*= JPH::Quat::sIdentity()*/)
+    JPH::RVec3Arg position, JPH::Quat rotation /*= JPH::Quat::sIdentity()*/,
+    JPH::EAllowedDOFs allowedDegreesOfFreedom /*= JPH::EAllowedDOFs::All*/)
 {
 #ifndef NDEBUG
     // Sanity check some layer stuff
@@ -745,8 +782,10 @@ Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotion
     }
 #endif
 
-    const auto body = physicsSystem->GetBodyInterface().CreateBody(
-        JPH::BodyCreationSettings(&shape, position, rotation, motionType, layer));
+    auto creationSettings = JPH::BodyCreationSettings(&shape, position, rotation, motionType, layer);
+    creationSettings.mAllowedDOFs = allowedDegreesOfFreedom;
+
+    const auto body = physicsSystem->GetBodyInterface().CreateBody(creationSettings);
 
     if (body == nullptr)
     {
@@ -757,6 +796,20 @@ Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotion
     changesToBodies = true;
 
     return {new PhysicsBody(body, body->GetID())};
+}
+
+Ref<PhysicsBody> PhysicalWorld::OnBodyCreated(Ref<PhysicsBody>&& body, bool addToWorld)
+{
+    if (body == nullptr)
+        return nullptr;
+
+    if (addToWorld)
+    {
+        physicsSystem->GetBodyInterface().AddBody(body->GetId(), JPH::EActivation::Activate);
+        OnPostBodyAdded(*body);
+    }
+
+    return std::move(body);
 }
 
 void PhysicalWorld::OnPostBodyAdded(PhysicsBody& body)

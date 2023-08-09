@@ -4,6 +4,7 @@
 #include <optional>
 
 #include "Jolt/Core/Reference.h"
+#include "Jolt/Physics/Body/AllowedDOFs.h"
 #include "Jolt/Physics/Body/MotionType.h"
 
 #include "core/ForwardDefinitions.hpp"
@@ -51,6 +52,9 @@ public:
     // Bodies
     Ref<PhysicsBody> CreateMovingBody(const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position,
         JPH::Quat rotation = JPH::Quat::sIdentity(), bool addToWorld = true);
+
+    Ref<PhysicsBody> CreateMovingBodyWithAxisLock(const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position,
+        JPH::Quat rotation, JPH::Vec3 lockedAxes, bool lockRotation, bool addToWorld = true);
 
     Ref<PhysicsBody> CreateStaticBody(const JPH::RefConst<JPH::Shape>& shape, JPH::RVec3Arg position,
         JPH::Quat rotation = JPH::Quat::sIdentity(), bool addToWorld = true);
@@ -127,8 +131,13 @@ private:
     void StepPhysics(JPH::JobSystemThreadPool& jobs, float time);
 
     Ref<PhysicsBody> CreateBody(const JPH::Shape& shape, JPH::EMotionType motionType, JPH::ObjectLayer layer,
-        JPH::RVec3Arg position, JPH::Quat rotation = JPH::Quat::sIdentity());
+        JPH::RVec3Arg position, JPH::Quat rotation = JPH::Quat::sIdentity(),
+        JPH::EAllowedDOFs allowedDegreesOfFreedom = JPH::EAllowedDOFs::All);
 
+    /// \brief Called after body has been created
+    Ref<PhysicsBody> OnBodyCreated(Ref<PhysicsBody>&& body, bool addToWorld);
+
+    /// \brief Called when body is added to the world (can happen multiple times for each body)
     void OnPostBodyAdded(PhysicsBody& body);
 
     void ApplyBodyControl(PhysicsBody& bodyWrapper);
