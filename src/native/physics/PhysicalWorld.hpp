@@ -18,6 +18,8 @@ class TempAllocator;
 class JobSystemThreadPool;
 class BodyID;
 class Shape;
+
+constexpr EAllowedDOFs AllRotationAllowed = EAllowedDOFs::RotationX | EAllowedDOFs::RotationY | EAllowedDOFs::RotationZ;
 } // namespace JPH
 
 namespace Thrive::Physics
@@ -86,6 +88,9 @@ public:
 
     // ------------------------------------ //
     // Constraints
+
+    //! \deprecated Use CreateMovingBodyWithAxisLock instead (this is kept just to show how other constraint types
+    //! should be added in the future)
     Ref<TrackedConstraint> CreateAxisLockConstraint(PhysicsBody& body, JPH::Vec3 axis, bool lockRotation);
 
     void DestroyConstraint(TrackedConstraint& constraint);
@@ -140,7 +145,9 @@ private:
     /// \brief Called when body is added to the world (can happen multiple times for each body)
     void OnPostBodyAdded(PhysicsBody& body);
 
-    void ApplyBodyControl(PhysicsBody& bodyWrapper);
+    /// \brief Applies physics body control operations
+    /// \param delta Is the physics step delta
+    void ApplyBodyControl(PhysicsBody& bodyWrapper, float delta);
 
     void DrawPhysics(float delta);
 

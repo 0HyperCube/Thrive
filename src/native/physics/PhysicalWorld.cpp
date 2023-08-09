@@ -31,6 +31,9 @@
 
 JPH_SUPPRESS_WARNINGS
 
+// Enables slower turning in ApplyBodyControl when close to the target rotation
+// #define USE_SLOW_TURN_NEAR_TARGET
+
 // ------------------------------------ //
 namespace Thrive::Physics
 {
@@ -727,10 +730,9 @@ void PhysicalWorld::StepPhysics(JPH::JobSystemThreadPool& jobs, float time)
     // second)
     const auto start = TimingClock::now();
 
-    // TODO: apply per physics frame forces
+    // Per physics step forces are applied in PerformPhysicsStepOperations triggered by the step listener
 
-    const auto result =
-        physicsSystem->Update(time, collisionStepsPerUpdate, tempAllocator.get(), &jobs);
+    const auto result = physicsSystem->Update(time, collisionStepsPerUpdate, tempAllocator.get(), &jobs);
 
     const auto elapsed = std::chrono::duration_cast<SecondDuration>(TimingClock::now() - start).count();
 
@@ -765,7 +767,7 @@ void PhysicalWorld::PerformPhysicsStepOperations(float delta)
         auto& body = *bodyPtr;
 
         if (body.GetBodyControlState() != nullptr)
-            ApplyBodyControl(body);
+            ApplyBodyControl(body, delta);
     }
 }
 
@@ -822,11 +824,17 @@ void PhysicalWorld::OnPostBodyAdded(PhysicsBody& body)
 }
 
 // ------------------------------------ //
-void PhysicalWorld::ApplyBodyControl(PhysicsBody& bodyWrapper)
+void PhysicalWorld::ApplyBodyControl(PhysicsBody& bodyWrapper, float delta)
 {
     constexpr auto allowedRotationDifference = 0.0001f;
-    constexpr auto closeToTargetThreshold = 0.23f;
     constexpr auto overshootDetectWhenAllAnglesLessThan = PI * 0.025f;
+
+#ifdef USE_SLOW_TURN_NEAR_TARGET
+    constexpr auto closeToTargetThreshold = 0.20f;
+#endif
+
+    // Normalize delta to 60Hz update rate to make gameplay logic not depend on the physics framerate
+    float normalizedDelta = delta / (1 / 60.0f);
 
     BodyControlState* controlState = bodyWrapper.GetBodyControlState();
     const auto bodyId = bodyWrapper.GetId();
@@ -841,8 +849,9 @@ void PhysicalWorld::ApplyBodyControl(PhysicsBody& bodyWrapper)
     }
 
     JPH::Body& body = lock.GetBody();
+    const auto degreesOfFreedom = body.GetMotionProperties()->GetAllowedDOFs();
 
-    body.AddImpulse(controlState->movement);
+    body.AddImpulse(controlState->movement * normalizedDelta);
 
     const auto& currentRotation = body.GetRotation();
 
@@ -859,7 +868,26 @@ void PhysicalWorld::ApplyBodyControl(PhysicsBody& bodyWrapper)
     else
     {
         // Not currently at the rotation target
-        const auto differenceAngles = difference.GetEulerAngles();
+        auto differenceAngles = difference.GetEulerAngles();
+
+        // Things break a lot if we add rotation on an axis where rotation is not allowed due to DOF
+        if ((degreesOfFreedom & JPH::AllRotationAllowed) != JPH::AllRotationAllowed)
+        {
+            if (static_cast<int>((degreesOfFreedom & JPH::EAllowedDOFs::RotationX)) == 0)
+            {
+                differenceAngles.SetX(0);
+            }
+
+            if (static_cast<int>((degreesOfFreedom & JPH::EAllowedDOFs::RotationY)) == 0)
+            {
+                differenceAngles.SetY(0);
+            }
+
+            if (static_cast<int>((degreesOfFreedom & JPH::EAllowedDOFs::RotationZ)) == 0)
+            {
+                differenceAngles.SetZ(0);
+            }
+        }
 
         bool setNormalVelocity = true;
 
@@ -892,9 +920,12 @@ void PhysicalWorld::ApplyBodyControl(PhysicsBody& bodyWrapper)
 
         if (setNormalVelocity)
         {
+#ifdef USE_SLOW_TURN_NEAR_TARGET
             // When near the target slow down rotation
             const bool nearTarget = difference.IsClose(JPH::Quat::sIdentity(), closeToTargetThreshold);
 
+            // It seems as these angles are the distance left, these are hopefully fine to be as-is without any kind
+            // of delta adjustment
             if (nearTarget)
             {
                 body.SetAngularVelocityClamped(differenceAngles / controlState->rotationRate * 0.5f);
@@ -903,6 +934,9 @@ void PhysicalWorld::ApplyBodyControl(PhysicsBody& bodyWrapper)
             {
                 body.SetAngularVelocityClamped(differenceAngles / controlState->rotationRate);
             }
+#else
+            body.SetAngularVelocityClamped(differenceAngles / controlState->rotationRate);
+#endif //USE_SLOW_TURN_NEAR_TARGET
         }
     }
 
