@@ -135,9 +135,12 @@
     <Compile Include="src\engine\common_components\PathLoadedSceneVisuals.cs" />
     <Compile Include="src\engine\common_components\Physics.cs" />
     <Compile Include="src\engine\common_components\PhysicsShapeHolder.cs" />
+    <Compile Include="src\engine\common_components\PlayerMarker.cs" />
     <Compile Include="src\engine\common_components\PredefinedVisuals.cs" />
     <Compile Include="src\engine\common_components\ReadableName.cs" />
     <Compile Include="src\engine\common_components\RenderOrderOverride.cs" />
+    <Compile Include="src\engine\common_components\SoundEffectPlayer.cs" />
+    <Compile Include="src\engine\common_components\SoundListener.cs" />
     <Compile Include="src\engine\common_components\SpatialInstance.cs" />
     <Compile Include="src\engine\common_components\Spawned.cs" />
     <Compile Include="src\engine\common_components\TimedLife.cs" />
@@ -154,6 +157,8 @@
     <Compile Include="src\engine\common_systems\PhysicsUpdateAndPositionSystem.cs" />
     <Compile Include="src\engine\common_systems\PredefinedVisualLoaderSystem.cs" />
     <Compile Include="src\engine\common_systems\RenderOrderSystem.cs" />
+    <Compile Include="src\engine\common_systems\SoundEffectSystem.cs" />
+    <Compile Include="src\engine\common_systems\SoundListenerSystem.cs" />
     <Compile Include="src\engine\common_systems\SpatialAttachSystem.cs" />
     <Compile Include="src\engine\common_systems\SpatialPositionSystem.cs" />
     <Compile Include="src\engine\common_systems\TimedLifeSystem.cs" />
@@ -422,6 +427,8 @@
     <Compile Include="src\microbe_stage\components\Engulfable.cs" />
     <Compile Include="src\microbe_stage\components\MicrobeAI.cs" />
     <Compile Include="src\microbe_stage\components\MicrobeColony.cs" />
+    <Compile Include="src\microbe_stage\components\MicrobeMovement.cs" />
+    <Compile Include="src\microbe_stage\components\MicrobeMovementSound.cs" />
     <Compile Include="src\microbe_stage\components\MicrobeShaderParameters.cs" />
     <Compile Include="src\microbe_stage\components\PlayerOffspring.cs" />
     <Compile Include="src\microbe_stage\components\SpeciesMember.cs" />

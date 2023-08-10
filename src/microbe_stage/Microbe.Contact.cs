@@ -1609,8 +1609,10 @@ public partial class Microbe
 
         foreach (string group in engulfedObject.OriginalGroups)
         {
-            if (group != Constants.RUNNABLE_MICROBE_GROUP)
-                target.EntityNode.RemoveFromGroup(group);
+            throw new NotImplementedException();
+
+            // if (group != Constants.RUNNABLE_MICROBE_GROUP)
+            //     target.EntityNode.RemoveFromGroup(group);
         }
 
         StartBulkTransport(engulfedObject, animationSpeed);
@@ -1914,8 +1916,10 @@ public partial class Microbe
 
         foreach (string group in engulfed.OriginalGroups)
         {
-            if (group != Constants.RUNNABLE_MICROBE_GROUP)
-                engulfable.EntityNode.AddToGroup(group);
+            throw new NotImplementedException();
+
+            // if (group != Constants.RUNNABLE_MICROBE_GROUP)
+            //     engulfable.EntityNode.AddToGroup(group);
         }
 
         // Reset render priority
