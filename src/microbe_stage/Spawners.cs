@@ -342,6 +342,9 @@ public static class SpawnHelpers
         if (aiControlled)
         {
             entity.Set<MicrobeAI>();
+
+            // Darwinian evolution tracks (these are the external effects that are passed to auto-evo)
+            entity.Set<SurvivalStatistics>();
         }
         else
         {
@@ -350,6 +353,27 @@ public static class SpawnHelpers
 
             // The player's "ears" are placed at the player microbe
             entity.Set<SoundListener>();
+        }
+
+        if (species is EarlyMulticellularSpecies earlyMulticellularSpecies)
+        {
+            entity.Set(new EarlyMulticellularSpeciesMember
+            {
+                Species = earlyMulticellularSpecies,
+            });
+
+            entity.Set<MulticellularGrowth>();
+        }
+        else if (species is MicrobeSpecies microbeSpecies)
+        {
+            entity.Set(new MicrobeSpeciesMember
+            {
+                Species = microbeSpecies,
+            });
+        }
+        else
+        {
+            throw new NotImplementedException("Unknown species type to spawn a microbe from");
         }
 
         if (multicellularCellType != null)
@@ -361,18 +385,17 @@ public static class SpawnHelpers
             microbe.ApplySpecies(species);
         }
 
-
+        // TODO: initialization logic
+        entity.Set(default(OrganelleContainer));
 
         var scale = new Vector3(1, 1, 1);
 
         entity.Set(new MicrobeSpeciesMember
         {
-
         });
 
         entity.Set(new OrganelleContainer
         {
-
         });
 
         entity.Set(new SpatialInstance
@@ -409,6 +432,11 @@ public static class SpawnHelpers
 
         entity.Set<UnneededCompoundVenter>();
 
+        entity.Set<CellProperties>();
+        entity.Set<ColourAnimation>();
+
+        entity.Set<CommandSignaler>();
+
         entity.Set(new Physics
         {
             LockToYAxis = true,
@@ -430,17 +458,21 @@ public static class SpawnHelpers
                 null,
         });
 
-        // Microbes are not affected by currents before they are visualized
+        entity.Set<Engulfer>();
 
-        entity.Set<CurrentAffected>();
+        // Microbes are not affected by currents before they are visualized
+        // entity.Set<CurrentAffected>();
 
         entity.Set(new MicrobeMovement(location));
 
         entity.Set<ManualPhysicsControl>();
 
+        // Selecting is used to throw out specific colony members
+        entity.Set<Selectable>();
+
         entity.Set(new ReadableName
         {
-            Name = new LocalizedString(chunkType.Name),
+            Name = new LocalizedString(species.FormattedName),
         });
 
         worldSimulation.FinishRecordingEntityCommands(recorder);

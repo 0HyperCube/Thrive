@@ -1,6 +1,5 @@
 ﻿namespace Systems
 {
-    using System;
     using Components;
     using DefaultEcs;
     using DefaultEcs.System;
@@ -51,6 +50,18 @@
                 return;
 
             ref var position = ref entity.Get<WorldPosition>();
+
+            if (wantedListenerPosition != null)
+            {
+                if (!printedError)
+                {
+                    GD.PrintErr("Multiple SoundListener entities are active at once. Only last one will work! " +
+                        "This error won't be printed again.");
+                    printedError = true;
+                }
+            }
+
+            wantedListenerPosition = position.ToTransform();
         }
 
         protected override void PostUpdate(float state)
