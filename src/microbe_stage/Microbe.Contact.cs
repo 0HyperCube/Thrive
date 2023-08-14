@@ -99,18 +99,6 @@ public partial class Microbe
     [JsonProperty]
     private MicrobeState state;
 
-    public enum EngulfCheckResult
-    {
-        Ok,
-        NotInEngulfMode,
-        RecentlyExpelled,
-        TargetDead,
-        TargetTooBig,
-        IngestedMatterFull,
-        CannotCannibalize,
-        TargetInvulnerable,
-    }
-
     /// <summary>
     ///   The colony this microbe is currently in
     /// </summary>

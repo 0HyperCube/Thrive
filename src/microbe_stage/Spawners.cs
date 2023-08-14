@@ -339,6 +339,8 @@ public static class SpawnHelpers
 
         entity.Set(new WorldPosition(location, Quat.Identity));
 
+        entity.Set(new Health(Constants.DEFAULT_HEALTH));
+
         if (aiControlled)
         {
             entity.Set<MicrobeAI>();
@@ -386,7 +388,6 @@ public static class SpawnHelpers
         }
 
         // TODO: initialization logic
-        entity.Set(default(OrganelleContainer));
 
         var scale = new Vector3(1, 1, 1);
 
@@ -450,12 +451,11 @@ public static class SpawnHelpers
 
         entity.Set<CollisionManagement>();
 
+        // TODO: this should be setup with some method that uses the species so that bacteria have just 50% size
         entity.Set(new Engulfable
         {
             BaseEngulfSize = chunkType.Size,
-            RequisiteEnzymeToDigest = !string.IsNullOrEmpty(chunkType.DissolverEnzyme) ?
-                SimulationParameters.Instance.GetEnzyme(chunkType.DissolverEnzyme) :
-                null,
+            RequisiteEnzymeToDigest = SimulationParameters.Instance.GetEnzyme(Membrane.Type.DissolverEnzyme),
         });
 
         entity.Set<Engulfer>();
@@ -463,7 +463,13 @@ public static class SpawnHelpers
         // Microbes are not affected by currents before they are visualized
         // entity.Set<CurrentAffected>();
 
-        entity.Set(new MicrobeMovement(location));
+        entity.Set(new MicrobeControl(location));
+
+        entity.Set(new MicrobeStatus
+        {
+            TimeUntilChemoreceptionUpdate = Constants.CHEMORECEPTOR_COMPOUND_UPDATE_INTERVAL,
+            TimeUntilDigestionUpdate = Constants.MICROBE_DIGESTION_UPDATE_INTERVAL,
+        });
 
         entity.Set<ManualPhysicsControl>();
 

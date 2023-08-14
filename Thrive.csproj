@@ -125,6 +125,7 @@
     <Compile Include="src\engine\CheatManager.cs" />
     <Compile Include="src\engine\ChildObjectCache.cs" />
     <Compile Include="src\engine\ChromaticFilter.cs" />
+    <Compile Include="src\engine\common_components\AttachedChildren.cs" />
     <Compile Include="src\engine\common_components\AttachedToEntity.cs" />
     <Compile Include="src\engine\common_components\CollisionManagement.cs" />
     <Compile Include="src\engine\common_components\ColourAnimation.cs" />
@@ -142,6 +143,7 @@
     <Compile Include="src\engine\common_components\PredefinedVisuals.cs" />
     <Compile Include="src\engine\common_components\ReadableName.cs" />
     <Compile Include="src\engine\common_components\RenderOrderOverride.cs" />
+    <Compile Include="src\engine\common_components\ReproductionStatus.cs" />
     <Compile Include="src\engine\common_components\Selectable.cs" />
     <Compile Include="src\engine\common_components\SoundEffectPlayer.cs" />
     <Compile Include="src\engine\common_components\SoundListener.cs" />
@@ -427,6 +429,7 @@
     <Compile Include="src\microbe_stage\components\CellBurstEffect.cs" />
     <Compile Include="src\microbe_stage\components\CellProperties.cs" />
     <Compile Include="src\microbe_stage\components\CommandSignaler.cs" />
+    <Compile Include="src\microbe_stage\components\CompoundAbsorber.cs" />
     <Compile Include="src\microbe_stage\components\CompoundStorage.cs" />
     <Compile Include="src\microbe_stage\components\CompoundVenter.cs" />
     <Compile Include="src\microbe_stage\components\CurrentAffected.cs" />
@@ -434,14 +437,17 @@
     <Compile Include="src\microbe_stage\components\Engulfer.cs" />
     <Compile Include="src\microbe_stage\components\MicrobeAI.cs" />
     <Compile Include="src\microbe_stage\components\MicrobeColony.cs" />
-    <Compile Include="src\microbe_stage\components\MicrobeMovement.cs" />
+    <Compile Include="src\microbe_stage\components\MicrobeControl.cs" />
+    <Compile Include="src\microbe_stage\components\MicrobeEventCallbacks.cs" />
     <Compile Include="src\microbe_stage\components\MicrobeMovementSound.cs" />
     <Compile Include="src\microbe_stage\components\MicrobeShaderParameters.cs" />
+    <Compile Include="src\microbe_stage\components\MicrobeStatus.cs" />
     <Compile Include="src\microbe_stage\components\OrganelleContainer.cs" />
     <Compile Include="src\microbe_stage\components\PlayerOffspring.cs" />
     <Compile Include="src\microbe_stage\components\MicrobeSpeciesMember.cs" />
     <Compile Include="src\microbe_stage\components\SurvivalStatistics.cs" />
     <Compile Include="src\microbe_stage\components\ToxinDamageSource.cs" />
+    <Compile Include="src\microbe_stage\DigestCheckResult.cs" />
     <Compile Include="src\microbe_stage\editor\action_data\OrganelleUpgradeActionData.cs" />
     <Compile Include="src\microbe_stage\editor\CellStatsIndicator.cs" />
     <Compile Include="src\microbe_stage\editor\action_data\ColourActionData.cs" />
@@ -523,6 +529,7 @@
     <Compile Include="src\microbe_stage\editor\EditorActionHistory.cs" />
     <Compile Include="src\microbe_stage\editor\upgrades\LysosomeUpgradeGUI.cs" />
     <Compile Include="src\microbe_stage\Endosome.cs" />
+    <Compile Include="src\microbe_stage\EngulfCheckResult.cs" />
     <Compile Include="src\microbe_stage\Enzyme.cs" />
     <Compile Include="src\microbe_stage\gui\DisplayDuration.cs" />
     <Compile Include="src\microbe_stage\gui\HUDMessages.cs" />
@@ -619,6 +626,7 @@
     <Compile Include="src\microbe_stage\systems\FluidCurrentsSystem.cs" />
     <Compile Include="src\microbe_stage\systems\MicrobeAISystem.cs" />
     <Compile Include="src\microbe_stage\systems\MicrobeShaderSystem.cs" />
+    <Compile Include="src\microbe_stage\systems\MicrobeVisualsSystem.cs" />
     <Compile Include="src\microbe_stage\systems\ProcessSystem.cs" />
     <Compile Include="src\microbe_stage\systems\SpawnSystem.cs" />
     <Compile Include="src\microbe_stage\systems\ToxinCollisionSystem.cs" />

@@ -23,6 +23,12 @@
         public float AnimationDuration;
 
         /// <summary>
+        ///   The code triggering animations may store whatever info it wants about the animations here. For example
+        ///   how important the current animation is to know if some other animation is allowed to overwrite this.
+        /// </summary>
+        public int AnimationUserInfo;
+
+        /// <summary>
         ///   Needs to be set to true to trigger the animation to happen
         /// </summary>
         public bool Animating;
