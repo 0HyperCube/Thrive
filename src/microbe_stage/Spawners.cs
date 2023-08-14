@@ -508,8 +508,6 @@ public static class SpawnHelpers
         }
     }
 
-    // TODO: this is likely a huge cause of lag. Would be nice to be able
-    // to spawn these so that only one per tick is spawned.
     public static IEnumerable<Microbe> SpawnBacteriaColony(Species species, Vector3 location,
         Node worldRoot, PackedScene microbeScene, CompoundCloudSystem cloudSystem, ISpawnSystem spawnSystem,
         GameProperties currentGame, Random random)
