@@ -447,6 +447,7 @@
     <Compile Include="src\microbe_stage\components\MicrobeSpeciesMember.cs" />
     <Compile Include="src\microbe_stage\components\SurvivalStatistics.cs" />
     <Compile Include="src\microbe_stage\components\ToxinDamageSource.cs" />
+    <Compile Include="src\microbe_stage\components\UnneededCompoundVenter.cs" />
     <Compile Include="src\microbe_stage\DigestCheckResult.cs" />
     <Compile Include="src\microbe_stage\editor\action_data\OrganelleUpgradeActionData.cs" />
     <Compile Include="src\microbe_stage\editor\CellStatsIndicator.cs" />

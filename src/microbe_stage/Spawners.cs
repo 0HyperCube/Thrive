@@ -327,25 +327,22 @@ public static class SpawnHelpers
     }
 
     public static EntityRecord SpawnMicrobe(IWorldSimulation worldSimulation, Species species, Vector3 location,
-        bool aiControlled, ISpawnSystem spawnSystem, GameProperties currentGame,
-        CellType? multicellularCellType = null)
+        bool aiControlled, CellType? multicellularCellType = null)
     {
-        // TODO: can probably remove the spawnSystem and currentGame parameters
-
         var recorder = worldSimulation.StartRecordingEntityCommands();
         var entityCreator = worldSimulation.GetRecorderWorld(recorder);
 
         var entity = worldSimulation.CreateEntityDeferred(entityCreator);
 
+        // Position
         entity.Set(new WorldPosition(location, Quat.Identity));
 
-        entity.Set(new Health(Constants.DEFAULT_HEALTH));
-
+        // Player vs. AI controlled microbe components
         if (aiControlled)
         {
             entity.Set<MicrobeAI>();
 
-            // Darwinian evolution tracks (these are the external effects that are passed to auto-evo)
+            // Darwinian evolution statistic tracking (these are the external effects that are passed to auto-evo)
             entity.Set<SurvivalStatistics>();
         }
         else
@@ -357,6 +354,11 @@ public static class SpawnHelpers
             entity.Set<SoundListener>();
         }
 
+        // Base species-based data initialization
+        ICellProperties usedCellProperties;
+        float engulfSize;
+        MembraneType membraneType;
+
         if (species is EarlyMulticellularSpecies earlyMulticellularSpecies)
         {
             entity.Set(new EarlyMulticellularSpeciesMember
@@ -364,7 +366,38 @@ public static class SpawnHelpers
                 Species = earlyMulticellularSpecies,
             });
 
-            entity.Set<MulticellularGrowth>();
+            if (multicellularCellType != null)
+            {
+                // Non-first cell in an early multicellular colony
+
+                usedCellProperties = multicellularCellType;
+                var properties = new CellProperties(multicellularCellType);
+                engulfSize = properties.EngulfSize;
+                membraneType = properties.MembraneType;
+                entity.Set(properties);
+
+                entity.Set(new ColourAnimation
+                {
+                    DefaultColour = multicellularCellType.Colour,
+                });
+            }
+            else
+            {
+                // TODO: should other cells also get this component to allow them to start regrowing after a colony
+                // is split apart?
+                entity.Set<MulticellularGrowth>();
+
+                usedCellProperties = earlyMulticellularSpecies.Cells[0];
+                var properties = new CellProperties(usedCellProperties);
+                engulfSize = properties.EngulfSize;
+                membraneType = properties.MembraneType;
+                entity.Set(properties);
+
+                entity.Set(new ColourAnimation
+                {
+                    DefaultColour = usedCellProperties.Colour,
+                });
+            }
         }
         else if (species is MicrobeSpecies microbeSpecies)
         {
@@ -372,32 +405,41 @@ public static class SpawnHelpers
             {
                 Species = microbeSpecies,
             });
+
+            usedCellProperties = microbeSpecies;
+            var properties = new CellProperties(microbeSpecies);
+            engulfSize = properties.EngulfSize;
+            membraneType = properties.MembraneType;
+            entity.Set(properties);
+
+            entity.Set(new ColourAnimation
+            {
+                DefaultColour = microbeSpecies.Colour,
+            });
+
+            if (multicellularCellType != null)
+                GD.PrintErr("Multicellular cell type may not be set when spawning a MicrobeSpecies instance");
         }
         else
         {
             throw new NotImplementedException("Unknown species type to spawn a microbe from");
         }
 
-        if (multicellularCellType != null)
+        float storageCapacity;
+
+        // Initialize organelles for the cell type
         {
-            microbe.ApplyMulticellularNonFirstCellSpecies((EarlyMulticellularSpecies)species, multicellularCellType);
+            var container = default(OrganelleContainer);
+
+            container.CreateOrganelleLayout(usedCellProperties);
+
+            storageCapacity = container.OrganellesCapacity;
+
+            entity.Set(container);
         }
-        else
-        {
-            microbe.ApplySpecies(species);
-        }
 
-        // TODO: initialization logic
-
-        var scale = new Vector3(1, 1, 1);
-
-        entity.Set(new MicrobeSpeciesMember
-        {
-        });
-
-        entity.Set(new OrganelleContainer
-        {
-        });
+        // Visuals
+        var scale = usedCellProperties.IsBacteria ? new Vector3(0.5f, 0.5f, 0.5f) : new Vector3(1, 1, 1);
 
         entity.Set(new SpatialInstance
         {
@@ -412,14 +454,9 @@ public static class SpawnHelpers
 
         entity.Set<MicrobeShaderParameters>();
 
-        var compounds = new CompoundBag();
-        microbe.SetInitialCompounds();
-
-        foreach (var entry in chunkType.Compounds)
-        {
-            // Directly write compounds to avoid the capacity limit
-            compounds.Compounds.Add(entry.Key, entry.Value.Amount);
-        }
+        // Compounds
+        var compounds = new CompoundBag(storageCapacity);
+        compounds.AddInitialCompounds(species.InitialCompounds);
 
         entity.Set(new CompoundStorage
         {
@@ -428,19 +465,24 @@ public static class SpawnHelpers
 
         entity.Set(new CompoundAbsorber
         {
-            Radius = ?,
+            // This gets set properly later once the membrane is ready
+            AbsorbRadius = 0.5f,
         });
 
-        entity.Set<UnneededCompoundVenter>();
+        entity.Set(new UnneededCompoundVenter
+        {
+            VentThreshold = 2,
+        });
 
-        entity.Set<CellProperties>();
-        entity.Set<ColourAnimation>();
-
-        entity.Set<CommandSignaler>();
-
+        // Physics
         entity.Set(new Physics
         {
             LockToYAxis = true,
+        });
+
+        entity.Set(new CollisionManagement
+        {
+            RecordActiveCollisions = Constants.MAX_SIMULTANEOUS_DAMAGE_COLLISIONS,
         });
 
         // The shape is created in the background to reduce lag when something spawns
@@ -449,29 +491,35 @@ public static class SpawnHelpers
             Shape = null,
         });
 
-        entity.Set<CollisionManagement>();
-
-        // TODO: this should be setup with some method that uses the species so that bacteria have just 50% size
-        entity.Set(new Engulfable
-        {
-            BaseEngulfSize = chunkType.Size,
-            RequisiteEnzymeToDigest = SimulationParameters.Instance.GetEnzyme(Membrane.Type.DissolverEnzyme),
-        });
-
-        entity.Set<Engulfer>();
-
-        // Microbes are not affected by currents before they are visualized
-        // entity.Set<CurrentAffected>();
-
+        // Movement
         entity.Set(new MicrobeControl(location));
+        entity.Set<ManualPhysicsControl>();
 
+        // Other cell features
         entity.Set(new MicrobeStatus
         {
             TimeUntilChemoreceptionUpdate = Constants.CHEMORECEPTOR_COMPOUND_UPDATE_INTERVAL,
             TimeUntilDigestionUpdate = Constants.MICROBE_DIGESTION_UPDATE_INTERVAL,
         });
 
-        entity.Set<ManualPhysicsControl>();
+        entity.Set(new Health(Constants.DEFAULT_HEALTH));
+
+        entity.Set<CommandSignaler>();
+
+        entity.Set(new Engulfable
+        {
+            BaseEngulfSize = engulfSize,
+            RequisiteEnzymeToDigest = SimulationParameters.Instance.GetEnzyme(membraneType.DissolverEnzyme),
+        });
+
+        entity.Set(new Engulfer
+        {
+            EngulfingSize = engulfSize,
+            EngulfStorageSize = engulfSize,
+        });
+
+        // Microbes are not affected by currents before they are visualized
+        // entity.Set<CurrentAffected>();
 
         // Selecting is used to throw out specific colony members
         entity.Set<Selectable>();

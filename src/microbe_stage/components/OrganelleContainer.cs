@@ -54,5 +54,21 @@
         /// </remarks>
         [JsonIgnore]
         public bool AllOrganellesDivided;
+
+        /// <summary>
+        ///   Reset this if the organelles are changed to make the <see cref="MicrobeVisualsSystem"/> recreate them
+        /// </summary>
+        [JsonIgnore]
+        public bool OrganelleVisualsCreated;
+    }
+
+    public static class OrganelleContainerExtensions
+    {
+        public static void CreateOrganelleLayout(ref this OrganelleContainer container, ICellProperties cellProperties)
+        {
+
+
+            container.OrganelleVisualsCreated = false;
+        }
     }
 }

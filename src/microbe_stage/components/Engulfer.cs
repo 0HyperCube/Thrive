@@ -20,8 +20,13 @@
         public List<Entity>? ExpelledObjects;
 
         /// <summary>
-        ///   The amount of space all of the currently engulfed objects occupy in the cytoplasm. This is used to determine
-        ///   whether a cell can ingest any more objects or not due to being full.
+        ///   The attacking capability of this engulfer. Used to determine what this can eat
+        /// </summary>
+        public float EngulfingSize;
+
+        /// <summary>
+        ///   The amount of space all of the currently engulfed objects occupy in the cytoplasm. This is used to
+        ///   determine whether a cell can ingest any more objects or not due to being full.
         /// </summary>
         /// <remarks>
         ///   <para>
@@ -30,5 +35,10 @@
         ///   </para>
         /// </remarks>
         public float UsedIngestionCapacity;
+
+        /// <summary>
+        ///   Total size that all engulfed objects need to fit in
+        /// </summary>
+        public float EngulfStorageSize;
     }
 }
