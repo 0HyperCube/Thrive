@@ -1,5 +1,4 @@
-﻿using System;
-using DefaultEcs.Threading;
+﻿using DefaultEcs.Threading;
 using Godot;
 using Newtonsoft.Json;
 using Systems;
@@ -10,37 +9,42 @@ using Systems;
 /// </summary>
 public class MicrobeWorldSimulation : WorldSimulationWithPhysics
 {
-    [JsonProperty]
-    private readonly GameProperties gameProperties;
+    private readonly IParallelRunner nonParallelRunner = new DefaultParallelRunner(1);
 
-    private Random aiRandom = new();
+    private GameProperties gameProperties = null!;
 
-    // TODO: allow saving / loading some system state somehow (hopefully without needing to add really hacky dummy
-    // constructors)
     private FluidCurrentsSystem fluidCurrentsSystem = null!;
-    private ProcessSystem processSystem = null!;
     private MicrobeAISystem microbeAI = null!;
-    private TimedLifeSystem timedLifeSystem = null!;
-
-    // need to merge  Keep AI from shooting while facing the wrong direction #4435  and update from master before continuing
-
-    // TODO: re-add the spawn system
-    // [JsonProperty]
-    // [AssignOnlyChildItemsOnDeserialize]
-    private SpawnSystem spawner = null!;
 
 #pragma warning disable CA2213
     private Node visualsParent = null!;
 #pragma warning restore CA2213
 
-    public MicrobeWorldSimulation(GameProperties gameProperties)
-    {
-        this.gameProperties = gameProperties;
-    }
+    // External system references
 
     [JsonIgnore]
     public CompoundCloudSystem CloudSystem { get; private set; } = null!;
 
+    // TODO: check that
+    [JsonProperty]
+    [AssignOnlyChildItemsOnDeserialize]
+    public SpawnSystem SpawnSystem { get; private set; } = null!;
+
+    [JsonIgnore]
+    public ProcessSystem ProcessSystem { get; private set; } = null!;
+
+    [JsonIgnore]
+    public TimedLifeSystem TimedLifeSystem { get; private set; } = null!;
+
+    /// <summary>
+    ///   First initialization step which creates all the system objects. When loading from a save objects of this
+    ///   type should have <see cref="AssignOnlyChildItemsOnDeserializeAttribute"/> and this method should be called
+    ///   before those child properties are loaded.
+    /// </summary>
+    /// <param name="visualDisplayRoot">Godot Node to place all simulation graphics underneath</param>
+    /// <param name="cloudSystem">
+    ///   Compound cloud simulation system. This method will call <see cref="CompoundCloudSystem.Init"/>
+    /// </param>
     public void Init(Node visualDisplayRoot, CompoundCloudSystem cloudSystem)
     {
         visualsParent = visualDisplayRoot;
@@ -52,18 +56,25 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
         CloudSystem = cloudSystem;
         cloudSystem.Init(fluidCurrentsSystem);
 
-        // microbeSystem = new MicrobeSystem(this);
-
         // TODO: this definitely needs to be (along with the process system) the first systems to be multithreaded
         microbeAI = new MicrobeAISystem(this, cloudSystem, EntitySystem, parallelRunner);
 
-        processSystem = new ProcessSystem(EntitySystem, parallelRunner);
+        ProcessSystem = new ProcessSystem(EntitySystem, parallelRunner);
 
-        timedLifeSystem = new TimedLifeSystem(this, EntitySystem, parallelRunner);
+        TimedLifeSystem = new TimedLifeSystem(this, EntitySystem, parallelRunner);
 
-        spawner = new SpawnSystem(this);
+        SpawnSystem = new SpawnSystem(this);
 
         OnInitialized();
+    }
+
+    /// <summary>
+    ///   Second phase initialization that requires access to the current game info
+    /// </summary>
+    /// <param name="currentGame">Currently started game</param>
+    public void InitForCurrentGame(GameProperties currentGame)
+    {
+        gameProperties = currentGame;
     }
 
     public override void ProcessFrameLogic(float delta)
@@ -73,7 +84,7 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
 
     public void SetSimulationBiome(BiomeConditions biomeConditions)
     {
-        processSystem.SetBiome(biomeConditions);
+        ProcessSystem.SetBiome(biomeConditions);
     }
 
     internal void OverrideMicrobeAIRandomSeed(int seed)
@@ -85,9 +96,9 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
     {
         fluidCurrentsSystem.Update(delta);
 
-        processSystem.Update(delta);
+        ProcessSystem.Update(delta);
 
-        timedLifeSystem.Update(delta);
+        TimedLifeSystem.Update(delta);
 
         if (RunAI)
         {
@@ -95,17 +106,19 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
             microbeAI.Update(delta);
         }
 
-        spawner.Update(delta);
+        SpawnSystem.Update(delta);
     }
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
+            nonParallelRunner.Dispose();
             fluidCurrentsSystem.Dispose();
-            processSystem.Dispose();
-            timedLifeSystem.Dispose();
-            spawner.Dispose();
+            microbeAI.Dispose();
+            ProcessSystem.Dispose();
+            TimedLifeSystem.Dispose();
+            SpawnSystem.Dispose();
         }
 
         base.Dispose(disposing);

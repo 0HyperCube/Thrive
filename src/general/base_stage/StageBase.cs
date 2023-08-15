@@ -213,16 +213,12 @@ public abstract class StageBase : NodeWithInput, IStageBase, IGodotEarlyNodeReso
 
         pauseMenu.GameProperties = CurrentGame ?? throw new InvalidOperationException("current game is not set");
 
-        CreateSimulation(CurrentGame);
-
         pauseMenu.SetNewSaveNameFromSpeciesName();
 
         StartMusic();
 
         StartGUIStageTransition(!IsLoadedFromSave, false);
     }
-
-    protected abstract void CreateSimulation(GameProperties currentGame);
 
     /// <summary>
     ///   Common logic for the case where we directly open this scene or start a new game normally from the menu

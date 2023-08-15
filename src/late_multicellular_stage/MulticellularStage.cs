@@ -682,11 +682,6 @@ public class MulticellularStage : CreatureStageBase<MulticellularCreature, Dummy
         }
     }
 
-    protected override void CreateSimulation(GameProperties currentGame)
-    {
-        // TODO: implement
-    }
-
     protected override void OnGameStarted()
     {
         // patchManager.CurrentGame = CurrentGame;

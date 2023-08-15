@@ -462,11 +462,6 @@ public class SpaceStage : StrategyStageBase, ISocietyStructureDataAccess
         structureSystem.CalculateDerivedStats();
     }
 
-    protected override void CreateSimulation(GameProperties currentGame)
-    {
-        // TODO: implement
-    }
-
     protected override void OnGameStarted()
     {
         // Intentionally not translated prototype message

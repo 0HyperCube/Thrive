@@ -246,11 +246,6 @@ public class SocietyStage : StrategyStageBase, ISocietyStructureDataAccess,
         CurrentGame.TechWeb.UnlockTechnology(SimulationParameters.Instance.GetTechnology("hunterGathering"));
     }
 
-    protected override void CreateSimulation(GameProperties currentGame)
-    {
-        // TODO: implement
-    }
-
     protected override void OnGameStarted()
     {
         // Intentionally not translated prototype message

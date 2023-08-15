@@ -13,14 +13,14 @@ using Newtonsoft.Json;
 [UseThriveSerializer]
 public abstract class CreatureStageBase<TPlayer, TSimulation> : StageBase, ICreatureStage
     where TPlayer : class
-    where TSimulation : class, IWorldSimulation
+    where TSimulation : class, IWorldSimulation, new()
 {
 #pragma warning disable CA2213
     protected DirectionalLight worldLight = null!;
 #pragma warning restore CA2213
 
-    [JsonProperty]
-    protected TSimulation worldSimulation = null!;
+    [AssignOnlyChildItemsOnDeserialize]
+    protected TSimulation worldSimulation = new();
 
     /// <summary>
     ///   Used to differentiate between spawning the player the first time and respawning
@@ -37,13 +37,14 @@ public abstract class CreatureStageBase<TPlayer, TSimulation> : StageBase, ICrea
     [JsonProperty]
     protected bool playerExtinctInCurrentPatch;
 
+    // TODO: eventually convert this just to a Entity without having any generic type configurability here
     /// <summary>
     ///   The current player or null.
-    ///   TODO: check: Due to references on save load this needs to be after the systems
     /// </summary>
     [JsonProperty]
     public TPlayer? Player { get; protected set; }
 
+    // TODO: make abstract
     [JsonIgnore]
     public bool HasPlayer => Player != null;
 

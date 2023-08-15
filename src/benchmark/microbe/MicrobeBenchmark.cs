@@ -463,9 +463,9 @@ public class MicrobeBenchmark : Node
         cloudSystem = new CompoundCloudSystem();
         worldRoot.AddChild(cloudSystem);
 
-        microbeSimulation =
-            new MicrobeWorldSimulation(gameProperties ?? throw new Exception("game properties not set"));
+        microbeSimulation = new MicrobeWorldSimulation();
         microbeSimulation.Init(dynamicRoot, cloudSystem);
+        microbeSimulation.InitForCurrentGame(gameProperties ?? throw new Exception("game properties not set"));
 
         microbeEntities = microbeSimulation.EntitySystem.GetEntities().With<MicrobeStatus>().With<Health>().AsSet();
 
