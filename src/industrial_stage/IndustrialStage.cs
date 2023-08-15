@@ -169,6 +169,11 @@ public class IndustrialStage : StrategyStageBase, ISocietyStructureDataAccess
         resourceStorage.Capacity = citySystem.CachedTotalStorage;
     }
 
+    protected override void CreateSimulation(GameProperties currentGame)
+    {
+        // TODO: implement
+    }
+
     protected override void OnGameStarted()
     {
         // Intentionally not translated prototype message

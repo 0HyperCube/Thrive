@@ -582,6 +582,11 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
         }
     }
 
+    protected override void CreateSimulation(GameProperties currentGame)
+    {
+        worldSimulation = new MicrobeWorldSimulation(currentGame);
+    }
+
     protected override void OnGameStarted()
     {
         patchManager.CurrentGame = CurrentGame;

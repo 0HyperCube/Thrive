@@ -13,14 +13,14 @@ using Newtonsoft.Json;
 [UseThriveSerializer]
 public abstract class CreatureStageBase<TPlayer, TSimulation> : StageBase, ICreatureStage
     where TPlayer : class
-    where TSimulation : class, IWorldSimulation, new()
+    where TSimulation : class, IWorldSimulation
 {
 #pragma warning disable CA2213
     protected DirectionalLight worldLight = null!;
 #pragma warning restore CA2213
 
-    [AssignOnlyChildItemsOnDeserialize]
-    protected TSimulation worldSimulation = new();
+    [JsonProperty]
+    protected TSimulation worldSimulation = null!;
 
     /// <summary>
     ///   Used to differentiate between spawning the player the first time and respawning
