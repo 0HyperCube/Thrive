@@ -76,7 +76,8 @@ public abstract class WorldSimulation : IWorldSimulation
 
         accumulatedLogicTime += delta;
 
-        // TODO: is it a good idea to rate limit physics to not be able to run on update frames when the logic wasn't ran
+        // TODO: is it a good idea to rate limit physics to not be able to run on update frames when the logic
+        // wasn't ran?
         if (accumulatedLogicTime < minimumTimeBetweenLogicUpdates)
             return;
 
@@ -177,7 +178,9 @@ public abstract class WorldSimulation : IWorldSimulation
 #endif
 
             availableRecorders.Enqueue(recorder);
-            nonEmptyRecorders.Add(recorder);
+
+            if (recorder.Size > 0)
+                nonEmptyRecorders.Add(recorder);
         }
     }
 

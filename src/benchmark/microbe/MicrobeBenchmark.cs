@@ -516,7 +516,7 @@ public class MicrobeBenchmark : Node
             if (existingMicrobe.Get<Health>().Dead)
                 continue;
 
-            if (spawnedMicrobes.All(m => m != existingMicrobe))
+            if (spawnedMicrobes.Any(m => m == existingMicrobe))
                 continue;
 
             spawnedMicrobes.Add(existingMicrobe);
