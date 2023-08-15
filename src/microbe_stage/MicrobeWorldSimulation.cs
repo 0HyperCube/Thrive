@@ -10,6 +10,9 @@ using Systems;
 /// </summary>
 public class MicrobeWorldSimulation : WorldSimulationWithPhysics
 {
+    [JsonProperty]
+    private readonly GameProperties gameProperties;
+
     private Random aiRandom = new();
 
     // TODO: allow saving / loading some system state somehow (hopefully without needing to add really hacky dummy
@@ -29,6 +32,11 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
 #pragma warning disable CA2213
     private Node visualsParent = null!;
 #pragma warning restore CA2213
+
+    public MicrobeWorldSimulation(GameProperties gameProperties)
+    {
+        this.gameProperties = gameProperties;
+    }
 
     [JsonIgnore]
     public CompoundCloudSystem CloudSystem { get; private set; } = null!;
