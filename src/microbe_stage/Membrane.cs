@@ -181,6 +181,7 @@ public class Membrane : MeshInstance, IComputedMembraneData
         }
     }
 
+    // TODO: move to a system
     public Color Tint
     {
         get => tint;
@@ -222,6 +223,7 @@ public class Membrane : MeshInstance, IComputedMembraneData
         }
     }
 
+    // TODO: move to a system
     public float DissolveEffectValue
     {
         get => dissolveEffectValue;

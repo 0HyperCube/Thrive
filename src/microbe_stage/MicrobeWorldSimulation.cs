@@ -13,8 +13,35 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
 
     private GameProperties gameProperties = null!;
 
+    // Base systems
+    private CountLimitedDespawnSystem countLimitedDespawnSystem = null!;
+    private DamageOnTouchSystem damageOnTouchSystem = null!;
+    private EntityMaterialFetchSystem entityMaterialFetchSystem = null!;
+    private FadeOutActionSystem fadeOutActionSystem = null!;
+    private PathBasedSceneLoader pathBasedSceneLoader = null!;
+    private PhysicsBodyControlSystem physicsBodyControlSystem = null!;
+    private PhysicsBodyCreationSystem physicsBodyCreationSystem = null!;
+    private PhysicsBodyDisablingSystem physicsBodyDisablingSystem = null!;
+    private PhysicsCollisionManagementSystem physicsCollisionManagementSystem = null!;
+    private PhysicsUpdateAndPositionSystem physicsUpdateAndPositionSystem = null!;
+    private PredefinedVisualLoaderSystem predefinedVisualLoaderSystem = null!;
+
+    // private RenderOrderSystem renderOrderSystem = null! = null!;
+
+    private SoundEffectSystem soundEffectSystem = null!;
+    private SoundListenerSystem soundListenerSystem = null!;
+    private SpatialAttachSystem spatialAttachSystem = null!;
+    private SpatialPositionSystem spatialPositionSystem = null!;
+
+    // Microbe systems
+    private AllCompoundsVentingSystem allCompoundsVentingSystem = null!;
+    private CellBurstEffectSystem cellBurstEffectSystem = null!;
     private FluidCurrentsSystem fluidCurrentsSystem = null!;
     private MicrobeAISystem microbeAI = null!;
+    private MicrobeShaderSystem microbeShaderSystem = null!;
+    private MicrobeVisualsSystem microbeVisualsSystem = null!;
+    private MicrobePhysicsSystem microbePhysicsSystem = null!;
+    private ToxinCollisionSystem toxinCollisionSystem = null!;
 
 #pragma warning disable CA2213
     private Node visualsParent = null!;
@@ -51,6 +78,29 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
 
         // TODO: add threading
         var parallelRunner = new DefaultParallelRunner(1);
+
+        // Systems stored in fields
+        countLimitedDespawnSystem = new CountLimitedDespawnSystem(this, EntitySystem, parallelRunner);
+        damageOnTouchSystem = new DamageOnTouchSystem(this, EntitySystem, parallelRunner);
+        entityMaterialFetchSystem = new EntityMaterialFetchSystem(EntitySystem, nonParallelRunner);
+        fadeOutActionSystem = new FadeOutActionSystem(EntitySystem, parallelRunner);
+        pathBasedSceneLoader = new PathBasedSceneLoader(EntitySystem, nonParallelRunner);
+        physicsBodyControlSystem = new PhysicsBodyControlSystem(physics, EntitySystem, parallelRunner);
+        physicsBodyCreationSystem = new PhysicsBodyCreationSystem(this, null, EntitySystem, nonParallelRunner);
+        physicsBodyDisablingSystem = new PhysicsBodyDisablingSystem(physics, EntitySystem);
+        physicsCollisionManagementSystem = new PhysicsCollisionManagementSystem(physics, EntitySystem, parallelRunner);
+        physicsUpdateAndPositionSystem = new PhysicsUpdateAndPositionSystem(physics, EntitySystem, parallelRunner);
+        predefinedVisualLoaderSystem = new PredefinedVisualLoaderSystem(EntitySystem, nonParallelRunner);
+
+        // TODO: different root for sounds?
+        soundEffectSystem = new SoundEffectSystem(visualsParent, EntitySystem, parallelRunner);
+        soundListenerSystem = new SoundListenerSystem(visualsParent, EntitySystem, parallelRunner);
+        spatialAttachSystem = new SpatialAttachSystem(visualsParent, EntitySystem);
+        spatialPositionSystem = new SpatialPositionSystem(EntitySystem, parallelRunner);
+
+        allCompoundsVentingSystem = new AllCompoundsVentingSystem(cloudSystem, this, EntitySystem, nonParallelRunner);
+        cellBurstEffectSystem = new CellBurstEffectSystem(EntitySystem, nonParallelRunner);
+
         fluidCurrentsSystem = new FluidCurrentsSystem(EntitySystem, parallelRunner);
 
         CloudSystem = cloudSystem;
@@ -59,6 +109,14 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
         // TODO: this definitely needs to be (along with the process system) the first systems to be multithreaded
         microbeAI = new MicrobeAISystem(this, cloudSystem, EntitySystem, parallelRunner);
 
+        microbeShaderSystem = new MicrobeShaderSystem(EntitySystem, nonParallelRunner);
+
+        microbeVisualsSystem = new MicrobeVisualsSystem(EntitySystem, nonParallelRunner);
+        microbePhysicsSystem = new MicrobePhysicsSystem(EntitySystem, nonParallelRunner);
+
+        toxinCollisionSystem = new ToxinCollisionSystem(EntitySystem, parallelRunner);
+
+        // Systems stored in properties
         ProcessSystem = new ProcessSystem(EntitySystem, parallelRunner);
 
         TimedLifeSystem = new TimedLifeSystem(this, EntitySystem, parallelRunner);
@@ -80,6 +138,9 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
     public override void ProcessFrameLogic(float delta)
     {
         ThrowIfNotInitialized();
+
+        microbeShaderSystem.Update(delta);
+        soundListenerSystem.Update(delta);
     }
 
     public void SetSimulationBiome(BiomeConditions biomeConditions)
@@ -94,17 +155,44 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
 
     protected override void OnProcessFixedLogic(float delta)
     {
+        damageOnTouchSystem.Update(delta);
+        entityMaterialFetchSystem.Update(delta);
+        fadeOutActionSystem.Update(delta);
+        pathBasedSceneLoader.Update(delta);
+        physicsBodyControlSystem.Update(delta);
+        physicsBodyCreationSystem.Update(delta);
+        physicsBodyDisablingSystem.Update(delta);
+        physicsCollisionManagementSystem.Update(delta);
+        physicsUpdateAndPositionSystem.Update(delta);
+        predefinedVisualLoaderSystem.Update(delta);
+
+        // renderOrderSystem.Update(delta);
+
+        soundEffectSystem.Update(delta);
+
+        allCompoundsVentingSystem.Update(delta);
+        cellBurstEffectSystem.Update(delta);
+
+        spatialAttachSystem.Update(delta);
+        spatialPositionSystem.Update(delta);
+
         fluidCurrentsSystem.Update(delta);
 
         ProcessSystem.Update(delta);
 
         TimedLifeSystem.Update(delta);
 
+        microbeVisualsSystem.Update(delta);
+        microbePhysicsSystem.Update(delta);
+        toxinCollisionSystem.Update(delta);
+
         if (RunAI)
         {
             // Update AI for the cells (note that the AI system itself can also be disabled, due to cheats)
             microbeAI.Update(delta);
         }
+
+        countLimitedDespawnSystem.Update(delta);
 
         SpawnSystem.Update(delta);
     }
@@ -114,8 +202,31 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
         if (disposing)
         {
             nonParallelRunner.Dispose();
+            countLimitedDespawnSystem.Dispose();
+            damageOnTouchSystem.Dispose();
+            entityMaterialFetchSystem.Dispose();
+            fadeOutActionSystem.Dispose();
+            pathBasedSceneLoader.Dispose();
+            physicsBodyControlSystem.Dispose();
+            physicsBodyCreationSystem.Dispose();
+            physicsBodyDisablingSystem.Dispose();
+            physicsCollisionManagementSystem.Dispose();
+            physicsUpdateAndPositionSystem.Dispose();
+            predefinedVisualLoaderSystem.Dispose();
+            soundEffectSystem.Dispose();
+            soundListenerSystem.Dispose();
+            spatialAttachSystem.Dispose();
+            spatialPositionSystem.Dispose();
+
+            allCompoundsVentingSystem.Dispose();
+            cellBurstEffectSystem.Dispose();
             fluidCurrentsSystem.Dispose();
             microbeAI.Dispose();
+            microbeShaderSystem.Dispose();
+            microbeVisualsSystem.Dispose();
+            microbePhysicsSystem.Dispose();
+            toxinCollisionSystem.Dispose();
+
             ProcessSystem.Dispose();
             TimedLifeSystem.Dispose();
             SpawnSystem.Dispose();
