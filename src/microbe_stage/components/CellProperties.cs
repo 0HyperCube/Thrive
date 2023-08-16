@@ -25,27 +25,27 @@
 
         // public float MassFromOrganelles
 
-        public bool IsBacteria;
-
         public MembraneType MembraneType;
         public float MembraneRigidity;
 
         /// <summary>
-        ///   True when <see cref="Membrane"/> has been created. Set to false if membrane properties or organelles
-        ///   are changed
+        ///   The membrane created for this cell. This is here so that some other systems apart from the visuals system
+        ///   can have access to the membrane data.
         /// </summary>
         [JsonIgnore]
-        public bool MembraneVisualsCreated;
+        public Membrane? CreatedMembrane;
+
+        public bool IsBacteria;
 
         public CellProperties(ICellProperties initialProperties)
         {
             Colour = initialProperties.Colour;
             HexCount = initialProperties.Organelles.HexCount;
             RotationSpeed = initialProperties.BaseRotationSpeed;
-            IsBacteria = initialProperties.IsBacteria;
             MembraneType = initialProperties.MembraneType;
             MembraneRigidity = initialProperties.MembraneRigidity;
-            MembraneVisualsCreated = false;
+            CreatedMembrane = null;
+            IsBacteria = initialProperties.IsBacteria;
 
             // These are initialized later
             EngulfSize = 0;

@@ -478,6 +478,7 @@ public static class SpawnHelpers
         entity.Set(new Physics
         {
             LockToYAxis = true,
+            LinearDamping = 0.2f,
         });
 
         entity.Set(new CollisionManagement

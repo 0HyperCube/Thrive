@@ -87,8 +87,7 @@
                 var physicalWorld = worldSimulationWithPhysics.PhysicalWorld;
 
                 // Apply initial velocity
-                physicalWorld.SetBodyVelocity(body, physics.Velocity,
-                    physics.AngularVelocity);
+                physicalWorld.SetBodyVelocity(body, physics.Velocity, physics.AngularVelocity);
 
                 if (physics.LinearDamping != null)
                 {

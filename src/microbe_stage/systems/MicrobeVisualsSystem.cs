@@ -54,6 +54,8 @@
 
             ref var cellProperties = ref entity.Get<CellProperties>();
 
+            cellProperties.CreatedMembrane = null;
+
             // TODO: background thread membrane generation
 
             ref var spatialInstance = ref entity.Get<SpatialInstance>();
@@ -71,6 +73,7 @@
 
             SetMembraneDisplayData(membrane, ref organelleContainer, ref cellProperties);
 
+            cellProperties.CreatedMembrane = membrane;
             spatialInstance.GraphicalInstance.AddChild(membrane);
 
             // Material is initialized in _Ready so this is after AddChild

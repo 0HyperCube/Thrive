@@ -41,7 +41,7 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
     private MicrobeAISystem microbeAI = null!;
     private MicrobeShaderSystem microbeShaderSystem = null!;
     private MicrobeVisualsSystem microbeVisualsSystem = null!;
-    private MicrobePhysicsSystem microbePhysicsSystem = null!;
+    private MicrobePhysicsCreationSystem microbePhysicsCreationSystem = null!;
     private TintColourAnimationSystem tintColourAnimationSystem = null!;
     private ToxinCollisionSystem toxinCollisionSystem = null!;
 
@@ -115,7 +115,7 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
         microbeShaderSystem = new MicrobeShaderSystem(EntitySystem, nonParallelRunner);
 
         microbeVisualsSystem = new MicrobeVisualsSystem(EntitySystem, nonParallelRunner);
-        microbePhysicsSystem = new MicrobePhysicsSystem(EntitySystem, nonParallelRunner);
+        microbePhysicsCreationSystem = new MicrobePhysicsCreationSystem(EntitySystem);
         tintColourAnimationSystem = new TintColourAnimationSystem(EntitySystem, nonParallelRunner);
 
         toxinCollisionSystem = new ToxinCollisionSystem(EntitySystem, parallelRunner);
@@ -190,7 +190,7 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
         TimedLifeSystem.Update(delta);
 
         microbeVisualsSystem.Update(delta);
-        microbePhysicsSystem.Update(delta);
+        microbePhysicsCreationSystem.Update(delta);
         toxinCollisionSystem.Update(delta);
 
         if (RunAI)
@@ -233,7 +233,7 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
             microbeAI.Dispose();
             microbeShaderSystem.Dispose();
             microbeVisualsSystem.Dispose();
-            microbePhysicsSystem.Dispose();
+            microbePhysicsCreationSystem.Dispose();
             tintColourAnimationSystem.Dispose();
             toxinCollisionSystem.Dispose();
 

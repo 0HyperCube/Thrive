@@ -117,6 +117,9 @@ public class Membrane : MeshInstance, IComputedMembraneData
         }
     }
 
+    [JsonIgnore]
+    public IReadOnlyList<Vector2> Computed2DVertices => vertices2D;
+
     /// <summary>
     ///   The type of the membrane.
     /// </summary>
