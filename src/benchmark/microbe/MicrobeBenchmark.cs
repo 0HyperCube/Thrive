@@ -199,8 +199,7 @@ public class MicrobeBenchmark : Node
 
         microbeEntities?.Complete();
 
-        microbeSimulation?.ProcessFrameLogic(delta);
-        microbeSimulation?.ProcessLogic(delta);
+        microbeSimulation?.ProcessAll(delta);
 
         switch (internalPhaseCounter)
         {

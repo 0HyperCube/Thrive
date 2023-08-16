@@ -633,6 +633,7 @@ public partial class Microbe
         OnDeath?.Invoke(this);
 
         throw new NotImplementedException();
+
         // ModLoader.ModInterface.TriggerOnMicrobeDied(this, IsPlayerMicrobe);
 
         // If being phagocytized don't continue further because the entity reference is still needed to
@@ -709,6 +710,7 @@ public partial class Microbe
                 RevertNodeParent();
 
             throw new NotImplementedException();
+
             // ai?.ResetAI();
 
             Mode = ModeEnum.Rigid;
@@ -807,6 +809,7 @@ public partial class Microbe
             var props = new AgentProperties(Species, oxytoxy);
 
             throw new NotImplementedException();
+
             // var agentScene = SpawnHelpers.LoadAgentScene();
 
             while (amount > Constants.MAXIMUM_AGENT_EMISSION_AMOUNT)
@@ -863,6 +866,7 @@ public partial class Microbe
         int chunksToSpawn = Math.Max(1, HexCount / Constants.CORPSE_CHUNK_DIVISOR);
 
         throw new NotImplementedException();
+
         // var droppedCorpseChunks = new HashSet<FloatingChunk>(chunksToSpawn);
         //
         // var chunkScene = SpawnHelpers.LoadChunkScene();
@@ -985,6 +989,7 @@ public partial class Microbe
         CollisionMask = 0;
 
         throw new NotImplementedException();
+
         // return droppedCorpseChunks;
     }
 
@@ -1347,12 +1352,14 @@ public partial class Microbe
             organelle.Hide();
         }
 
-        Membrane.DissolveEffectValue += delta * Constants.MEMBRANE_DISSOLVE_SPEED;
+        throw new NotImplementedException();
 
-        if (Membrane.DissolveEffectValue >= 1)
-        {
-            this.DestroyDetachAndQueueFree();
-        }
+        // Membrane.DissolveEffectValue += delta * Constants.MEMBRANE_DISSOLVE_SPEED;
+        //
+        // if (Membrane.DissolveEffectValue >= 1)
+        // {
+        //     this.DestroyDetachAndQueueFree();
+        // }
     }
 
     private void ChangeNodeParent(Microbe parent)

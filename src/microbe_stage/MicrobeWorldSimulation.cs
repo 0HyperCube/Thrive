@@ -14,6 +14,7 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
     private GameProperties gameProperties = null!;
 
     // Base systems
+    private ColourAnimationSystem colourAnimationSystem = null!;
     private CountLimitedDespawnSystem countLimitedDespawnSystem = null!;
     private DamageOnTouchSystem damageOnTouchSystem = null!;
     private EntityMaterialFetchSystem entityMaterialFetchSystem = null!;
@@ -41,6 +42,7 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
     private MicrobeShaderSystem microbeShaderSystem = null!;
     private MicrobeVisualsSystem microbeVisualsSystem = null!;
     private MicrobePhysicsSystem microbePhysicsSystem = null!;
+    private TintColourAnimationSystem tintColourAnimationSystem = null!;
     private ToxinCollisionSystem toxinCollisionSystem = null!;
 
 #pragma warning disable CA2213
@@ -80,6 +82,7 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
         var parallelRunner = new DefaultParallelRunner(1);
 
         // Systems stored in fields
+        colourAnimationSystem = new ColourAnimationSystem(EntitySystem, parallelRunner);
         countLimitedDespawnSystem = new CountLimitedDespawnSystem(this, EntitySystem, parallelRunner);
         damageOnTouchSystem = new DamageOnTouchSystem(this, EntitySystem, parallelRunner);
         entityMaterialFetchSystem = new EntityMaterialFetchSystem(EntitySystem, nonParallelRunner);
@@ -113,6 +116,7 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
 
         microbeVisualsSystem = new MicrobeVisualsSystem(EntitySystem, nonParallelRunner);
         microbePhysicsSystem = new MicrobePhysicsSystem(EntitySystem, nonParallelRunner);
+        tintColourAnimationSystem = new TintColourAnimationSystem(EntitySystem, nonParallelRunner);
 
         toxinCollisionSystem = new ToxinCollisionSystem(EntitySystem, parallelRunner);
 
@@ -139,7 +143,10 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
     {
         ThrowIfNotInitialized();
 
+        colourAnimationSystem.Update(delta);
         microbeShaderSystem.Update(delta);
+        tintColourAnimationSystem.Update(delta);
+
         soundListenerSystem.Update(delta);
     }
 
@@ -202,6 +209,8 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
         if (disposing)
         {
             nonParallelRunner.Dispose();
+
+            colourAnimationSystem.Dispose();
             countLimitedDespawnSystem.Dispose();
             damageOnTouchSystem.Dispose();
             entityMaterialFetchSystem.Dispose();
@@ -225,6 +234,7 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
             microbeShaderSystem.Dispose();
             microbeVisualsSystem.Dispose();
             microbePhysicsSystem.Dispose();
+            tintColourAnimationSystem.Dispose();
             toxinCollisionSystem.Dispose();
 
             ProcessSystem.Dispose();

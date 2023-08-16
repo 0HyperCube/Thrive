@@ -385,10 +385,7 @@ public static class SpawnHelpers
                 membraneType = properties.MembraneType;
                 entity.Set(properties);
 
-                entity.Set(new ColourAnimation
-                {
-                    DefaultColour = multicellularCellType.Colour,
-                });
+                entity.Set(new ColourAnimation(Membrane.MembraneTintFromSpeciesColour(multicellularCellType.Colour)));
             }
             else
             {
@@ -402,10 +399,7 @@ public static class SpawnHelpers
                 membraneType = properties.MembraneType;
                 entity.Set(properties);
 
-                entity.Set(new ColourAnimation
-                {
-                    DefaultColour = usedCellProperties.Colour,
-                });
+                entity.Set(new ColourAnimation(Membrane.MembraneTintFromSpeciesColour(usedCellProperties.Colour)));
             }
         }
         else if (species is MicrobeSpecies microbeSpecies)
@@ -421,10 +415,7 @@ public static class SpawnHelpers
             membraneType = properties.MembraneType;
             entity.Set(properties);
 
-            entity.Set(new ColourAnimation
-            {
-                DefaultColour = microbeSpecies.Colour,
-            });
+            entity.Set(new ColourAnimation(Membrane.MembraneTintFromSpeciesColour(usedCellProperties.Colour)));
 
             if (multicellularCellType != null)
                 GD.PrintErr("Multicellular cell type may not be set when spawning a MicrobeSpecies instance");

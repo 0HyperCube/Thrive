@@ -19,7 +19,7 @@
     [With(typeof(EntityMaterial))]
     public sealed class MicrobeVisualsSystem : AEntitySetSystem<float>
     {
-        private Lazy<PackedScene> membraneScene =
+        private readonly Lazy<PackedScene> membraneScene =
             new(() => GD.Load<PackedScene>("res://src/microbe_stage/Membrane.tscn"));
 
         // TODO: implement membrane background generation
@@ -69,15 +69,7 @@
             var membrane = membraneScene.Value.Instance<Membrane>();
             ++membraneGenerationRequestNumber;
 
-            membrane.OrganellePositions = organelleContainer.Organelles.Select(o =>
-            {
-                var pos = Hex.AxialToCartesian(o.Position);
-                return new Vector2(pos.x, pos.z);
-            }).ToList();
-
-            membrane.Type = cellProperties.MembraneType;
-            membrane.WigglyNess = cellProperties.MembraneType.BaseWigglyness;
-            membrane.MovementWigglyNess = cellProperties.MembraneType.MovementWigglyness;
+            SetMembraneDisplayData(membrane, ref organelleContainer, ref cellProperties);
 
             spatialInstance.GraphicalInstance.AddChild(membrane);
 
@@ -100,6 +92,20 @@
             base.PostUpdate(state);
 
             // Clear any ready resources that weren't required to not keep them forever
+        }
+
+        private static void SetMembraneDisplayData(Membrane membrane, ref OrganelleContainer organelleContainer,
+            ref CellProperties cellProperties)
+        {
+            membrane.OrganellePositions = organelleContainer.Organelles!.Select(o =>
+            {
+                var pos = Hex.AxialToCartesian(o.Position);
+                return new Vector2(pos.x, pos.z);
+            }).ToList();
+
+            membrane.Type = cellProperties.MembraneType;
+            membrane.WigglyNess = cellProperties.MembraneType.BaseWigglyness;
+            membrane.MovementWigglyNess = cellProperties.MembraneType.MovementWigglyness;
         }
     }
 }

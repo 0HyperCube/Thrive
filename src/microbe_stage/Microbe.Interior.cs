@@ -1672,7 +1672,9 @@ public partial class Microbe
 
     private void UpdateDissolveEffect()
     {
-        Membrane.DissolveEffectValue = dissolveEffectValue;
+        throw new NotImplementedException();
+
+        // Membrane.DissolveEffectValue = dissolveEffectValue;
 
         foreach (var organelle in organelles!)
         {

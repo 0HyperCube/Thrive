@@ -141,8 +141,7 @@ public class MicrobeStage : CreatureStageBase<Microbe, MicrobeWorldSimulation>
         if (Player != null)
             worldSimulation.PlayerPosition = Player.GlobalTranslation;
 
-        worldSimulation.ProcessFrameLogic(delta);
-        worldSimulation.ProcessLogic(delta);
+        worldSimulation.ProcessAll(delta);
 
         if (gameOver)
             return;

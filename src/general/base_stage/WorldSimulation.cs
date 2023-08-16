@@ -59,10 +59,19 @@ public abstract class WorldSimulation : IWorldSimulation
     public bool Initialized { get; private set; }
 
     /// <summary>
-    ///   Perform per-frame logic. Should be only used for things where the additional precision matters for example
-    ///   for GUI animation quality
+    ///   Process everything that needs to be done in a neat single method call
     /// </summary>
-    public abstract void ProcessFrameLogic(float delta);
+    /// <param name="delta">Time since last time this was called</param>
+    /// <remarks>
+    ///   <para>
+    ///     This is an alternative to calling <see cref="ProcessLogic"/> and <see cref="ProcessFrameLogic"/> separately
+    ///   </para>
+    /// </remarks>
+    public void ProcessAll(float delta)
+    {
+        ProcessLogic(delta);
+        ProcessFrameLogic(delta);
+    }
 
     /// <summary>
     ///   Processes non-framerate dependent logic and steps the physics simulation once enough time has accumulated
@@ -96,6 +105,12 @@ public abstract class WorldSimulation : IWorldSimulation
 
         accumulatedLogicTime = 0;
     }
+
+    /// <summary>
+    ///   Perform per-frame logic. Should be only used for things where the additional precision matters for example
+    ///   for GUI animation quality. Needs to be called after <see cref="ProcessLogic"/> for a frame when this occurs
+    /// </summary>
+    public abstract void ProcessFrameLogic(float delta);
 
     public Entity CreateEmptyEntity()
     {
