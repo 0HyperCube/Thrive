@@ -9,6 +9,12 @@
     /// </summary>
     public struct CellProperties
     {
+        /// <summary>
+        ///   Base colour of the cell. This is used when initializing organelles as it would otherwise be difficult to
+        ///   to obtain the colour
+        /// </summary>
+        public Color Colour;
+
         public int HexCount;
 
         public float EngulfSize;
@@ -33,6 +39,7 @@
 
         public CellProperties(ICellProperties initialProperties)
         {
+            Colour = initialProperties.Colour;
             HexCount = initialProperties.Organelles.HexCount;
             RotationSpeed = initialProperties.BaseRotationSpeed;
             IsBacteria = initialProperties.IsBacteria;

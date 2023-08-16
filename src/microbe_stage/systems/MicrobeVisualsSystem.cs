@@ -79,10 +79,8 @@
 
             // TODO: health value applying
 
-            // TODO: colour control, like with the microbe shader system or another one based on the colour as the
-            // flash animations need to work
-
-            // TODO: organelle visuals
+            // TODO: only recreate organelle visuals that are really needed (instead of all every time)
+            CreateOrganelleVisuals(spatialInstance.GraphicalInstance, ref organelleContainer, ref cellProperties);
 
             organelleContainer.OrganelleVisualsCreated = true;
         }
@@ -106,6 +104,43 @@
             membrane.Type = cellProperties.MembraneType;
             membrane.WigglyNess = cellProperties.MembraneType.BaseWigglyness;
             membrane.MovementWigglyNess = cellProperties.MembraneType.MovementWigglyness;
+        }
+
+        private static void CreateOrganelleVisuals(Spatial parentNode, ref OrganelleContainer organelleContainer,
+            ref CellProperties cellProperties)
+        {
+            foreach (var placedOrganelle in organelleContainer.Organelles!)
+            {
+                // Only handle organelles that have graphics
+                if (placedOrganelle.Definition.LoadedScene == null)
+                    continue;
+
+                // TODO: external organelle positioning
+
+                // TODO: only overwrite scale when needed (otherwise organelle growth animation won't work)
+                var transform = new Transform(new Basis(
+                        MathUtils.CreateRotationForOrganelle(1 * placedOrganelle.Orientation)).Scaled(new Vector3(
+                        Constants.DEFAULT_HEX_SIZE, Constants.DEFAULT_HEX_SIZE,
+                        Constants.DEFAULT_HEX_SIZE)),
+                    Hex.AxialToCartesian(placedOrganelle.Position) + placedOrganelle.Definition.ModelOffset);
+
+                // For organelle visuals to work, they need to be wrapped in an extra layer of Spatial to not
+                // mess with the normal scale that is used by many organelle scenes
+                var extraLayer = new Spatial
+                {
+                    Transform = transform,
+                };
+
+                var visualsInstance = placedOrganelle.Definition.LoadedScene.Instance<Spatial>();
+
+                var material = visualsInstance.GetMaterial(placedOrganelle.Definition.DisplaySceneModelPath);
+                material.SetShaderParam("tint", cellProperties.Colour);
+
+                // TODO: render order
+
+                extraLayer.AddChild(visualsInstance);
+                parentNode.AddChild(extraLayer);
+            }
         }
     }
 }

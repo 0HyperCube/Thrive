@@ -733,7 +733,7 @@ public class PlacedOrganelle : Spatial, IPositionedOrganelle, ISaveLoadedTracked
 
         // Position the intermediate node relative to origin of cell
         var transform = new Transform(Quat.Identity,
-            Hex.AxialToCartesian(Position) + Definition.CalculateModelOffset());
+            Hex.AxialToCartesian(Position) + Definition.ModelOffset);
 
         OrganelleGraphics.Transform = transform;
 
