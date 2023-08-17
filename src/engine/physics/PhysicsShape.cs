@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Godot;
 
@@ -95,6 +96,7 @@ public class PhysicsShape : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal IntPtr AccessShapeInternal()
     {
         if (disposed)

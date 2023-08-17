@@ -81,6 +81,7 @@ public class Membrane : MeshInstance, IComputedMembraneData
     /// </remarks>
     public IReadOnlyList<Vector2> OrganellePositions { get; set; } = PreviewMembraneOrganellePositions;
 
+    // TODO: delete this property if this doesn't get used soon
     /// <summary>
     ///   Returns a convex shaped 3-Dimensional array of vertices from the generated <see cref="vertices2D"/>.
     /// </summary>
