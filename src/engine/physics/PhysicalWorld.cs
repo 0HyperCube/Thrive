@@ -134,8 +134,8 @@ public class PhysicalWorld : IDisposable
     /// </summary>
     /// <param name="body">Body to be destroyed immediately. No longer valid for any physics calls after this</param>
     /// <param name="dispose">
-    ///   When true the body is disposed automatically. If false then the calling code is must eventually call Dispose
-    ///   on the body.
+    ///   When true the body is disposed automatically. If false the caller can call dispose when it wants to or
+    ///   not call it at all, which should be fine but then the body wrapper object may exist for a long time.
     /// </param>
     public void DestroyBody(NativePhysicsBody body, bool dispose = true)
     {
@@ -144,7 +144,6 @@ public class PhysicalWorld : IDisposable
 
         NativeMethods.DestroyPhysicalWorldBody(AccessWorldInternal(), body.AccessBodyInternal());
 
-        // Body must be disposed to make sure it gets garbage collected
         if (dispose)
             body.Dispose();
     }
@@ -301,13 +300,11 @@ public class PhysicalWorld : IDisposable
         if (maxRecordedCollisions < 1)
             throw new ArgumentException("Need to record at least one collision", nameof(maxRecordedCollisions));
 
-        var (collisionCountAddress, collisionsArray, arrayAddress) =
+        var (collisionsArray, arrayAddress) =
             body.SetupCollisionRecording(maxRecordedCollisions);
 
-        receiverOfAddressOfCollisionCount = collisionCountAddress;
-
-        NativeMethods.PhysicsBodyEnableCollisionRecording(AccessWorldInternal(), body.AccessBodyInternal(),
-            arrayAddress, maxRecordedCollisions, collisionCountAddress);
+        receiverOfAddressOfCollisionCount = NativeMethods.PhysicsBodyEnableCollisionRecording(AccessWorldInternal(),
+            body.AccessBodyInternal(), arrayAddress, maxRecordedCollisions);
 
         return collisionsArray;
     }
@@ -474,8 +471,8 @@ internal static partial class NativeMethods
         bool lockRotation);
 
     [DllImport("thrive_native")]
-    internal static extern void PhysicsBodyEnableCollisionRecording(IntPtr physicalWorld, IntPtr body,
-        IntPtr collisionRecordingTarget, int maxRecordedCollisions, IntPtr recordedCollisionCountReceiver);
+    internal static extern IntPtr PhysicsBodyEnableCollisionRecording(IntPtr physicalWorld, IntPtr body,
+        IntPtr collisionRecordingTarget, int maxRecordedCollisions);
 
     [DllImport("thrive_native")]
     internal static extern void PhysicsBodyDisableCollisionRecording(IntPtr physicalWorld, IntPtr body);
