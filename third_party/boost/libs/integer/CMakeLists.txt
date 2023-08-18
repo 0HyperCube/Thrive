@@ -19,4 +19,8 @@ target_link_libraries(boost_integer
         Boost::core
         Boost::static_assert
         Boost::throw_exception
+
+        # Custom added dependency as this depends on this but isn't listed here
+        # for some reason
+        Boost::smart_ptr
 )

@@ -12,12 +12,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR AND NOT CMAKE_BUILD_TYPE A
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-project(Boost VERSION 1.82.0 LANGUAGES CXX)
+project(Boost VERSION 1.83.0 LANGUAGES CXX)
 
 set(BOOST_SUPERPROJECT_VERSION ${PROJECT_VERSION})
 set(BOOST_SUPERPROJECT_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/tools/cmake/include)
+# list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/tools/cmake/include)
 
 add_subdirectory(libs/assert)
 add_subdirectory(libs/circular_buffer)
