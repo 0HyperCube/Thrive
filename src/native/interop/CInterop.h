@@ -95,6 +95,14 @@ extern "C"
     [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyAddAxisLock(
         PhysicalWorld* physicalWorld, PhysicsBody* body, JVecF3 axis, bool lockRotation);
 
+    /// Sets up collision recording for a body. The returned value is a pointer to read the currently active collisions
+    /// that have been written to collisionRecordingTarget
+    [[maybe_unused]] THRIVE_NATIVE_API int32_t* PhysicsBodyEnableCollisionRecording(PhysicalWorld* physicalWorld,
+        PhysicsBody* body, char* collisionRecordingTarget, int32_t maxRecordedCollisions);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyDisableCollisionRecording(
+        PhysicalWorld* physicalWorld, PhysicsBody* body);
+
     [[maybe_unused]] THRIVE_NATIVE_API void PhysicalWorldSetGravity(PhysicalWorld* physicalWorld, JVecF3 gravity);
     [[maybe_unused]] THRIVE_NATIVE_API void PhysicalWorldRemoveGravity(PhysicalWorld* physicalWorld);
 
@@ -115,7 +123,10 @@ extern "C"
 
     /// Set user data for a physics body, note that currently all data needs to be the same size to fully work,
     /// which is specified by Thrive::PHYSICS_USER_DATA_SIZE
-    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodySetUserData(PhysicsBody* body, const char* data, int32_t dataLength);
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodySetUserData(
+        PhysicsBody* body, const char* data, int32_t dataLength);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyForceClearRecordingTargets(PhysicsBody* body);
 
     // ------------------------------------ //
     // Physics shapes

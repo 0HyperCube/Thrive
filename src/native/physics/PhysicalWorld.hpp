@@ -89,6 +89,12 @@ public:
     bool FixBodyYCoordinateToZero(JPH::BodyID bodyId);
 
     // ------------------------------------ //
+    // Collisions
+    int32_t* EnableCollisionRecording(PhysicsBody& body, char* collisionRecordingTarget, int maxRecordedCollisions);
+
+    void DisableCollisionRecording(PhysicsBody& body);
+
+    // ------------------------------------ //
     // Constraints
 
     //! \deprecated Use CreateMovingBodyWithAxisLock instead (this is kept just to show how other constraint types

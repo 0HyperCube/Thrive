@@ -24,10 +24,13 @@
 #include "BodyActivationListener.hpp"
 #include "BodyControlState.hpp"
 #include "ContactListener.hpp"
-#include "DebugDrawForwarder.hpp"
 #include "PhysicsBody.hpp"
 #include "StepListener.hpp"
 #include "TrackedConstraint.hpp"
+
+#ifdef JPH_DEBUG_RENDERER
+#include "DebugDrawForwarder.hpp"
+#endif
 
 JPH_SUPPRESS_WARNINGS
 
@@ -531,6 +534,17 @@ bool PhysicalWorld::FixBodyYCoordinateToZero(JPH::BodyID bodyId)
 }
 
 // ------------------------------------ //
+int32_t* PhysicalWorld::EnableCollisionRecording(
+    PhysicsBody& body, char* collisionRecordingTarget, int maxRecordedCollisions)
+{
+    return nullptr;
+}
+
+void PhysicalWorld::DisableCollisionRecording(PhysicsBody& body)
+{
+}
+
+// ------------------------------------ //
 Ref<TrackedConstraint> PhysicalWorld::CreateAxisLockConstraint(PhysicsBody& body, JPH::Vec3 axis, bool lockRotation)
 {
     JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterface(), body.GetId());
@@ -581,8 +595,13 @@ Ref<TrackedConstraint> PhysicalWorld::CreateAxisLockConstraint(PhysicsBody& body
 
     auto constraintPtr = (JPH::SixDOFConstraint*)constraintSettings.Create(JPH::Body::sFixedToWorld, lock.GetBody());
 
+#ifdef USE_OBJECT_POOLS
+    auto trackedConstraint =
+        ConstructFromGlobalPool<TrackedConstraint>(JPH::Ref<JPH::Constraint>(constraintPtr), Ref<PhysicsBody>(&body));
+#else
     auto trackedConstraint = Ref<TrackedConstraint>(
         new TrackedConstraint(JPH::Ref<JPH::Constraint>(constraintPtr), Ref<PhysicsBody>(&body)));
+#endif
 
     if (body.IsInWorld())
     {
@@ -774,7 +793,11 @@ Ref<PhysicsBody> PhysicalWorld::CreateBody(const JPH::Shape& shape, JPH::EMotion
 
     changesToBodies = true;
 
+#ifdef USE_OBJECT_POOLS
+    return ConstructFromGlobalPool<PhysicsBody>(body, body->GetID());
+#else
     return {new PhysicsBody(body, body->GetID())};
+#endif
 }
 
 Ref<PhysicsBody> PhysicalWorld::OnBodyCreated(Ref<PhysicsBody>&& body, bool addToWorld)

@@ -4,6 +4,8 @@
 // File configured by CMake do not edit Include.h (you can edit Include.h.in)
 //
 
+#include <cstddef>
+
 // clang-format off
 #define THRIVE_LIBRARY_VERSION @NATIVE_LIBRARY_VERSION@
 // clang-format on

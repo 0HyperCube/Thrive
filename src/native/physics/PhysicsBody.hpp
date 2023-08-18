@@ -22,17 +22,25 @@ class PhysicalWorld;
 class BodyControlState;
 
 /// \brief Our physics body wrapper that has extra data
-class PhysicsBody : public RefCounted
+class PhysicsBody : public RefCounted<PhysicsBody>
 {
     friend PhysicalWorld;
     friend BodyActivationListener;
     friend TrackedConstraint;
 
 protected:
+#ifndef USE_OBJECT_POOLS
     PhysicsBody(JPH::Body* body, JPH::BodyID bodyId) noexcept;
+#endif
 
 public:
-    ~PhysicsBody() noexcept;
+#ifdef USE_OBJECT_POOLS
+    /// Even though this is public this should only be called by PhysicalWorld, so any other code sohuld ask the world
+    /// to make new bodies
+    PhysicsBody(JPH::Body* body, JPH::BodyID bodyId, ReleaseCallback deleteCallback) noexcept;
+#endif
+
+    ~PhysicsBody() noexcept override;
 
     PhysicsBody(const PhysicsBody& other) = delete;
     PhysicsBody(PhysicsBody&& other) = delete;
@@ -77,8 +85,10 @@ public:
 
     inline bool SetUserData(const char* data, int length) noexcept
     {
+        static_assert(PHYSICS_USER_DATA_SIZE < std::numeric_limits<int>::max());
+
         // Fail if too much data given
-        if (length > userData.size())
+        if (length > static_cast<int>(userData.size()))
         {
             userDataLength = 0;
             return false;
@@ -122,6 +132,9 @@ private:
     std::unique_ptr<BodyControlState> bodyControlStateIfActive;
 
     int userDataLength = 0;
+
+    /// A pointer to this is passed out for users of the collision recording array
+    int activeRecordedCollisionCount = 0;
 
     bool inWorld = false;
     bool active = true;
