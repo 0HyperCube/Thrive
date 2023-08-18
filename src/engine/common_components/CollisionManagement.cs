@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
     using DefaultEcs;
     using Newtonsoft.Json;
@@ -73,8 +74,9 @@
 
     public static class CollisionManagementHelpers
     {
-        public static int GetActiveCollisions(
-            ref this CollisionManagement collisionManagement, out PhysicsCollision[]? collisions)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetActiveCollisions(ref this CollisionManagement collisionManagement,
+            out PhysicsCollision[]? collisions)
         {
             // If state is not correct for reading
             collisions = collisionManagement.ActiveCollisions;
