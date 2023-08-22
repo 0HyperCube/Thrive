@@ -1091,6 +1091,11 @@ public static class Constants
     public const int MEBIBYTE = 1024 * KIBIBYTE;
 
     /// <summary>
+    ///   Max bytes to allocate on the stack, any bigger data needs to allocate heap memory
+    /// </summary>
+    public const int MAX_STACKALLOC = 1024;
+
+    /// <summary>
     ///   Delay for the compound row to hide when standing still and compound amount is 0.
     /// </summary>
     public const float COMPOUND_HOVER_INFO_REMOVE_DELAY = 0.5f;

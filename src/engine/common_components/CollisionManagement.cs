@@ -55,6 +55,8 @@
         /// </remarks>
         public int RecordActiveCollisions;
 
+        // TODO: as this can't stop existing collisions there probably needs t obe a feature maybe in Physics that
+        // removes the body entirely from the physics world
         public bool AllCollisionsDisabled;
 
         /// <summary>
@@ -68,6 +70,12 @@
 
         [JsonIgnore]
         public bool CollisionFilterCallbackRegistered;
+
+        /// <summary>
+        ///   Internal flag don't touch. Used as an optimization to not always have to call to the native side library.
+        /// </summary>
+        [JsonIgnore]
+        public bool CollisionIgnoresUsed;
 
         public delegate bool OnCollided(ref PhysicsCollision collision);
     }

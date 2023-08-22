@@ -95,10 +95,28 @@ extern "C"
     [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyAddAxisLock(
         PhysicalWorld* physicalWorld, PhysicsBody* body, JVecF3 axis, bool lockRotation);
 
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodySetCollisionEnabledState(
+        PhysicalWorld* physicalWorld, PhysicsBody* body, bool collisionsEnabled);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyAddCollisionIgnore(
+        PhysicalWorld* physicalWorld, PhysicsBody* body, PhysicsBody* addIgnore);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyRemoveCollisionIgnore(
+        PhysicalWorld* physicalWorld, PhysicsBody* body, PhysicsBody* removeIgnore);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyClearCollisionIgnores(
+        PhysicalWorld* physicalWorld, PhysicsBody* body);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodySetCollisionIgnores(
+        PhysicalWorld* physicalWorld, PhysicsBody* body, PhysicsBody* ignoredBodies[], int32_t count);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyClearAndSetSingleIgnore(
+        PhysicalWorld* physicalWorld, PhysicsBody* body, PhysicsBody* onlyIgnoredBody);
+
     /// Sets up collision recording for a body. The returned value is a pointer to read the currently active collisions
     /// that have been written to collisionRecordingTarget
-    [[maybe_unused]] THRIVE_NATIVE_API int32_t* PhysicsBodyEnableCollisionRecording(PhysicalWorld* physicalWorld,
-        PhysicsBody* body, char* collisionRecordingTarget, int32_t maxRecordedCollisions);
+    [[maybe_unused]] THRIVE_NATIVE_API int32_t* PhysicsBodyEnableCollisionRecording(
+        PhysicalWorld* physicalWorld, PhysicsBody* body, char* collisionRecordingTarget, int32_t maxRecordedCollisions);
 
     [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyDisableCollisionRecording(
         PhysicalWorld* physicalWorld, PhysicsBody* body);

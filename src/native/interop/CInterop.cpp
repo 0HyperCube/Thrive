@@ -287,12 +287,57 @@ void PhysicsBodyAddAxisLock(PhysicalWorld* physicalWorld, PhysicsBody* body, JVe
 }
 
 // ------------------------------------ //
+void PhysicsBodySetCollisionEnabledState(PhysicalWorld* physicalWorld, PhysicsBody* body, bool collisionsEnabled)
+{
+    reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+        ->SetCollisionDisabledState(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body), !collisionsEnabled);
+}
+
+// ------------------------------------ //
+void PhysicsBodyAddCollisionIgnore(PhysicalWorld* physicalWorld, PhysicsBody* body, PhysicsBody* addIgnore)
+{
+    reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+        ->AddCollisionIgnore(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body),
+            *reinterpret_cast<Thrive::Physics::PhysicsBody*>(addIgnore));
+}
+
+void PhysicsBodyRemoveCollisionIgnore(PhysicalWorld* physicalWorld, PhysicsBody* body, PhysicsBody* removeIgnore)
+{
+    reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+        ->RemoveCollisionIgnore(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body),
+            *reinterpret_cast<Thrive::Physics::PhysicsBody*>(removeIgnore));
+}
+
+void PhysicsBodyClearCollisionIgnores(PhysicalWorld* physicalWorld, PhysicsBody* body)
+{
+    reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+        ->ClearCollisionIgnores(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body));
+}
+
+void PhysicsBodySetCollisionIgnores(
+    PhysicalWorld* physicalWorld, PhysicsBody* body, PhysicsBody* ignoredBodies[], int32_t count)
+{
+    reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+        ->SetCollisionIgnores(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body),
+            reinterpret_cast<Thrive::Physics::PhysicsBody*&>(ignoredBodies), count);
+}
+
+void PhysicsBodyClearAndSetSingleIgnore(PhysicalWorld* physicalWorld, PhysicsBody* body, PhysicsBody* onlyIgnoredBody)
+{
+    reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+        ->SetSingleCollisionIgnore(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body),
+            *reinterpret_cast<Thrive::Physics::PhysicsBody*>(onlyIgnoredBody));
+}
+
+// ------------------------------------ //
 int32_t* PhysicsBodyEnableCollisionRecording(
     PhysicalWorld* physicalWorld, PhysicsBody* body, char* collisionRecordingTarget, int32_t maxRecordedCollisions)
 {
-    return reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
-        ->EnableCollisionRecording(
-            *reinterpret_cast<Thrive::Physics::PhysicsBody*>(body), collisionRecordingTarget, maxRecordedCollisions);
+    return const_cast<int32_t*>(
+        reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+            ->EnableCollisionRecording(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body),
+                reinterpret_cast<Thrive::Physics::CollisionRecordListType>(collisionRecordingTarget),
+                maxRecordedCollisions));
 }
 
 void PhysicsBodyDisableCollisionRecording(PhysicalWorld* physicalWorld, PhysicsBody* body)

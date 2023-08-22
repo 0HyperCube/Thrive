@@ -59,19 +59,23 @@
                 ref var ignoreCollisions = ref collisionManagement.IgnoredCollisionsWith;
                 if (ignoreCollisions == null)
                 {
-                    physicalWorld.BodyClearCollisionsIgnores(physicsBody);
+                    if (collisionManagement.CollisionIgnoresUsed)
+                    {
+                        collisionManagement.CollisionIgnoresUsed = false;
+                        physicalWorld.BodyClearCollisionsIgnores(physicsBody);
+                    }
                 }
                 else if (ignoreCollisions.Count > 0)
                 {
+                    collisionManagement.CollisionIgnoresUsed = true;
+
                     if (ignoreCollisions.Count < 2)
                     {
                         // When ignoring just one collision use the single body API as that doesn't need to allocate
                         // any lists
-                        physicalWorld.BodyClearCollisionsIgnores(physicsBody);
-
                         var ignoreWith = GetPhysicsForEntity(ignoreCollisions[0], ref collisionManagement);
                         if (ignoreWith != null)
-                            physicalWorld.BodyIgnoreCollisionsWithBody(physicsBody, ignoreWith);
+                            physicalWorld.BodySetCollisionIgnores(physicsBody, ignoreWith);
                     }
                     else
                     {
