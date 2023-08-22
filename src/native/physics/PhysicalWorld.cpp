@@ -534,14 +534,99 @@ bool PhysicalWorld::FixBodyYCoordinateToZero(JPH::BodyID bodyId)
 }
 
 // ------------------------------------ //
-int32_t* PhysicalWorld::EnableCollisionRecording(
-    PhysicsBody& body, char* collisionRecordingTarget, int maxRecordedCollisions)
+const int32_t* PhysicalWorld::EnableCollisionRecording(
+    PhysicsBody& body, CollisionRecordListType collisionRecordingTarget, int maxRecordedCollisions)
 {
-    return nullptr;
+    body.SetCollisionRecordingTarget(collisionRecordingTarget, maxRecordedCollisions);
+
+    if (body.MarkCollisionRecordingEnabled())
+    {
+        UpdateBodyUserPointer(body);
+    }
+
+    return body.GetRecordedCollisionTargetAddress();
 }
 
 void PhysicalWorld::DisableCollisionRecording(PhysicsBody& body)
 {
+    body.ClearCollisionRecordingTarget();
+
+    if (body.MarkCollisionRecordingDisabled())
+    {
+        UpdateBodyUserPointer(body);
+    }
+}
+
+void PhysicalWorld::AddCollisionIgnore(PhysicsBody& body, const PhysicsBody& ignoredBody, bool skipDuplicates)
+{
+    body.AddCollisionIgnore(ignoredBody, skipDuplicates);
+
+    if (body.MarkCollisionFilterEnabled())
+    {
+        UpdateBodyUserPointer(body);
+    }
+}
+
+bool PhysicalWorld::RemoveCollisionIgnore(PhysicsBody& body, const PhysicsBody& noLongerIgnoredBody)
+{
+    const auto changes = body.RemoveCollisionIgnore(noLongerIgnoredBody);
+
+    if (body.MarkCollisionFilterEnabled())
+    {
+        UpdateBodyUserPointer(body);
+    }
+
+    return changes;
+}
+
+void PhysicalWorld::SetCollisionIgnores(PhysicsBody& body, PhysicsBody* const& ignoredBodies, int ignoreCount)
+{
+    body.SetCollisionIgnores(ignoredBodies, ignoreCount);
+
+    if (body.MarkCollisionFilterEnabled())
+    {
+        UpdateBodyUserPointer(body);
+    }
+}
+
+void PhysicalWorld::SetSingleCollisionIgnore(PhysicsBody& body, const PhysicsBody& onlyIgnoredBody)
+{
+    body.SetSingleCollisionIgnore(onlyIgnoredBody);
+
+    if (body.MarkCollisionFilterEnabled())
+    {
+        UpdateBodyUserPointer(body);
+    }
+}
+
+void PhysicalWorld::ClearCollisionIgnores(PhysicsBody& body)
+{
+    body.ClearCollisionIgnores();
+
+    if (body.MarkCollisionFilterDisabled())
+    {
+        UpdateBodyUserPointer(body);
+    }
+}
+
+void PhysicalWorld::SetCollisionDisabledState(PhysicsBody& body, bool disableAllCollisions)
+{
+    if (!body.SetDisableAllCollisions(disableAllCollisions))
+    {
+        // No changes
+        return;
+    }
+
+    if (disableAllCollisions)
+    {
+        body.MarkCollisionDisableFlagEnabled();
+    }
+    else
+    {
+        body.MarkCollisionDisableFlagDisabled();
+    }
+
+    UpdateBodyUserPointer(body);
 }
 
 // ------------------------------------ //
@@ -805,6 +890,13 @@ Ref<PhysicsBody> PhysicalWorld::OnBodyCreated(Ref<PhysicsBody>&& body, bool addT
     if (body == nullptr)
         return nullptr;
 
+    // Safety check for pointer data alignment
+    if (reinterpret_cast<decltype(STUFFED_POINTER_DATA_MASK)>(body.get()) & STUFFED_POINTER_DATA_MASK)
+    {
+        LOG_ERROR("Allocated PhysicsBody doesn't follow alignment requirements! It uses low bits in the pointer.");
+        std::abort();
+    }
+
     if (addToWorld)
     {
         physicsSystem->GetBodyInterface().AddBody(body->GetId(), JPH::EActivation::Activate);
@@ -821,6 +913,20 @@ void PhysicalWorld::OnPostBodyAdded(PhysicsBody& body)
     // Add an extra reference to the body to keep it from being deleted while in this world
     body.AddRef();
     ++bodyCount;
+}
+
+void PhysicalWorld::UpdateBodyUserPointer(const PhysicsBody& body)
+{
+    JPH::BodyLockWrite lock(physicsSystem->GetBodyLockInterface(), body.GetId());
+    if (!lock.Succeeded())
+    {
+        LOG_ERROR("Can't lock body for updating user pointer bits, the enabled / disabled feature won't apply on it");
+    }
+    else
+    {
+        JPH::Body& joltBody = lock.GetBody();
+        joltBody.SetUserData(body.CalculateUserPointer());
+    }
 }
 
 // ------------------------------------ //

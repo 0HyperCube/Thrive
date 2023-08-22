@@ -10,6 +10,7 @@
 #include "core/ForwardDefinitions.hpp"
 
 #include "Layers.hpp"
+#include "PhysicsCollision.hpp"
 
 namespace JPH
 {
@@ -90,9 +91,39 @@ public:
 
     // ------------------------------------ //
     // Collisions
-    int32_t* EnableCollisionRecording(PhysicsBody& body, char* collisionRecordingTarget, int maxRecordedCollisions);
+
+    /// \brief Starts collision recording. collisionRecordingTarget must have at least space for maxRecordedCollisions
+    /// elements, otherwise this will overwrite random memory
+    const int32_t* EnableCollisionRecording(
+        PhysicsBody& body, CollisionRecordListType collisionRecordingTarget, int maxRecordedCollisions);
 
     void DisableCollisionRecording(PhysicsBody& body);
+
+    /// \brief Makes body ignore collisions with ignoredBody
+    void AddCollisionIgnore(PhysicsBody& body, const PhysicsBody& ignoredBody, bool skipDuplicates);
+
+    /// \brief Removes a previously added body ignore
+    ///
+    /// Note that this removes the ignore just from body so if the ignore relationship is two-ways this doesn't make
+    /// collisions happen
+    /// \returns True when removed, false if the body was not ignored
+    bool RemoveCollisionIgnore(PhysicsBody& body, const PhysicsBody& noLongerIgnoredBody);
+
+    /// \brief Sets an exact list of ignored bodies for body. Removes all existing ignores
+    /// \param ignoredBodies list of bodies to ignore (should be a pointer to array of references)
+    /// \param ignoreCount specifies the length of the ignoredBodies array, note that instead of passing an array of
+    /// length 0 calling ClearCollisionIgnores is preferred
+    void SetCollisionIgnores(PhysicsBody& body, PhysicsBody* const& ignoredBodies, int ignoreCount);
+
+    /// \brief More efficient variant of clearing all ignores and setting just one
+    void SetSingleCollisionIgnore(PhysicsBody& body, const PhysicsBody& onlyIgnoredBody);
+
+    /// \brief Clears all collision ignores on a body
+    void ClearCollisionIgnores(PhysicsBody& body);
+
+    /// \brief When called with true this disables all collisions for the given body (can be restored by calling this
+    /// method again with false parameter)
+    void SetCollisionDisabledState(PhysicsBody& body, bool disableAllCollisions);
 
     // ------------------------------------ //
     // Constraints
@@ -152,6 +183,10 @@ private:
 
     /// \brief Called when body is added to the world (can happen multiple times for each body)
     void OnPostBodyAdded(PhysicsBody& body);
+
+    /// \brief Updates the user pointer for a body to enable / disable newly set bitflags in the pointer for some
+    /// various features
+    void UpdateBodyUserPointer(const PhysicsBody& body);
 
     /// \brief Applies physics body control operations
     /// \param delta Is the physics step delta

@@ -5,6 +5,7 @@
 //
 
 #include <cstddef>
+#include <cstdint>
 
 // clang-format off
 #define THRIVE_LIBRARY_VERSION @NATIVE_LIBRARY_VERSION@
@@ -26,6 +27,10 @@
 
 #cmakedefine USE_OBJECT_POOLS
 
+#cmakedefine NULL_HAS_UNUSUAL_REPRESENTATION
+
+#cmakedefine USE_SMALL_VECTOR_POOLS
+
 #ifdef WIN32
 #define FORCE_INLINE __forceinline
 #else
@@ -41,4 +46,14 @@ constexpr double PI_DOUBLE = 3.1415926535897932;
 
 /// Size in bytes that physics body user data is (used for collision callbacks)
 constexpr size_t PHYSICS_USER_DATA_SIZE = 8;
+
+/// Always zero bytes in pointers that stuff extra info in them thanks to alignment requirements
+constexpr size_t UNUSED_POINTER_BITS = 3;
+
+constexpr size_t STUFFED_POINTER_ALIGNMENT = 8;
+
+constexpr uint64_t STUFFED_POINTER_DATA_MASK = 0x7;
+
+constexpr uint64_t STUFFED_POINTER_POINTER_MASK = ~STUFFED_POINTER_DATA_MASK;
+
 } // namespace Thrive

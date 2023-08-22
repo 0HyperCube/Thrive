@@ -296,9 +296,11 @@ void PhysicsBodySetCollisionEnabledState(PhysicalWorld* physicalWorld, PhysicsBo
 // ------------------------------------ //
 void PhysicsBodyAddCollisionIgnore(PhysicalWorld* physicalWorld, PhysicsBody* body, PhysicsBody* addIgnore)
 {
+    bool handleDuplicates = true;
+
     reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
         ->AddCollisionIgnore(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body),
-            *reinterpret_cast<Thrive::Physics::PhysicsBody*>(addIgnore));
+            *reinterpret_cast<Thrive::Physics::PhysicsBody*>(addIgnore), handleDuplicates);
 }
 
 void PhysicsBodyRemoveCollisionIgnore(PhysicalWorld* physicalWorld, PhysicsBody* body, PhysicsBody* removeIgnore)
