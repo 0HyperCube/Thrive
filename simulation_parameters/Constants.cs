@@ -348,6 +348,11 @@ public static class Constants
     public const int MAX_SIMULTANEOUS_DAMAGE_COLLISIONS = 5;
 
     /// <summary>
+    ///   How many collisions each projectile can record
+    /// </summary>
+    public const int MAX_SIMULTANEOUS_PROJECTILE_COLLISIONS = 4;
+
+    /// <summary>
     ///   Cooldown between agent emissions, in seconds.
     /// </summary>
     public const float AGENT_EMISSION_COOLDOWN = 2.0f;

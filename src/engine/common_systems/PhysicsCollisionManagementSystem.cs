@@ -45,13 +45,7 @@
 
             collisionManagement.StateApplied = true;
 
-            // All collision disable
-            if (collisionManagement.AllCollisionsDisabled != collisionManagement.CurrentCollisionState)
-            {
-                collisionManagement.CurrentCollisionState = collisionManagement.AllCollisionsDisabled;
-
-                physicalWorld.SetBodyCollisionsEnabledState(physicsBody, !collisionManagement.CurrentCollisionState);
-            }
+            // All collision disable is now in Physics directly and applied by PhysicsUpdateAndPositionSystem
 
             // Collision disable against specific bodies
             try

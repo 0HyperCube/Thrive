@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
+    using System.Threading;
     using DefaultEcs;
     using Newtonsoft.Json;
 
@@ -55,10 +56,6 @@
         /// </remarks>
         public int RecordActiveCollisions;
 
-        // TODO: as this can't stop existing collisions there probably needs t obe a feature maybe in Physics that
-        // removes the body entirely from the physics world
-        public bool AllCollisionsDisabled;
-
         /// <summary>
         ///   Must be set to false after changing any properties to have them apply (after the initial creation)
         /// </summary>
@@ -82,6 +79,15 @@
 
     public static class CollisionManagementHelpers
     {
+        public static void StartCollisionRecording(ref this CollisionManagement collisionManagement, int maxCollisions)
+        {
+            if (collisionManagement.RecordActiveCollisions >= maxCollisions)
+                return;
+
+            Interlocked.Add(ref collisionManagement.RecordActiveCollisions, maxCollisions);
+            collisionManagement.StateApplied = false;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetActiveCollisions(ref this CollisionManagement collisionManagement,
             out PhysicsCollision[]? collisions)
