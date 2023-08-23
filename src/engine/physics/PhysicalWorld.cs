@@ -38,8 +38,12 @@ public class PhysicalWorld : IDisposable
         Dispose(false);
     }
 
-    public delegate bool OnCollisionFilterCallback(IntPtr body1, int subShapeData1, IntPtr body2, int subShapeData2,
-        float penetration);
+    /// <summary>
+    ///   Callback to determine if a collision is allowed to happen. Note that the penetration amount is not
+    ///   necessarily initialized if the callback is registered so that it doesn't want to calculate that info (as it
+    ///   is not available without extra calculation when a collision begins)
+    /// </summary>
+    public delegate bool OnCollisionFilterCallback(ref PhysicsCollision collision);
 
     public float LatestPhysicsDuration => NativeMethods.PhysicalWorldGetPhysicsLatestTime(AccessWorldInternal());
 
@@ -359,7 +363,7 @@ public class PhysicalWorld : IDisposable
         NativeMethods.PhysicsBodyDisableCollisionRecording(AccessWorldInternal(), body.AccessBodyInternal());
     }
 
-    public void BodyAddCollisionFilter(NativePhysicsBody body, OnCollisionFilterCallback filterCallback)
+    public void BodyAddCollisionFilter(NativePhysicsBody body, OnCollisionFilterCallback filterCallback, bool calculatePenetrationAmount)
     {
         throw new NotImplementedException();
     }

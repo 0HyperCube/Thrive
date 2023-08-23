@@ -38,12 +38,19 @@
         /// </summary>
         /// <remarks>
         ///   <para>
+        ///     When clearing this, it is extremely important to set <see cref="StateApplied"/> as otherwise the C++
+        ///     side will hold onto an invalid callback and cause very weird method call bugs. The only case where that
+        ///     is fine if this delegate refers to a static method.
+        ///   </para>
+        /// </remarks>
+        /// <remarks>
+        ///   <para>
         ///     TODO: plan if this should be saved (in which case some objects don't want their callbacks to save,
         ///     for example the toxin collision system) or if all systems will need to reapply their filters after load
         ///   </para>
         /// </remarks>
         [JsonIgnore]
-        public OnCollided? CollisionFilter;
+        public PhysicalWorld.OnCollisionFilterCallback? CollisionFilter;
 
         /// <summary>
         ///   When set above 0 up to this many collisions are recorded in <see cref="ActiveCollisions"/>
@@ -57,8 +64,15 @@
         public int RecordActiveCollisions;
 
         /// <summary>
+        ///   If this is not true then the <see cref="CollisionFilter"/> when used doesn't calculate how hard the
+        ///   collision being checked is going to be
+        /// </summary>
+        public bool CollisionFilterCalculatesPenetrationAmount;
+
+        /// <summary>
         ///   Must be set to false after changing any properties to have them apply (after the initial creation)
         /// </summary>
+        [JsonIgnore]
         public bool StateApplied;
 
         // The following variables are internal for the collision management system and should not be modified
@@ -73,8 +87,6 @@
         /// </summary>
         [JsonIgnore]
         public bool CollisionIgnoresUsed;
-
-        public delegate bool OnCollided(ref PhysicsCollision collision);
     }
 
     public static class CollisionManagementHelpers

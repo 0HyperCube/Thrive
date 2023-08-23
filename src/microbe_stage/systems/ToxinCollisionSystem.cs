@@ -86,8 +86,6 @@
             // TODO: maybe this could cache something for slight speed up? (though the cache would need clearing
             // periodically)
 
-            // TODO: consider if dumping extra data like 64 bytes in the physics body would be enough to make this
-            // check not need to look up multiple entities
             var toxin = collision.FirstEntity;
             var damageTarget = collision.SecondEntity;
 
