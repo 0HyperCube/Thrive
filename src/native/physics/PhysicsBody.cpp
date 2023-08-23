@@ -124,20 +124,23 @@ bool PhysicsBody::DisableBodyControl() noexcept
 }
 
 // ------------------------------------ //
-void PhysicsBody::MarkUsedInWorld() noexcept
+void PhysicsBody::MarkUsedInWorld(const PhysicalWorld* world) noexcept
 {
-    if (inWorld)
+    if (containedInWorld)
         LOG_ERROR("PhysicsBody marked used when already in use");
 
-    inWorld = true;
+    containedInWorld = world;
+
+    // Calling this method is the way that bodies become attached again (if detached previously)
+    detached = false;
 }
 
 void PhysicsBody::MarkRemovedFromWorld() noexcept
 {
-    if (!inWorld)
+    if (!containedInWorld)
         LOG_ERROR("PhysicsBody marked removed from world when it wasn't used in the first place");
 
-    inWorld = false;
+    containedInWorld = nullptr;
 }
 
 void PhysicsBody::NotifyConstraintAdded(TrackedConstraint& constraint) noexcept

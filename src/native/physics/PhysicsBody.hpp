@@ -45,6 +45,10 @@ class alignas(STUFFED_POINTER_ALIGNMENT) PhysicsBody : public RefCounted<Physics
     friend BodyActivationListener;
     friend TrackedConstraint;
 
+    // Flags used only internally to track some extra state
+    static constexpr uint64_t EXTRA_FLAG_FILTER_LIST = 0x8;
+    static constexpr uint64_t EXTRA_FLAG_FILTER_CALLBACK = 0x16;
+
 protected:
 #ifndef USE_OBJECT_POOLS
     PhysicsBody(JPH::Body* body, JPH::BodyID bodyId) noexcept;
@@ -115,6 +119,23 @@ public:
         return false;
     }
 
+    inline void SetCollisionFilter(CollisionFilterCallback callback, bool calculateCollisionParameters) noexcept
+    {
+        callbackBasedFilter = callback;
+        filterGetsCollisionCalculations = calculateCollisionParameters;
+    }
+
+    inline void RemoveCollisionFilter(CollisionFilterCallback callback) noexcept
+    {
+        callbackBasedFilter = callback;
+    }
+
+    FORCE_INLINE inline CollisionFilterCallback GetCollisionFilter(bool& calculateCollisionParameters) const noexcept
+    {
+        calculateCollisionParameters = filterGetsCollisionCalculations;
+        return callbackBasedFilter;
+    }
+
     // ------------------------------------ //
     // State flags
 
@@ -125,7 +146,7 @@ public:
 
     [[nodiscard]] inline bool IsInWorld() const noexcept
     {
-        return inWorld;
+        return containedInWorld != nullptr;
     }
 
     [[nodiscard]] inline JPH::BodyID GetId() const
@@ -150,18 +171,64 @@ public:
     {
         const auto old = activeUserPointerFlags;
 
-        activeUserPointerFlags |= PHYSICS_BODY_COLLISION_FLAG;
+        // This and the following set flag methods are a two-step flag, i.e. we have two fields that control one of
+        // the primary fields
+        activeUserPointerFlags |= EXTRA_FLAG_FILTER_LIST;
 
-        return old != activeUserPointerFlags;
+        if (old == activeUserPointerFlags)
+            return false;
+
+        activeUserPointerFlags |= PHYSICS_BODY_COLLISION_FLAG;
+        return true;
     }
 
     inline bool MarkCollisionFilterDisabled() noexcept
     {
         const auto old = activeUserPointerFlags;
 
+        activeUserPointerFlags &= ~EXTRA_FLAG_FILTER_LIST;
+
+        if (old == activeUserPointerFlags)
+            return false;
+
+        // Keep the main flag on if the other flag controlling this is still on
+        if (activeUserPointerFlags & EXTRA_FLAG_FILTER_CALLBACK)
+            return true;
+
         activeUserPointerFlags &= ~PHYSICS_BODY_COLLISION_FLAG;
 
-        return old != activeUserPointerFlags;
+        return true;
+    }
+
+    inline bool MarkCollisionFilterCallbackUsed() noexcept
+    {
+        const auto old = activeUserPointerFlags;
+
+        activeUserPointerFlags |= EXTRA_FLAG_FILTER_CALLBACK;
+
+        if (old == activeUserPointerFlags)
+            return false;
+
+        activeUserPointerFlags |= PHYSICS_BODY_COLLISION_FLAG;
+        return true;
+    }
+
+    inline bool MarkCollisionFilterCallbackDisabled() noexcept
+    {
+        const auto old = activeUserPointerFlags;
+
+        activeUserPointerFlags &= ~EXTRA_FLAG_FILTER_CALLBACK;
+
+        if (old == activeUserPointerFlags)
+            return false;
+
+        // Keep the main flag on if the other flag controlling this is still on
+        if (activeUserPointerFlags & EXTRA_FLAG_FILTER_LIST)
+            return true;
+
+        activeUserPointerFlags &= ~PHYSICS_BODY_COLLISION_FLAG;
+
+        return true;
     }
 
     inline bool MarkCollisionRecordingEnabled() noexcept
@@ -212,11 +279,12 @@ public:
 
     [[nodiscard]] inline uint64_t CalculateUserPointer() const noexcept
     {
-        return reinterpret_cast<uint64_t>(this) & static_cast<uint64_t>(activeUserPointerFlags);
+        return reinterpret_cast<uint64_t>(this) |
+            (static_cast<uint64_t>(activeUserPointerFlags) & STUFFED_POINTER_DATA_MASK);
     }
 
     // ------------------------------------ //
-    // Collision callback user data (C# side's)
+    // Collision callback user data (C# side provides this)
 
     [[nodiscard]] inline bool HasUserData() const noexcept
     {
@@ -247,12 +315,27 @@ public:
         return true;
     }
 
+    inline bool IsDetached() const noexcept
+    {
+        return detached;
+    }
+
 protected:
     bool EnableBodyControlIfNotAlready() noexcept;
     bool DisableBodyControl() noexcept;
 
-    void MarkUsedInWorld() noexcept;
+    void MarkUsedInWorld(const PhysicalWorld* containedInWorld) noexcept;
     void MarkRemovedFromWorld() noexcept;
+
+    inline void MarkDetached() noexcept
+    {
+        detached = true;
+    }
+
+    inline bool IsInSpecificWorld(const PhysicalWorld* world) const noexcept
+    {
+        return containedInWorld == world;
+    }
 
     void NotifyConstraintAdded(TrackedConstraint& constraint) noexcept;
     void NotifyConstraintRemoved(TrackedConstraint& constraint) noexcept;
@@ -276,6 +359,12 @@ private:
 
     std::unique_ptr<BodyControlState> bodyControlStateIfActive;
 
+    /// This is purely used to compare against world pointers to check that this is in a specific world. Do not call
+    /// anything through this pointer as it is not guaranteed safe.
+    const PhysicalWorld* containedInWorld = nullptr;
+
+    CollisionFilterCallback callbackBasedFilter = nullptr;
+
     int userDataLength = 0;
 
     int maxCollisionsToRecord = 0;
@@ -288,9 +377,10 @@ private:
 
     uint8_t activeUserPointerFlags = 0;
 
-    bool inWorld = false;
+    bool detached = false;
     bool active = true;
     bool allCollisionsDisabled = false;
+    bool filterGetsCollisionCalculations;
 };
 
 } // namespace Thrive::Physics

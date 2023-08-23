@@ -11,6 +11,9 @@ namespace Thrive::Physics
 class PhysicsBody;
 
 /// \brief Recorded physics collision. Must match the memory layout of the C# side PhysicsCollision class.
+///
+/// If the size in bytes is changed PhysicsCollision in CStructures.h must also be updated (size defined in
+/// Include.h.in)
 struct PhysicsCollision
 {
 public:
@@ -27,8 +30,14 @@ public:
     int32_t SecondSubShapeData;
 
     float PenetrationAmount;
+
+    // Without packed attribute there are 4 bytes of extra padding here
 };
 
+static_assert(sizeof (PhysicsCollision) == PHYSICS_COLLISION_DATA_SIZE);
+
 using CollisionRecordListType = PhysicsCollision*;
+
+using CollisionFilterCallback = bool (*)(const PhysicsCollision& potentialCollision);
 
 } // namespace Thrive::Physics

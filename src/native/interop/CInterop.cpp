@@ -159,6 +159,15 @@ void PhysicalWorldAddBody(PhysicalWorld* physicalWorld, PhysicsBody* body, bool 
         ->AddBody(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body), activate);
 }
 
+void PhysicalWorldDetachBody(PhysicalWorld* physicalWorld, PhysicsBody* body)
+{
+    if (body == nullptr)
+        return;
+
+    reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+        ->DetachBody(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body));
+}
+
 void DestroyPhysicalWorldBody(PhysicalWorld* physicalWorld, PhysicsBody* body)
 {
     if (physicalWorld == nullptr || body == nullptr)
@@ -203,6 +212,28 @@ void ReadPhysicsBodyTransform(
 
     *positionReceiver = Thrive::DVec3ToCAPI(readPosition);
     *rotationReceiver = Thrive::QuatToCAPI(readQuat);
+}
+
+void ReadPhysicsBodyVelocity(
+    PhysicalWorld* physicalWorld, PhysicsBody* body, JVecF3* velocityReceiver, JVecF3* angularVelocityReceiver)
+{
+#ifndef NDEBUG
+    if (physicalWorld == nullptr || body == nullptr || velocityReceiver == nullptr ||
+        angularVelocityReceiver == nullptr)
+    {
+        LOG_ERROR("Physics body read velocity call with invalid parameters");
+        return;
+    }
+#endif
+
+    JPH::Vec3 readVelocity;
+    JPH::Vec3 readAngular;
+
+    reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+        ->ReadBodyVelocity(reinterpret_cast<Thrive::Physics::PhysicsBody*>(body)->GetId(), readVelocity, readAngular);
+
+    *velocityReceiver = Thrive::Vec3ToCAPI(readVelocity);
+    *angularVelocityReceiver = Thrive::Vec3ToCAPI(readAngular);
 }
 
 #pragma clang diagnostic pop
@@ -346,6 +377,20 @@ void PhysicsBodyDisableCollisionRecording(PhysicalWorld* physicalWorld, PhysicsB
 {
     reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
         ->DisableCollisionRecording(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body));
+}
+
+void PhysicsBodyAddCollisionFilter(
+    PhysicalWorld* physicalWorld, PhysicsBody* body, OnFilterPhysicsCollision callback, bool calculateCollisionResponse)
+{
+    reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+        ->AddCollisionFilter(
+            *reinterpret_cast<Thrive::Physics::PhysicsBody*>(body), callback, calculateCollisionResponse);
+}
+
+void PhysicsBodyDisableCollisionFilter(PhysicalWorld* physicalWorld, PhysicsBody* body)
+{
+    reinterpret_cast<Thrive::Physics::PhysicalWorld*>(physicalWorld)
+        ->DisableCollisionFilter(*reinterpret_cast<Thrive::Physics::PhysicsBody*>(body));
 }
 
 // ------------------------------------ //

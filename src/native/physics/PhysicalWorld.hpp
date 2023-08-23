@@ -65,11 +65,19 @@ public:
     /// \brief Add a body that has been created but not added to the physics simulation in this world
     void AddBody(PhysicsBody& body, bool activate);
 
+    /// \brief Detaches a body to remove it from the simulation. It can be added back with AddBody
+    ///
+    /// Note that currently all constraints this body is part of will be deleted permanently (i.e. they won't be
+    /// restored even if this body is added back to the world). Also bodies are world specific so the body cannot be
+    /// added back to a different physics world.
+    void DetachBody(const Ref<PhysicsBody>& body);
+
     void DestroyBody(const Ref<PhysicsBody>& body);
 
     void SetDamping(JPH::BodyID bodyId, float damping, const float* angularDamping = nullptr);
 
     void ReadBodyTransform(JPH::BodyID bodyId, JPH::RVec3& positionReceiver, JPH::Quat& rotationReceiver) const;
+    void ReadBodyVelocity(JPH::BodyID bodyId, JPH::Vec3& velocityReceiver, JPH::Vec3& angularVelocityReceiver) const;
 
     void GiveImpulse(JPH::BodyID bodyId, JPH::Vec3Arg impulse);
     void SetVelocity(JPH::BodyID bodyId, JPH::Vec3Arg velocity);
@@ -124,6 +132,10 @@ public:
     /// \brief When called with true this disables all collisions for the given body (can be restored by calling this
     /// method again with false parameter)
     void SetCollisionDisabledState(PhysicsBody& body, bool disableAllCollisions);
+
+    void AddCollisionFilter(PhysicsBody& body, CollisionFilterCallback callback, bool calculateCollisionResponse);
+
+    void DisableCollisionFilter(PhysicsBody& body);
 
     // ------------------------------------ //
     // Constraints
@@ -183,6 +195,9 @@ private:
 
     /// \brief Called when body is added to the world (can happen multiple times for each body)
     void OnPostBodyAdded(PhysicsBody& body);
+
+    void OnBodyPreLeaveWorld(PhysicsBody& body);
+    void OnPostBodyLeaveWorld(PhysicsBody& body);
 
     /// \brief Updates the user pointer for a body to enable / disable newly set bitflags in the pointer for some
     /// various features

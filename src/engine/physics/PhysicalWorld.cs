@@ -129,9 +129,7 @@ public class PhysicalWorld : IDisposable
     /// <param name="body">The body to detach</param>
     public void DetachBody(NativePhysicsBody body)
     {
-        throw new NotImplementedException();
-
-        // NativeMethods.PhysicalWorldDetachBody(AccessWorldInternal(), body.AccessBodyInternal());
+        NativeMethods.PhysicalWorldDetachBody(AccessWorldInternal(), body.AccessBodyInternal());
     }
 
     /// <summary>
@@ -183,10 +181,12 @@ public class PhysicalWorld : IDisposable
         return (position, orientation);
     }
 
-    public (Vector3 Velocity, Vector3 AngularVelocity) ReadBodyVelocity(NativePhysicsBody physicsBody)
+    public (Vector3 Velocity, Vector3 AngularVelocity) ReadBodyVelocity(NativePhysicsBody body)
     {
-        // TODO: implement
-        throw new NotImplementedException();
+        NativeMethods.ReadPhysicsBodyVelocity(AccessWorldInternal(), body.AccessBodyInternal(),
+            out var velocity, out var angularVelocity);
+
+        return (velocity, angularVelocity);
     }
 
     public void GiveImpulse(NativePhysicsBody body, Vector3 impulse)
@@ -363,14 +363,16 @@ public class PhysicalWorld : IDisposable
         NativeMethods.PhysicsBodyDisableCollisionRecording(AccessWorldInternal(), body.AccessBodyInternal());
     }
 
-    public void BodyAddCollisionFilter(NativePhysicsBody body, OnCollisionFilterCallback filterCallback, bool calculatePenetrationAmount)
+    public void BodyAddCollisionFilter(NativePhysicsBody body, OnCollisionFilterCallback filterCallback,
+        bool calculatePenetrationAmount)
     {
-        throw new NotImplementedException();
+        NativeMethods.PhysicsBodyAddCollisionFilter(AccessWorldInternal(), body.AccessBodyInternal(), filterCallback,
+            calculatePenetrationAmount);
     }
 
     public void BodyDisableCollisionFilter(NativePhysicsBody body)
     {
-        throw new NotImplementedException();
+        NativeMethods.PhysicsBodyDisableCollisionFilter(AccessWorldInternal(), body.AccessBodyInternal());
     }
 
     public void SetGravity(JVecF3? gravity = null)
@@ -472,6 +474,9 @@ internal static partial class NativeMethods
     internal static extern void PhysicalWorldAddBody(IntPtr physicalWorld, IntPtr body, bool activate);
 
     [DllImport("thrive_native")]
+    internal static extern void PhysicalWorldDetachBody(IntPtr physicalWorld, IntPtr body);
+
+    [DllImport("thrive_native")]
     internal static extern void DestroyPhysicalWorldBody(IntPtr physicalWorld, IntPtr body);
 
     [DllImport("thrive_native")]
@@ -484,6 +489,10 @@ internal static partial class NativeMethods
     [DllImport("thrive_native")]
     internal static extern void ReadPhysicsBodyTransform(IntPtr world, IntPtr body, [Out] out JVec3 position,
         [Out] out JQuat orientation);
+
+    [DllImport("thrive_native")]
+    internal static extern void ReadPhysicsBodyVelocity(IntPtr world, IntPtr body, [Out] out JVecF3 velocity,
+        [Out] out JVecF3 angularVelocity);
 
     [DllImport("thrive_native")]
     internal static extern void GiveImpulse(IntPtr world, IntPtr body, JVecF3 impulse);
@@ -547,6 +556,13 @@ internal static partial class NativeMethods
 
     [DllImport("thrive_native")]
     internal static extern void PhysicsBodyDisableCollisionRecording(IntPtr physicalWorld, IntPtr body);
+
+    [DllImport("thrive_native")]
+    internal static extern void PhysicsBodyAddCollisionFilter(IntPtr physicalWorld, IntPtr body,
+        PhysicalWorld.OnCollisionFilterCallback callback, bool calculateCollisionResponse);
+
+    [DllImport("thrive_native")]
+    internal static extern void PhysicsBodyDisableCollisionFilter(IntPtr physicalWorld, IntPtr body);
 
     [DllImport("thrive_native")]
     internal static extern void PhysicalWorldSetGravity(IntPtr physicalWorld, JVecF3 gravity);

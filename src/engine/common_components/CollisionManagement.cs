@@ -35,6 +35,8 @@
         ///   false will prevent that collision. Note that no state should be modified (that is not completely
         ///   thread-safe and entity order safe) by this. Also this will increase the physics processing expensiveness
         ///   of an entity so if at all possible other approaches should be used to filter out unwanted collisions.
+        ///   Or only react to detected collisions of wanted type. The filter works by calling from the native side
+        ///   back to the C# side inside the physics simulation.
         /// </summary>
         /// <remarks>
         ///   <para>

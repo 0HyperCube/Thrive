@@ -273,9 +273,15 @@ Ref<PhysicsBody> PhysicalWorld::CreateStaticBody(const JPH::RefConst<JPH::Shape>
 
 void PhysicalWorld::AddBody(PhysicsBody& body, bool activate)
 {
-    if (body.IsInWorld())
+    if (body.IsInWorld() && !body.IsDetached())
     {
         LOG_ERROR("Physics body is already in some world, not adding it to this world");
+        return;
+    }
+
+    if (body.IsInSpecificWorld(this))
+    {
+        LOG_ERROR("Physics body can only be added back to the world it was created for");
         return;
     }
 
@@ -294,32 +300,55 @@ void PhysicalWorld::AddBody(PhysicsBody& body, bool activate)
     OnPostBodyAdded(body);
 }
 
+void PhysicalWorld::DetachBody(const Ref<PhysicsBody>& body)
+{
+    if (!body->IsInWorld() || body->IsDetached())
+    {
+        LOG_ERROR("Can't detach physics body not in world or detached already");
+        return;
+    }
+
+    auto& bodyInterface = physicsSystem->GetBodyInterface();
+
+    OnBodyPreLeaveWorld(*body);
+
+    bodyInterface.RemoveBody(body->GetId());
+
+    OnPostBodyLeaveWorld(*body);
+
+    body->MarkDetached();
+}
+
 void PhysicalWorld::DestroyBody(const Ref<PhysicsBody>& body)
 {
     if (body == nullptr)
         return;
 
-    auto& bodyInterface = physicsSystem->GetBodyInterface();
-
-    // Destroy constraints
-    while (!body->GetConstraints().empty())
+    if (!body->IsInWorld())
     {
-        DestroyConstraint(*body->GetConstraints().back());
+        LOG_ERROR("Cannot destroy a physics body not in the world");
+        return;
     }
 
-    if (body->GetBodyControlState() != nullptr)
-        DisableBodyControl(*body);
+    auto& bodyInterface = physicsSystem->GetBodyInterface();
+
+    if (!body->IsDetached())
+    {
+        bodyInterface.DestroyBody(body->GetId());
+        body->MarkRemovedFromWorld();
+
+        return;
+    }
+
+    OnBodyPreLeaveWorld(*body);
 
     bodyInterface.RemoveBody(body->GetId());
-    body->MarkRemovedFromWorld();
 
     // Permanently destroy the body
-    // TODO: we'll probably want to allow some way to re-add bodies at some point
     bodyInterface.DestroyBody(body->GetId());
+    body->MarkRemovedFromWorld();
 
-    // Remove the extra body reference that we added for the physics system keeping a pointer to the body
-    body->Release();
-    --bodyCount;
+    OnPostBodyLeaveWorld(*body);
 
     changesToBodies = true;
 }
@@ -360,6 +389,25 @@ void PhysicalWorld::ReadBodyTransform(
         LOG_ERROR("Couldn't lock body for reading transform");
         std::memset(&positionReceiver, 0, sizeof(positionReceiver));
         std::memset(&rotationReceiver, 0, sizeof(rotationReceiver));
+    }
+}
+
+void PhysicalWorld::ReadBodyVelocity(
+    JPH::BodyID bodyId, JPH::Vec3& velocityReceiver, JPH::Vec3& angularVelocityReceiver) const
+{
+    JPH::BodyLockRead lock(physicsSystem->GetBodyLockInterface(), bodyId);
+    if (lock.Succeeded())
+    {
+        const JPH::Body& body = lock.GetBody();
+
+        velocityReceiver = body.GetLinearVelocity();
+        angularVelocityReceiver = body.GetAngularVelocity();
+    }
+    else
+    {
+        LOG_ERROR("Couldn't lock body for reading velocity");
+        std::memset(&velocityReceiver, 0, sizeof(velocityReceiver));
+        std::memset(&angularVelocityReceiver, 0, sizeof(angularVelocityReceiver));
     }
 }
 
@@ -627,6 +675,27 @@ void PhysicalWorld::SetCollisionDisabledState(PhysicsBody& body, bool disableAll
     }
 
     UpdateBodyUserPointer(body);
+}
+
+void PhysicalWorld::AddCollisionFilter(
+    PhysicsBody& body, CollisionFilterCallback callback, bool calculateCollisionResponse)
+{
+    body.SetCollisionFilter(callback, calculateCollisionResponse);
+
+    if (body.MarkCollisionFilterCallbackUsed())
+    {
+        UpdateBodyUserPointer(body);
+    }
+}
+
+void PhysicalWorld::DisableCollisionFilter(PhysicsBody& body)
+{
+    body.RemoveCollisionFilter();
+
+    if (body.MarkCollisionFilterCallbackDisabled())
+    {
+        UpdateBodyUserPointer(body);
+    }
 }
 
 // ------------------------------------ //
@@ -911,8 +980,28 @@ void PhysicalWorld::OnPostBodyAdded(PhysicsBody& body)
     body.MarkUsedInWorld();
 
     // Add an extra reference to the body to keep it from being deleted while in this world
+    // TODO: does detached body also need to keep an extra reference?
     body.AddRef();
     ++bodyCount;
+}
+
+void PhysicalWorld::OnBodyPreLeaveWorld(PhysicsBody& body)
+{
+    // Destroy constraints
+    while (!body.GetConstraints().empty())
+    {
+        DestroyConstraint(*body.GetConstraints().back());
+    }
+
+    if (body.GetBodyControlState() != nullptr)
+        DisableBodyControl(body);
+}
+
+void PhysicalWorld::OnPostBodyLeaveWorld(PhysicsBody& body)
+{
+    // Remove the extra body reference that we added for the physics system keeping a pointer to the body
+    body.Release();
+    --bodyCount;
 }
 
 void PhysicalWorld::UpdateBodyUserPointer(const PhysicsBody& body)

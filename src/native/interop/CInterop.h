@@ -14,6 +14,8 @@ extern "C"
     typedef void (*OnLineDraw)(JVec3 from, JVec3 to, JColour colour);
     typedef void (*OnTriangleDraw)(JVec3 vertex1, JVec3 vertex2, JVec3 vertex3, JColour colour);
 
+    typedef bool (*OnFilterPhysicsCollision)(PhysicsCollision* potentialCollision);
+
     // ------------------------------------ //
     // General
 
@@ -54,6 +56,8 @@ extern "C"
     [[maybe_unused]] THRIVE_NATIVE_API void PhysicalWorldAddBody(
         PhysicalWorld* physicalWorld, PhysicsBody* body, bool activate);
 
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicalWorldDetachBody(PhysicalWorld* physicalWorld, PhysicsBody* body);
+
     [[maybe_unused]] THRIVE_NATIVE_API void DestroyPhysicalWorldBody(PhysicalWorld* physicalWorld, PhysicsBody* body);
 
     [[maybe_unused]] THRIVE_NATIVE_API void SetPhysicsBodyLinearDamping(
@@ -64,6 +68,9 @@ extern "C"
 
     [[maybe_unused]] THRIVE_NATIVE_API void ReadPhysicsBodyTransform(
         PhysicalWorld* physicalWorld, PhysicsBody* body, JVec3* positionReceiver, JQuat* rotationReceiver);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void ReadPhysicsBodyVelocity(
+        PhysicalWorld* physicalWorld, PhysicsBody* body, JVecF3* velocityReceiver, JVecF3* angularVelocityReceiver);
 
     [[maybe_unused]] THRIVE_NATIVE_API void GiveImpulse(
         PhysicalWorld* physicalWorld, PhysicsBody* body, JVecF3 impulse);
@@ -119,6 +126,12 @@ extern "C"
         PhysicalWorld* physicalWorld, PhysicsBody* body, char* collisionRecordingTarget, int32_t maxRecordedCollisions);
 
     [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyDisableCollisionRecording(
+        PhysicalWorld* physicalWorld, PhysicsBody* body);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyAddCollisionFilter(PhysicalWorld* physicalWorld,
+        PhysicsBody* body, OnFilterPhysicsCollision callback, bool calculateCollisionResponse);
+
+    [[maybe_unused]] THRIVE_NATIVE_API void PhysicsBodyDisableCollisionFilter(
         PhysicalWorld* physicalWorld, PhysicsBody* body);
 
     [[maybe_unused]] THRIVE_NATIVE_API void PhysicalWorldSetGravity(PhysicalWorld* physicalWorld, JVecF3 gravity);
