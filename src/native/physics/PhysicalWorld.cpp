@@ -20,8 +20,8 @@
 // #include "core/TaskSystem.hpp"
 
 #include "core/Mutex.hpp"
-#include "core/Time.hpp"
 #include "core/Spinlock.hpp"
+#include "core/Time.hpp"
 
 #include "BodyActivationListener.hpp"
 #include "BodyControlState.hpp"
@@ -128,6 +128,17 @@ public:
         for (size_t i = 0; i < size; ++i)
         {
             activeBodiesWithCollisions[i]->ClearRecordedData();
+        }
+    }
+
+    inline void IncrementStepCounter() noexcept
+    {
+        ++stepCounter;
+
+        if (stepCounter >= std::numeric_limits<decltype(stepCounter)>::max())
+        {
+            // Skip the last value to ensure no uninitialized values cause a problem if they appear on this update
+            stepCounter = 1;
         }
     }
 
@@ -973,7 +984,7 @@ void PhysicalWorld::ReportBodyWithActiveCollisions(PhysicsBody& body)
 
 void PhysicalWorld::PerformPhysicsStepOperations(float delta)
 {
-    ++pimpl->stepCounter;
+    pimpl->IncrementStepCounter();
 
     // Collision setup
     contactListener->ReportStepNumber(pimpl->stepCounter);
