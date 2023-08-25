@@ -403,7 +403,8 @@ void PhysicalWorld::DestroyBody(const Ref<PhysicsBody>& body)
 
     auto& bodyInterface = physicsSystem->GetBodyInterface();
 
-    if (!body->IsDetached())
+    // Special handling for bodies that are detached as part of their destruction logic has already been performed
+    if (body->IsDetached())
     {
         bodyInterface.DestroyBody(body->GetId());
         body->MarkRemovedFromWorld();
