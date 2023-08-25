@@ -9,6 +9,12 @@ using DefaultEcs;
 [StructLayout(LayoutKind.Sequential)]
 public struct PhysicsCollision
 {
+    /// <summary>
+    ///   When a sub shape data is equal to this, the shape is unknown and not a sub-shape. This must match what the
+    ///   native side has defined.
+    /// </summary>
+    public const uint COLLISION_UNKNOWN_SUB_SHAPE = uint.MaxValue;
+
     // Native code side handles writing to these objects
     // ReSharper disable UnassignedReadonlyField
 

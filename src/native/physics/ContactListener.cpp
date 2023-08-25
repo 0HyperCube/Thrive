@@ -10,7 +10,16 @@
 // ------------------------------------ //
 namespace Thrive::Physics
 {
+ContactListener::ContactListener()
+{
+    if (COLLISION_UNKNOWN_SUB_SHAPE != JPH::SubShapeID().GetValue())
+    {
+        LOG_ERROR("Incorrectly configured unknown collision value compared to what Jolt has");
+        abort();
+    }
+}
 
+// ------------------------------------ //
 inline void PrepareBasicCollisionInfo(PhysicsCollision& collision, const PhysicsBody* body1, const PhysicsBody* body2)
 {
     collision.FirstBody = body1;
