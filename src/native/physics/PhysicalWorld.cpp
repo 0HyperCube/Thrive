@@ -129,6 +129,8 @@ public:
         {
             activeBodiesWithCollisions[i]->ClearRecordedData();
         }
+
+        activeBodiesWithCollisions.clear();
     }
 
     inline void IncrementStepCounter() noexcept
