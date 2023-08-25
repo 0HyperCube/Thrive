@@ -21,6 +21,7 @@
 
 #include "core/Mutex.hpp"
 #include "core/Time.hpp"
+#include "core/Spinlock.hpp"
 
 #include "BodyActivationListener.hpp"
 #include "BodyControlState.hpp"
@@ -45,9 +46,7 @@ namespace Thrive::Physics
 class PhysicalWorld::Pimpl
 {
 public:
-    Pimpl() :
-        durationBuffer(30), activeBodiesWithCollisions(std::make_unique<std::vector<PhysicsBody*>>()),
-        previousBodiesWithCollisions(std::make_unique<std::vector<PhysicsBody*>>())
+    Pimpl() : durationBuffer(30)
     {
 #ifdef JPH_DEBUG_RENDERER
         // Convex shapes
@@ -61,6 +60,8 @@ public:
 
         // TODO: some of the extra settings should be enableable
 #endif
+
+        activeBodiesWithCollisions.reserve(50);
     }
 
     float AddAndCalculateAverageTime(float duration)
@@ -87,64 +88,46 @@ public:
 
     inline void PushBodyWithActiveCollisions(PhysicsBody& body)
     {
-        // TODO: switch to a spin lock or a lock free queue
-        Lock lock(activeBodyWriteMutex);
+        activeBodyWriteLock.Lock();
 
-        activeBodiesWithCollisions->emplace_back(&body);
+        activeBodiesWithCollisions.emplace_back(&body);
+
+        activeBodyWriteLock.Unlock();
     }
 
     /// \brief Ensures a body is no longer referenced by any step data
-    void NotifyBodyRemove(PhysicsBody* body) noexcept
+    void NotifyBodyRemove(PhysicsBody* body) noexcept // NOLINT(*-make-member-function-const)
     {
-        // Only active bodies can store the body reference across frames so only that needs to be checked
-        auto& listToLookAt = *activeBodiesWithCollisions;
-        const size_t size = listToLookAt.size();
-
+        const auto size = activeBodiesWithCollisions.size();
         for (size_t i = 0; i < size; ++i)
         {
-            if (listToLookAt[i] != body)
+            if (activeBodiesWithCollisions[i] != body)
                 continue;
 
-            // Need to remove this, as we don't have to ensure order we can swap this to be last in the vector
+            // Need to remove this, as we don't have to ensure the order we can swap this to be last in the vector
             // and pop the last
             if (i + 1 < size)
             {
-                std::swap(listToLookAt[i], listToLookAt[size - 1]);
+                std::swap(activeBodiesWithCollisions[i], activeBodiesWithCollisions[size - 1]);
             }
             else
             {
                 // Already last
             }
 
-            listToLookAt.pop_back();
+            activeBodiesWithCollisions.pop_back();
 
             return;
         }
     }
 
-    void HandleExpiringBodyCollisions()
+    void HandleExpiringBodyCollisions() // NOLINT(*-make-member-function-const)
     {
-        // Handle expiring previous collisions
-
-        // Active bodies of previous run becomes the previous bodies with this swap (and the last frame handled
-        // previous data which should be empty becomes the active bodies)
-
-        std::swap(activeBodiesWithCollisions, previousBodiesWithCollisions);
-
-        auto& listToClear = *previousBodiesWithCollisions;
-
-        size_t previousCount = listToClear.size();
-        for (size_t i = 0; i < previousCount; ++i)
+        // Mark all previous collision data as empty
+        const auto size = activeBodiesWithCollisions.size();
+        for (size_t i = 0; i < size; ++i)
         {
-            listToClear[i]->ClearRecordedDataIfStepIsOld(stepCounter);
-        }
-
-        listToClear.clear();
-
-        // This should be cleared already by the previous physics step
-        if (!activeBodiesWithCollisions->empty())
-        {
-            LOG_ERROR("Logic error in active body record list keeping");
+            activeBodiesWithCollisions[i]->ClearRecordedData();
         }
     }
 
@@ -161,10 +144,9 @@ public:
 
     JPH::Vec3 gravity = JPH::Vec3(0, -9.81f, 0);
 
-    std::unique_ptr<std::vector<PhysicsBody*>> activeBodiesWithCollisions;
-    std::unique_ptr<std::vector<PhysicsBody*>> previousBodiesWithCollisions;
+    std::vector<PhysicsBody*> activeBodiesWithCollisions;
 
-    Mutex activeBodyWriteMutex;
+    Spinlock activeBodyWriteLock;
 
     uint32_t stepCounter = 0;
 

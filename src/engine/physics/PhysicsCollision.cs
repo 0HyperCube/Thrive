@@ -14,7 +14,14 @@ public struct PhysicsCollision
 
     // The fields are here in an order optimized to minimize padding and not grouped logically
 
+    /// <summary>
+    ///   The first entity participating in this collision. This is a bitwise copy of the entity identifier of the
+    ///   entity this physics body was created for. Note that the ordering is always guaranteed so that the entity
+    ///   recording the collision or checking inside a collision filter is always the first body. So code does not have
+    ///   to check if the first or second entity is the entity that created this collision object.
+    /// </summary>
     public readonly Entity FirstEntity;
+
     public readonly Entity SecondEntity;
 
     /// <summary>
