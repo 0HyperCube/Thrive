@@ -392,27 +392,18 @@ protected:
             }
         }
 
-        int indexToWriteTo;
-        int readCollisionIndexValue;
-
         // Atomically acquire the array index to write to
-        do
+        const auto indexToWriteTo = activeRecordedCollisionCount.fetch_add(1, std::memory_order::acq_rel);
+
+        // Skip if too many collisions
+        if (indexToWriteTo >= maxCollisionsToRecord) [[unlikely]]
         {
-            // TODO: should this instead do a fetch_add to get the index to write to and update the new index in one
-            // operation? Though with that case each time we've reached the max collisions we need to reset the value
-            // back to the max value if the count goes too high
-            readCollisionIndexValue = activeRecordedCollisionCount.load(std::memory_order_acquire);
+            // If we go over the number of allowed recorded collisions, we need to reset the memory back
+            if (indexToWriteTo > maxCollisionsToRecord)
+                activeRecordedCollisionCount.store(maxCollisionsToRecord, std::memory_order_release);
 
-            // Skip if too many collisions
-            if (readCollisionIndexValue >= maxCollisionsToRecord)
-                return nullptr;
-
-            indexToWriteTo = readCollisionIndexValue;
-
-            // Atomically increment the index for the next slot that gets used. If this fails then another thread
-            // managed to
-        } while (!activeRecordedCollisionCount.compare_exchange_strong(readCollisionIndexValue,
-            readCollisionIndexValue + 1, std::memory_order_release, std::memory_order_relaxed));
+            return nullptr;
+        }
 
         return &collisionRecordingTarget[indexToWriteTo];
     }
@@ -447,6 +438,9 @@ protected:
     FORCE_INLINE inline void ClearRecordedData()
     {
         activeRecordedCollisionCount = 0;
+
+        // TODO: could maybe switch the last step number to a simple bool flag to determine if we have registered our
+        // selves already or not to be cleared of collisions on next update
     }
 
 private:
