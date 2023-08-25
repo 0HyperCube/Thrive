@@ -43,7 +43,7 @@
 
                 collisions.CollisionFilter = FilterCollisions;
 
-                collisions.StartCollisionRecording(Constants.MAX_SIMULTANEOUS_PROJECTILE_COLLISIONS);
+                collisions.StartCollisionRecording(Constants.MAX_SIMULTANEOUS_COLLISIONS_TINY);
 
                 collisions.StateApplied = false;
             }

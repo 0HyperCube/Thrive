@@ -34,7 +34,7 @@
             // Entity setup
             if (!damageTouch.RegisteredWithCollisions)
             {
-                collisionManagement.StartCollisionRecording(Constants.MAX_SIMULTANEOUS_DAMAGE_COLLISIONS);
+                collisionManagement.StartCollisionRecording(Constants.MAX_SIMULTANEOUS_COLLISIONS_SMALL);
 
                 damageTouch.RegisteredWithCollisions = true;
             }
