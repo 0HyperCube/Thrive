@@ -522,7 +522,7 @@ public static class SpawnHelpers
 
         entity.Set(new CommandSignaler
         {
-            SignallingChannel = species.ID,
+            SignalingChannel = species.ID,
         });
 
         entity.Set(new Engulfable

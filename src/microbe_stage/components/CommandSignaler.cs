@@ -4,8 +4,8 @@
     using Godot;
 
     /// <summary>
-    ///   Sends and receivers command signals (signalling agent). Requires a <see cref="WorldPosition"/> to function
-    ///   as the origin of the signalling command.
+    ///   Sends and receivers command signals (signaling agent). Requires a <see cref="WorldPosition"/> to function
+    ///   as the origin of the signaling command.
     /// </summary>
     public struct CommandSignaler
     {
@@ -23,17 +23,19 @@
 
         /// <summary>
         ///   Used to limit signals reaching entities they shouldn't. In the microbe stage this contains the entity's
-        ///   species ID to allow species-wide signalling.
+        ///   species ID to allow species-wide signaling.
         /// </summary>
-        public ulong SignallingChannel;
+        public ulong SignalingChannel;
 
         /// <summary>
-        ///   Because AI is ran in parallel thread, if it wants to change the signalling, it needs to do it through this
+        ///   Because AI is ran in parallel thread, if it wants to change the signaling, it needs to do it through this
         /// </summary>
-        public MicrobeSignalCommand? QueuedSignallingCommand;
+        public MicrobeSignalCommand? QueuedSignalingCommand;
 
         public MicrobeSignalCommand Command;
 
         public MicrobeSignalCommand ReceivedCommand;
+
+        // TODO: should this have a bool flag to disable this component when the microbe doesn't have a signaling agent?
     }
 }

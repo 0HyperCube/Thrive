@@ -14,7 +14,7 @@
     /// </summary>
     [With(typeof(CommandSignaler))]
     [With(typeof(WorldPosition))]
-    public sealed class EntitySignallingSystem : AEntitySetSystem<float>
+    public sealed class EntitySignalingSystem : AEntitySetSystem<float>
     {
         private readonly Dictionary<ulong, List<(Entity Entity, Vector3 Position)>> entitiesOnChannels = new();
 
@@ -23,7 +23,7 @@
 
         private bool timeToUpdate;
 
-        public EntitySignallingSystem(World world, IParallelRunner runner) : base(world, runner)
+        public EntitySignalingSystem(World world, IParallelRunner runner) : base(world, runner)
         {
         }
 
@@ -75,21 +75,21 @@
             {
                 ref var signaling = ref entity.Get<CommandSignaler>();
 
-                if (signaling.QueuedSignallingCommand != null)
+                if (signaling.QueuedSignalingCommand != null)
                 {
-                    signaling.Command = signaling.QueuedSignallingCommand.Value;
-                    signaling.QueuedSignallingCommand = null;
+                    signaling.Command = signaling.QueuedSignalingCommand.Value;
+                    signaling.QueuedSignalingCommand = null;
                 }
 
                 // Build a mapping of signalers by their channel and position to speed up the update logic below
                 if (signaling.Command == MicrobeSignalCommand.None)
                     continue;
 
-                if (!entitiesOnChannels.TryGetValue(signaling.SignallingChannel, out var channel))
+                if (!entitiesOnChannels.TryGetValue(signaling.SignalingChannel, out var channel))
                 {
                     channel = new List<(Entity Entity, Vector3 Position)>();
 
-                    entitiesOnChannels[signaling.SignallingChannel] = channel;
+                    entitiesOnChannels[signaling.SignalingChannel] = channel;
                 }
 
                 ref var position = ref entity.Get<WorldPosition>();
@@ -111,7 +111,7 @@
             // Find closest signaler on the channel this entity is on
             bool foundSignal = false;
 
-            if (entitiesOnChannels.TryGetValue(signaling.SignallingChannel, out var signalers))
+            if (entitiesOnChannels.TryGetValue(signaling.SignalingChannel, out var signalers))
             {
                 ref var position = ref entity.Get<WorldPosition>();
 
