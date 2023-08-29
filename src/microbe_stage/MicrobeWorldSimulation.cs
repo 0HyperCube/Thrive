@@ -13,6 +13,12 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
 
     private GameProperties gameProperties = null!;
 
+    /// <summary>
+    ///   Used to tell a few systems the approximate player position which might not always exist
+    /// </summary>
+    [JsonIgnore]
+    private Vector3? reportedPlayerPosition;
+
     // Base systems
     private ColourAnimationSystem colourAnimationSystem = null!;
     private CountLimitedDespawnSystem countLimitedDespawnSystem = null!;
@@ -117,7 +123,7 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
         cloudSystem.Init(fluidCurrentsSystem);
 
         // TODO: this definitely needs to be (along with the process system) the first systems to be multithreaded
-        microbeAI = new MicrobeAISystem(this, cloudSystem, EntitySystem, parallelRunner);
+        microbeAI = new MicrobeAISystem(cloudSystem, EntitySystem, parallelRunner);
 
         microbeShaderSystem = new MicrobeShaderSystem(EntitySystem, nonParallelRunner);
 
@@ -160,6 +166,16 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
     public void SetSimulationBiome(BiomeConditions biomeConditions)
     {
         ProcessSystem.SetBiome(biomeConditions);
+    }
+
+    public void ReportPlayerPosition(Vector3 position)
+    {
+        reportedPlayerPosition = position;
+
+        // Immediately report to some systems
+        countLimitedDespawnSystem.ReportPlayerPosition(position);
+        soundEffectSystem.ReportPlayerPosition(position);
+        SpawnSystem.ReportPlayerPosition(position);
     }
 
     internal void OverrideMicrobeAIRandomSeed(int seed)
@@ -205,12 +221,15 @@ public class MicrobeWorldSimulation : WorldSimulationWithPhysics
         if (RunAI)
         {
             // Update AI for the cells (note that the AI system itself can also be disabled, due to cheats)
+            microbeAI.ReportPotentialPlayerPosition(reportedPlayerPosition);
             microbeAI.Update(delta);
         }
 
         countLimitedDespawnSystem.Update(delta);
 
         SpawnSystem.Update(delta);
+
+        reportedPlayerPosition = null;
     }
 
     protected override void Dispose(bool disposing)

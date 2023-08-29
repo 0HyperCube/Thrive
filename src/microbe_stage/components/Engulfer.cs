@@ -1,5 +1,6 @@
 ﻿namespace Components
 {
+    using System;
     using System.Collections.Generic;
     using DefaultEcs;
 
@@ -40,5 +41,13 @@
         ///   Total size that all engulfed objects need to fit in
         /// </summary>
         public float EngulfStorageSize;
+    }
+
+    public static class EngulferHelpers
+    {
+        public static EngulfCheckResult CanEngulfObject(ref this Engulfer engulfer, in Entity target)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

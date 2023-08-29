@@ -149,6 +149,7 @@
     <Compile Include="src\engine\common_components\SoundListener.cs" />
     <Compile Include="src\engine\common_components\SpatialInstance.cs" />
     <Compile Include="src\engine\common_components\Spawned.cs" />
+    <Compile Include="src\engine\common_components\SpeciesMember.cs" />
     <Compile Include="src\engine\common_components\TimedLife.cs" />
     <Compile Include="src\engine\common_components\WorldPosition.cs" />
     <Compile Include="src\engine\common_systems\ColourAnimationSystem.cs" />
