@@ -68,8 +68,8 @@ public class EnergyBalanceInfoSimple
     {
     }
 
-    public virtual void AddProduction(
-        string groupName, float amount, Dictionary<Compound, float> requiredInputCompounds)
+    public virtual void AddProduction(string groupName, float amount,
+        Dictionary<Compound, float> requiredInputCompounds)
     {
     }
 

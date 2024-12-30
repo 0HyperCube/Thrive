@@ -37,8 +37,8 @@ public class EnergyBalanceInfoFull : EnergyBalanceInfoSimple
         Consumption[groupName] = existing + amount;
     }
 
-    public override void AddProduction(
-        string groupName, float amount, Dictionary<Compound, float> requiredInputCompounds)
+    public override void AddProduction(string groupName, float amount,
+        Dictionary<Compound, float> requiredInputCompounds)
     {
         Production.TryGetValue(groupName, out var existing);
 
